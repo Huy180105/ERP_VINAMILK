@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vnm-royal: #00249C;
+  --color-vnm-royal-dark: #001768;
+  --color-vnm-azure: #0052FF;
+  --color-vnm-sky: #EBF2FF;
+  --color-vnm-cream: #FAF8F5;
+  --color-vnm-cream-dark: #F3EFE6;
+  --color-vnm-green: #10B981;
+  --color-vnm-green-soft: #ECFDF5;
+  --color-vnm-amber: #F59E0B;
+  --color-vnm-amber-soft: #FFFBEB;
+  --color-vnm-rose: #F43F5E;
+}
+
+body {
+  margin: 0;
+  background: #F4F6FA;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1E293B;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-dark {
+  background: rgba(0, 36, 156, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Soft card shadow */
+.soft-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 36, 156, 0.08);
+}
+
+.soft-shadow-lg {
+  box-shadow: 0 20px 40px -15px rgba(0, 36, 156, 0.12);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
