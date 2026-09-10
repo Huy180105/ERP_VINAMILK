@@ -6,6 +6,10 @@ node_modules/
 yarn-debug.log*
 yarn-error.log*
 
+# Extracted diagram images
+extracted_images/
+/extracted_images/
+
 # Laravel & Backend dependencies
 vendor/
 /HT QL Kho/BE/vendor/
