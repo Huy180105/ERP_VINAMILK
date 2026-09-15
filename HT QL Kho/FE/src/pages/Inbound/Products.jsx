@@ -707,9 +707,10 @@ export default function InboundProducts() {
                             <input
                               type="date"
                               value={item.hanSuDung}
-                              onChange={(e) => handleItemChange(idx, 'hanSuDung', e.target.value)}
-                              className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                              required
+                              disabled
+                              readOnly
+                              title="Hạn sử dụng được tự động tính theo Ngày sản xuất + Thời hạn chuẩn của sản phẩm (không thể sửa thủ công)"
+                              className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-mono font-semibold text-slate-700 cursor-not-allowed"
                             />
                           </td>
                           <td className="p-2 text-center">
