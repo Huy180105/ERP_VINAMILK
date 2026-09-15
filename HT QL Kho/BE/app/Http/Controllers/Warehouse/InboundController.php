@@ -291,10 +291,10 @@ class InboundController extends Controller
     {
         $receipt = PhieuNhapSP::with('chiTiets')->findOrFail($id);
 
-        if ($receipt->trangThai !== 'Chờ duyệt') {
+        if (!in_array($receipt->trangThai, ['Chờ duyệt', 'Từ chối'])) {
             return response()->json([
                 'success' => false,
-                'message' => "Chỉ được phép sửa phiếu nhập khi đang ở trạng thái 'Chờ duyệt'. Phiếu hiện tại: {$receipt->trangThai}",
+                'message' => "Chỉ được phép sửa phiếu nhập khi đang ở trạng thái 'Chờ duyệt' hoặc 'Từ chối'. Phiếu hiện tại: {$receipt->trangThai}",
             ], 400);
         }
 
@@ -336,6 +336,7 @@ class InboundController extends Controller
             $receipt->update([
                 'ghiChu' => $validated['ghiChu'],
                 'maPhieuYCXSP' => $validated['maPhieuYCXSP'] ?? null,
+                'trangThai' => 'Chờ duyệt',
             ]);
 
             ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->delete();

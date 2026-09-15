@@ -102,8 +102,8 @@ export default function InboundProducts() {
   };
 
   const handleOpenEditModal = (receipt) => {
-    if (receipt.trangThai !== 'Chờ duyệt') {
-      alert(`Chỉ được phép sửa phiếu ở trạng thái "Chờ duyệt". Phiếu hiện tại: ${receipt.trangThai}`);
+    if (!['Chờ duyệt', 'Từ chối'].includes(receipt.trangThai)) {
+      alert(`Chỉ được phép sửa phiếu ở trạng thái "Chờ duyệt" hoặc "Từ chối". Phiếu hiện tại: ${receipt.trangThai}`);
       return;
     }
     setEditingReceipt(receipt);
@@ -440,10 +440,11 @@ export default function InboundProducts() {
                             </button>
                             <button
                               onClick={() => handleOpenEditModal(r)}
-                              title="Sửa phiếu"
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer"
+                              title="Sửa thông tin phiếu"
+                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
+                              <span>Sửa</span>
                             </button>
                             <button
                               onClick={() => handleDelete(r.maPhieuNhapSP)}
@@ -476,9 +477,17 @@ export default function InboundProducts() {
                           </>
                         )}
 
-                        {/* 3. Trạng thái TỪ CHỐI -> Cho phép Xóa hoặc In */}
+                        {/* 3. Trạng thái TỪ CHỐI -> Cho phép Sửa lại, Xem chi tiết hoặc Xóa */}
                         {r.trangThai === 'Từ chối' && (
                           <>
+                            <button
+                              onClick={() => handleOpenEditModal(r)}
+                              title="Sửa & Gửi lại phiếu"
+                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>Sửa & Gửi lại</span>
+                            </button>
                             <button
                               onClick={() => handleOpenDetail(r)}
                               title="Xem chi tiết"
