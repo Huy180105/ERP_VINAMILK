@@ -102,6 +102,10 @@ export default function InboundProducts() {
   };
 
   const handleOpenEditModal = (receipt) => {
+    if (!['Chờ duyệt', 'Từ chối'].includes(receipt.trangThai)) {
+      alert(`Chỉ được phép sửa phiếu ở trạng thái "Chờ duyệt" hoặc "Từ chối". Phiếu hiện tại: ${receipt.trangThai}`);
+      return;
+    }
     setEditingReceipt(receipt);
     setFormErrors([]);
     setFormData({
@@ -452,7 +456,7 @@ export default function InboundProducts() {
                           </>
                         )}
 
-                        {/* 2. Trạng thái ĐÃ DUYỆT -> Nút LẤY HÀNG THÀNH CÔNG, SỬA & IN PHIẾU */}
+                        {/* 2. Trạng thái ĐÃ DUYỆT -> Nút LẤY HÀNG THÀNH CÔNG (Nhân viên & Quản lý) */}
                         {r.trangThai === 'Đã duyệt' && (
                           <>
                             <button
@@ -462,14 +466,6 @@ export default function InboundProducts() {
                             >
                               <PackageCheck className="w-4 h-4" />
                               <span>Lấy Hàng Thành Công</span>
-                            </button>
-                            <button
-                              onClick={() => handleOpenEditModal(r)}
-                              title="Sửa phiếu nhập"
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Sửa</span>
                             </button>
                             <button
                               onClick={() => handleOpenPrint(r)}
@@ -509,17 +505,9 @@ export default function InboundProducts() {
                           </>
                         )}
 
-                        {/* 4. Trạng thái THÀNH CÔNG / ĐÃ HOÀN THÀNH -> Sửa, Xem chi tiết & In phiếu */}
+                        {/* 4. Trạng thái THÀNH CÔNG / ĐÃ HOÀN THÀNH -> Chỉ cho phép Xem chi tiết & In phiếu (Không sửa) */}
                         {(r.trangThai === 'Thành công' || r.trangThai === 'Đã hoàn thành') && (
                           <>
-                            <button
-                              onClick={() => handleOpenEditModal(r)}
-                              title="Sửa phiếu nhập & Cập nhật Tồn kho"
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Sửa</span>
-                            </button>
                             <button
                               onClick={() => handleOpenDetail(r)}
                               className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 cursor-pointer"

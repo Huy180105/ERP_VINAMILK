@@ -291,6 +291,13 @@ class InboundController extends Controller
     {
         $receipt = PhieuNhapSP::with('chiTiets')->findOrFail($id);
 
+        if (!in_array($receipt->trangThai, ['Chờ duyệt', 'Từ chối'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Chỉ được phép sửa phiếu nhập khi đang ở trạng thái 'Chờ duyệt' hoặc 'Từ chối'. Phiếu hiện tại: {$receipt->trangThai}",
+            ], 400);
+        }
+
         $validated = $request->validate([
             'ghiChu' => 'required|string',
             'maPhieuYCXSP' => 'nullable|string',
@@ -326,25 +333,16 @@ class InboundController extends Controller
 
         DB::beginTransaction();
         try {
-            $newStatus = ($receipt->trangThai === 'Từ chối') ? 'Chờ duyệt' : $receipt->trangThai;
-
             $receipt->update([
                 'ghiChu' => $validated['ghiChu'],
                 'maPhieuYCXSP' => $validated['maPhieuYCXSP'] ?? null,
-                'trangThai' => $newStatus,
+                'trangThai' => 'Chờ duyệt',
             ]);
-
-            // Dọn dẹp lô tồn kho cũ nếu phiếu đã Thành công / Đã hoàn thành
-            $oldDetailIds = $receipt->chiTiets->pluck('maChiTietPhieuNhapSP')->filter();
-            if (in_array($receipt->trangThai, ['Thành công', 'Đã hoàn thành']) && $oldDetailIds->count() > 0) {
-                TonKho::whereIn('maChiTietPhieuNhapSP', $oldDetailIds)->delete();
-            }
 
             ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->delete();
 
-            $counter = 1;
             foreach ($validated['items'] as $item) {
-                $detail = ChiTietPhieuNhapSP::create([
+                ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
                     'maSP' => $item['maSP'],
                     'soLuongNhap' => $item['soLuongNhap'],
@@ -352,31 +350,6 @@ class InboundController extends Controller
                     'hanSuDung' => $item['hanSuDung'],
                     'ghiChu' => $item['ghiChu'] ?? null,
                 ]);
-
-                if (in_array($receipt->trangThai, ['Thành công', 'Đã hoàn thành'])) {
-                    $dateStr = Carbon::now()->format('Ymd');
-                    $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
-                    $sp = \App\Models\SanPham::find($item['maSP']);
-                    $spName = $sp ? $sp->tenSanPham : "Sản phẩm " . $item['maSP'];
-
-                    $expDate = Carbon::parse($item['hanSuDung']);
-                    $daysToExpiry = $today->diffInDays($expDate, false);
-                    $trangThaiTon = ($daysToExpiry <= 30) ? 'Ưu tiên xuất FEFO' : 'Còn hạn';
-
-                    TonKho::create([
-                        'maTonKho' => $maTonKho,
-                        'tenTonKho' => "Lô {$spName} ({$item['ngaySanXuat']})",
-                        'maSP' => $item['maSP'],
-                        'maNVL' => null,
-                        'ngaySanXuat' => $item['ngaySanXuat'],
-                        'hanSuDung' => $item['hanSuDung'],
-                        'soLuongNhap' => $item['soLuongNhap'],
-                        'soLuongTonHienTai' => $item['soLuongNhap'],
-                        'trangThai' => $trangThaiTon,
-                        'ghiChu' => "Cập nhật từ sửa phiếu nhập {$receipt->maPhieuNhapSP}",
-                        'maChiTietPhieuNhapSP' => $detail->maChiTietPhieuNhapSP,
-                    ]);
-                }
             }
 
             DB::commit();
