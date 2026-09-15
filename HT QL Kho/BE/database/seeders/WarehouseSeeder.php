@@ -383,27 +383,30 @@ class WarehouseSeeder extends Seeder
 
         DB::table('ChiTietPhieuNhapSP')->insert([
             [
+                'maChiTietPhieuNhapSP' => 1,
                 'maPhieuNhapSP' => 'PNSP2026090201',
-                'maTonKho' => 'LOT-SP-20260902-FEFO1',
-                'soLuong' => 5000,
+                'maSP' => 'SP001',
+                'soLuongNhap' => 5000,
                 'ngaySanXuat' => Carbon::now()->subDays(45)->toDateString(),
-                'hanSuDung' => Carbon::now()->addDays(10)->toDateString(),
+                'hanSuDung' => Carbon::now()->addDays(200)->toDateString(),
                 'ghiChu' => 'QC đạt chuẩn Monde Selection',
             ],
             [
+                'maChiTietPhieuNhapSP' => 2,
                 'maPhieuNhapSP' => 'PNSP2026090402',
-                'maTonKho' => 'LOT-SP-20260904-SC01',
-                'soLuong' => 3000,
+                'maSP' => 'SP003',
+                'soLuongNhap' => 3000,
                 'ngaySanXuat' => Carbon::now()->subDays(22)->toDateString(),
-                'hanSuDung' => Carbon::now()->addDays(8)->toDateString(),
+                'hanSuDung' => Carbon::now()->addDays(190)->toDateString(),
                 'ghiChu' => 'Bảo quản kho mát ngay',
             ],
             [
+                'maChiTietPhieuNhapSP' => 3,
                 'maPhieuNhapSP' => 'PNSP2026090803',
-                'maTonKho' => 'LOT-SP-20260908-FEFO2',
-                'soLuong' => 15000,
+                'maSP' => 'SP001',
+                'soLuongNhap' => 15000,
                 'ngaySanXuat' => Carbon::now()->subDays(5)->toDateString(),
-                'hanSuDung' => Carbon::now()->addDays(120)->toDateString(),
+                'hanSuDung' => Carbon::now()->addDays(365)->toDateString(),
                 'ghiChu' => 'Nhập kho tổng',
             ]
         ]);

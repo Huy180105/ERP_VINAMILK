@@ -26,6 +26,7 @@ class TonKho extends Model
         'soLuongTonHienTai',
         'trangThai',
         'ghiChu',
+        'maChiTietPhieuNhapSP',
     ];
 
     public function sanPham()

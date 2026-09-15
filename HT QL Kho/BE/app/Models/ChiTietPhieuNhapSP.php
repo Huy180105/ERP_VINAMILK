@@ -10,20 +10,26 @@ class ChiTietPhieuNhapSP extends Model
     use HasFactory;
 
     protected $table = 'ChiTietPhieuNhapSP';
-    public $incrementing = false;
+    protected $primaryKey = 'maChiTietPhieuNhapSP';
     public $timestamps = false;
 
     protected $fillable = [
+        'maChiTietPhieuNhapSP',
         'maPhieuNhapSP',
-        'maTonKho',
-        'soLuong',
+        'maSP',
+        'soLuongNhap',
         'ngaySanXuat',
         'hanSuDung',
         'ghiChu',
     ];
 
-    public function tonKho()
+    public function sanPham()
     {
-        return $this->belongsTo(TonKho::class, 'maTonKho', 'maTonKho');
+        return $this->belongsTo(SanPham::class, 'maSP', 'maSanPham');
+    }
+
+    public function phieuNhapSP()
+    {
+        return $this->belongsTo(PhieuNhapSP::class, 'maPhieuNhapSP', 'maPhieuNhapSP');
     }
 }

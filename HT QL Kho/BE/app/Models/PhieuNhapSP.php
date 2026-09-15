@@ -30,4 +30,14 @@ class PhieuNhapSP extends Model
     {
         return $this->hasMany(ChiTietPhieuNhapSP::class, 'maPhieuNhapSP', 'maPhieuNhapSP');
     }
+
+    public function nhanVienTao()
+    {
+        return $this->belongsTo(NhanVien::class, 'maNVTao', 'maNV');
+    }
+
+    public function nhanVienNhan()
+    {
+        return $this->belongsTo(NhanVien::class, 'maNVNhan', 'maNV');
+    }
 }

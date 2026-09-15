@@ -17,6 +17,13 @@ Route::prefix('warehouse/inbound')->group(function () {
     Route::put('/raw-materials/{id}/complete', [InboundController::class, 'completeRawMaterialReceipt']);
 
     // Nhập kho Sản phẩm từ Xưởng sản xuất (CF-FR20 -> CF-FR29)
+    Route::get('/products/next-code', [InboundController::class, 'getNextProductReceiptCode']);
     Route::get('/products', [InboundController::class, 'getProductReceipts']);
-    Route::put('/products/{id}/complete', [InboundController::class, 'completeProductReceipt']);
+    Route::post('/products', [InboundController::class, 'createProductReceipt']);
+    Route::put('/products/{id}', [InboundController::class, 'updateProductReceipt']);
+    Route::delete('/products/{id}', [InboundController::class, 'deleteProductReceipt']);
+    Route::put('/products/{id}/approve', [InboundController::class, 'approveProductReceipt']);
+    Route::put('/products/{id}/reject', [InboundController::class, 'rejectProductReceipt']);
+    Route::put('/products/{id}/confirm-received', [InboundController::class, 'confirmGoodsReceived']);
+    Route::put('/products/{id}/complete', [InboundController::class, 'confirmGoodsReceived']);
 });

@@ -51,7 +51,16 @@ export const InboundAPI = {
   createRawMaterialReceipt: (data) => api.post('/inbound/raw-materials', data),
   approveRawMaterialReceipt: (id) => api.put(`/inbound/raw-materials/${id}/approve`),
   completeRawMaterialReceipt: (id) => api.put(`/inbound/raw-materials/${id}/complete`),
+  
+  // Product Inbound Receipts (PhieuNhapSP)
+  getNextProductReceiptCode: () => api.get('/inbound/products/next-code'),
   getProductReceipts: (params) => api.get('/inbound/products', { params }),
+  createProductReceipt: (data) => api.post('/inbound/products', data),
+  updateProductReceipt: (id, data) => api.put(`/inbound/products/${id}`, data),
+  deleteProductReceipt: (id) => api.delete(`/inbound/products/${id}`),
+  approveProductReceipt: (id) => api.put(`/inbound/products/${id}/approve`),
+  rejectProductReceipt: (id) => api.put(`/inbound/products/${id}/reject`),
+  confirmGoodsReceived: (id) => api.put(`/inbound/products/${id}/confirm-received`),
   completeProductReceipt: (id) => api.put(`/inbound/products/${id}/complete`),
 };
 

@@ -34,4 +34,4 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 EXPOSE 8000
 
-CMD php artisan config:clear && php artisan route:clear && php artisan serve --host=0.0.0.0 --port=8000
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
