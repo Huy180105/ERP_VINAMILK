@@ -61,10 +61,17 @@ export default function InboundProducts() {
     }
   };
 
-  const calculateDefaultExpiry = (mfgDateStr) => {
+  const calculateDefaultExpiry = (mfgDateStr, maSP = '') => {
     if (!mfgDateStr) return '';
     const mfg = new Date(mfgDateStr);
-    mfg.setDate(mfg.getDate() + 180); // Mặc định +180 ngày (6 tháng)
+    
+    // Tính hạn sử dụng theo thuộc tính loại sản phẩm trong bảng SanPham (phân hệ sản xuất):
+    let daysToAdd = 365; // Mặc định 1 năm
+    if (maSP === 'SP003' || maSP === 'SP006') daysToAdd = 210; // Sữa chua / Probi: 7 tháng
+    else if (maSP === 'SP004') daysToAdd = 270; // Sữa hạt: 9 tháng
+    else if (maSP === 'SP007') daysToAdd = 730; // Sữa bột: 2 năm
+
+    mfg.setDate(mfg.getDate() + daysToAdd);
     return mfg.toISOString().split('T')[0];
   };
 
@@ -80,7 +87,8 @@ export default function InboundProducts() {
     }
 
     const defaultMfg = todayStr;
-    const defaultExp = calculateDefaultExpiry(defaultMfg);
+    const defaultMaSP = productsList.length > 0 ? productsList[0].maSanPham : '';
+    const defaultExp = calculateDefaultExpiry(defaultMfg, defaultMaSP);
 
     setFormData({
       maPhieuNhapSP: nextCode,
@@ -90,7 +98,7 @@ export default function InboundProducts() {
       maPhieuYCXSP: '',
       items: [
         { 
-          maSP: productsList.length > 0 ? productsList[0].maSanPham : '', 
+          maSP: defaultMaSP, 
           soLuongNhap: 1000, 
           ngaySanXuat: defaultMfg, 
           hanSuDung: defaultExp, 
@@ -118,7 +126,7 @@ export default function InboundProducts() {
         maSP: item.maSP,
         soLuongNhap: item.soLuongNhap || 1,
         ngaySanXuat: item.ngaySanXuat || todayStr,
-        hanSuDung: item.hanSuDung || calculateDefaultExpiry(item.ngaySanXuat),
+        hanSuDung: item.hanSuDung || calculateDefaultExpiry(item.ngaySanXuat || todayStr, item.maSP),
         ghiChu: item.ghiChu || ''
       })) : [{ maSP: '', soLuongNhap: 100, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr), ghiChu: '' }]
     });
@@ -126,12 +134,13 @@ export default function InboundProducts() {
   };
 
   const handleAddItem = () => {
-    const defaultExp = calculateDefaultExpiry(todayStr);
+    const defaultMaSP = productsList.length > 0 ? productsList[0].maSanPham : '';
+    const defaultExp = calculateDefaultExpiry(todayStr, defaultMaSP);
     setFormData(prev => ({
       ...prev,
       items: [
         ...prev.items,
-        { maSP: productsList.length > 0 ? productsList[0].maSanPham : '', soLuongNhap: 500, ngaySanXuat: todayStr, hanSuDung: defaultExp, ghiChu: '' }
+        { maSP: defaultMaSP, soLuongNhap: 500, ngaySanXuat: todayStr, hanSuDung: defaultExp, ghiChu: '' }
       ]
     }));
   };
@@ -150,12 +159,13 @@ export default function InboundProducts() {
   const handleItemChange = (index, field, value) => {
     setFormData(prev => {
       const updatedItems = [...prev.items];
-      updatedItems[index] = { ...updatedItems[index], [field]: value };
+      const item = { ...updatedItems[index], [field]: value };
       
-      // Tự động tính hạn sử dụng nếu thay đổi ngày sản xuất
-      if (field === 'ngaySanXuat' && value) {
-        updatedItems[index].hanSuDung = calculateDefaultExpiry(value);
+      // Tự động tính hạn sử dụng nếu thay đổi ngày sản xuất hoặc mã sản phẩm
+      if (field === 'ngaySanXuat' || field === 'maSP') {
+        item.hanSuDung = calculateDefaultExpiry(item.ngaySanXuat || todayStr, item.maSP);
       }
+      updatedItems[index] = item;
       return { ...prev, items: updatedItems };
     });
   };
@@ -171,7 +181,7 @@ export default function InboundProducts() {
 
     const today = new Date(todayStr);
     const minExpiry = new Date(todayStr);
-    minExpiry.setDate(minExpiry.getDate() + 180); // HSD tối thiểu >= today + 180 ngày
+    minExpiry.setDate(minExpiry.getDate() + 180); // HSD tối thiểu phải > today + 180 ngày
 
     formData.items.forEach((item, idx) => {
       const rowNum = idx + 1;
@@ -193,9 +203,9 @@ export default function InboundProducts() {
         errors.push(`Dòng thứ ${rowNum}: Hạn sử dụng không được để trống.`);
       } else {
         const exp = new Date(item.hanSuDung);
-        if (exp < minExpiry) {
+        if (exp <= minExpiry) {
           const minExpStr = minExpiry.toISOString().split('T')[0];
-          errors.push(`Dòng thứ ${rowNum}: Hạn sử dụng (${item.hanSuDung}) không hợp lệ! Phải từ ngày ${minExpStr} trở về sau (tối thiểu 180 ngày tính từ hôm nay).`);
+          errors.push(`Dòng thứ ${rowNum}: Hạn sử dụng (${item.hanSuDung}) không hợp lệ! Hạn sử dụng phải lớn hơn 180 ngày tính từ ngày hiện tại (sau ngày ${minExpStr}).`);
         }
       }
     });
@@ -581,7 +591,7 @@ export default function InboundProducts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">NV Tạo Phiếu (Tự động)</label>
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">NV Tạo Phiếu</label>
                   <input
                     type="text"
                     value="NV001 - Nguyễn Văn Hùng"
@@ -590,7 +600,7 @@ export default function InboundProducts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Ngày Nhập (Hiện tại)</label>
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Ngày Nhập</label>
                   <input
                     type="date"
                     value={formData.ngayNhap}
@@ -600,11 +610,11 @@ export default function InboundProducts() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
-                    Ghi Chú Phiếu Nhập <span className="text-rose-500">* (Bắt buộc)</span>
+                    Ghi Chú Phiếu Nhập
                   </label>
                   <input
                     type="text"
-                    placeholder="Nhập ghi chú chi tiết mẻ sản xuất, tiêu chuẩn QC..."
+                    placeholder="Nhập ghi chú mẻ sản xuất, tiêu chuẩn QC..."
                     value={formData.ghiChu}
                     onChange={(e) => setFormData({ ...formData, ghiChu: e.target.value })}
                     className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
@@ -612,14 +622,18 @@ export default function InboundProducts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Mã Phiếu YCXSP (Có thể bỏ trống)</label>
-                  <input
-                    type="text"
-                    placeholder="VD: YCXSP20260901"
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Mã Phiếu YCXSP</label>
+                  <select
                     value={formData.maPhieuYCXSP}
                     onChange={(e) => setFormData({ ...formData, maPhieuYCXSP: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    <option value="YCXSP20260901">YCXSP20260901 - Bàn giao Sữa tươi UHT Batch 01</option>
+                    <option value="YCXSP20260902">YCXSP20260902 - Bàn giao Sữa chua ăn Batch 02</option>
+                    <option value="YCXSP20260903">YCXSP20260903 - Bàn giao Sữa hạt hạnh nhân Batch 03</option>
+                    <option value="YCXSP20260904">YCXSP20260904 - Bàn giao Sữa Probi Batch 04</option>
+                  </select>
                 </div>
               </div>
 
@@ -644,10 +658,10 @@ export default function InboundProducts() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-100 text-slate-600 font-bold uppercase text-[10px]">
                       <tr>
-                        <th className="p-2.5 w-5/12">Sản Phẩm *</th>
-                        <th className="p-2.5 w-2/12">Số Lượng Nhập (&gt;0) *</th>
-                        <th className="p-2.5 w-2/12">Ngày Sản Xuất (≤Hôm nay) *</th>
-                        <th className="p-2.5 w-2/12">Hạn Sử Dụng (≥180 Ngày) *</th>
+                        <th className="p-2.5 w-5/12">Sản Phẩm</th>
+                        <th className="p-2.5 w-2/12">Số Lượng Nhập</th>
+                        <th className="p-2.5 w-2/12">Ngày Sản Xuất</th>
+                        <th className="p-2.5 w-2/12">Hạn Sử Dụng</th>
                         <th className="p-2.5 w-1/12 text-center">Xóa</th>
                       </tr>
                     </thead>

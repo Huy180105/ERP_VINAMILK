@@ -233,10 +233,10 @@ class InboundController extends Controller
                 ], 422);
             }
 
-            if ($expDate->lt($minExpiryDate)) {
+            if ($expDate->lte($minExpiryDate)) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Hạn sử dụng (" . $expDate->toDateString() . ") không hợp lệ. Hạn sử dụng phải từ ngày " . $minExpiryDate->toDateString() . " trở về sau (tối thiểu 180 ngày tính từ hôm nay).",
+                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Hạn sử dụng (" . $expDate->toDateString() . ") không hợp lệ. Hạn sử dụng phải lớn hơn 180 ngày tính từ hôm nay (sau ngày " . $minExpiryDate->toDateString() . ").",
                 ], 422);
             }
         }
@@ -323,10 +323,10 @@ class InboundController extends Controller
                 ], 422);
             }
 
-            if ($expDate->lt($minExpiryDate)) {
+            if ($expDate->lte($minExpiryDate)) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Hạn sử dụng không hợp lệ (Phải >= 180 ngày tính từ hôm nay).",
+                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Hạn sử dụng (" . $expDate->toDateString() . ") không hợp lệ. Hạn sử dụng phải lớn hơn 180 ngày tính từ hôm nay (sau ngày " . $minExpiryDate->toDateString() . ").",
                 ], 422);
             }
         }
@@ -446,10 +446,24 @@ class InboundController extends Controller
         DB::beginTransaction();
         try {
             $today = Carbon::today();
-            $counter = 1;
+            $dateStr = Carbon::now()->format('Ymd');
+            $prefix = "LOT-SP-{$dateStr}-";
+
+            // Tìm mã số thứ tự lô lớn nhất đã tồn tại trong ngày để tránh trùng khóa chính TonKho.PRIMARY
+            $existingLots = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")->get();
+            $maxCounter = 0;
+            foreach ($existingLots as $lot) {
+                $suffix = str_replace($prefix, '', $lot->maTonKho);
+                if (is_numeric($suffix)) {
+                    $num = (int) $suffix;
+                    if ($num > $maxCounter) {
+                        $maxCounter = $num;
+                    }
+                }
+            }
+            $counter = $maxCounter + 1;
 
             foreach ($receipt->chiTiets as $detail) {
-                $dateStr = Carbon::now()->format('Ymd');
                 $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
                 $spName = $detail->sanPham ? $detail->sanPham->tenSanPham : "Sản phẩm " . $detail->maSP;
 
