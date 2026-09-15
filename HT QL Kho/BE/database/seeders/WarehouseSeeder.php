@@ -29,8 +29,41 @@ class WarehouseSeeder extends Seeder
         DB::table('SanPham')->truncate();
         DB::table('NhaCungCap')->truncate();
         DB::table('KhachHang')->truncate();
+        DB::table('NhanVien')->truncate();
+        DB::table('ChucVu')->truncate();
+        DB::table('PhongBan')->truncate();
+        DB::table('Kho')->truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        // 0. Seed PhongBan, ChucVu, NhanVien, Kho
+        DB::table('PhongBan')->insert([
+            ['maPhongBan' => 'PB01', 'tenPhongBan' => 'Phòng Quản Lý Kho & Vận Tải'],
+            ['maPhongBan' => 'PB02', 'tenPhongBan' => 'Phòng Điều Độ Sản Xuất'],
+            ['maPhongBan' => 'PB03', 'tenPhongBan' => 'Phòng Quản Lý Chất Lượng (QA/QC)'],
+            ['maPhongBan' => 'PB04', 'tenPhongBan' => 'Phòng Mua Hàng & Cung Ứng'],
+        ]);
+
+        DB::table('ChucVu')->insert([
+            ['maChucVu' => 'CV01', 'tenChucVu' => 'Trưởng Phòng Kho'],
+            ['maChucVu' => 'CV02', 'tenChucVu' => 'Quản Lý Kho Hàng'],
+            ['maChucVu' => 'CV03', 'tenChucVu' => 'Nhân Viên Thủ Kho'],
+            ['maChucVu' => 'CV04', 'tenChucVu' => 'Nhân Viên Kế Toán Kho'],
+        ]);
+
+        DB::table('NhanVien')->insert([
+            ['maNV' => 'NV001', 'hoTen' => 'Nguyễn Văn Hùng', 'maPhongBan' => 'PB01', 'maChucVu' => 'CV02', 'ngayVaoLam' => '2022-01-15', 'trangThai' => 'Đang làm việc'],
+            ['maNV' => 'NV002', 'hoTen' => 'Trần Thị Thu Thảo', 'maPhongBan' => 'PB01', 'maChucVu' => 'CV03', 'ngayVaoLam' => '2023-03-10', 'trangThai' => 'Đang làm việc'],
+            ['maNV' => 'NV003', 'hoTen' => 'Lê Minh Tuấn', 'maPhongBan' => 'PB02', 'maChucVu' => 'CV03', 'ngayVaoLam' => '2021-06-20', 'trangThai' => 'Đang làm việc'],
+            ['maNV' => 'NV004', 'hoTen' => 'Phạm Hoàng Nam', 'maPhongBan' => 'PB04', 'maChucVu' => 'CV03', 'ngayVaoLam' => '2024-02-01', 'trangThai' => 'Đang làm việc'],
+        ]);
+
+        DB::table('Kho')->insert([
+            ['maKho' => 'KHO01', 'tenKho' => 'Kho Nguyên Liệu & Bao Bì Trung Tâm Củ Chi', 'diaChi' => 'Ấp Bến Cỏ, Xã Phú Hòa Đông, Củ Chi, TP.HCM'],
+            ['maKho' => 'KHO02', 'tenKho' => 'Kho Thành Phẩm Lạnh Nhà Máy Sữa Thống Nhất', 'diaChi' => 'Số 12 KCN Tân Tạo, Tân Tạo A, Bình Tân, TP.HCM'],
+            ['maKho' => 'KHO03', 'tenKho' => 'Kho Phân Phối Tổng Miền Nam (Bình Dương)', 'diaChi' => 'Đường NA3, KCN Mỹ Phước 2, Bến Cát, Bình Dương'],
+            ['maKho' => 'KHO04', 'tenKho' => 'Kho Lạnh Chuyên Dụng Sữa Chua & Men Sống Probi', 'diaChi' => 'Đường Độc Lập, KCN Sóng Thần 1, Dĩ An, Bình Dương'],
+        ]);
 
         // 1. Seed LoaiNVL (6 Categories)
         DB::table('LoaiNVL')->insert([

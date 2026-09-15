@@ -1,14 +1,19 @@
 import axios from 'axios';
 
-// Dynamic API Base URL detection for both Docker (Port 3000 / Nginx) and Local Dev (Port 5173 / 8000)
+// Dynamic API Base URL detection for both Docker (Nginx / Ngrok / Cloud) and Local Dev (Port 5173 / 8000)
 const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    // If accessed via Nginx (Port 3000 / Production), use relative path to leverage Nginx reverse proxy
-    if (window.location.port === '3000' || window.location.port === '80' || window.location.port === '443') {
-      return '/api/warehouse';
-    }
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
   }
-  return 'http://localhost:8000/api/warehouse';
+  if (typeof window !== 'undefined') {
+    // Only when running Vite dev server standalone on port 5173, fallback to http://localhost:8000
+    if (window.location.port === '5173') {
+      return 'http://localhost:8000/api/warehouse';
+    }
+    // In all web deployments (Nginx Docker, Ngrok, Custom domains), use relative path to leverage Nginx reverse proxy
+    return '/api/warehouse';
+  }
+  return '/api/warehouse';
 };
 
 const api = axios.create({
