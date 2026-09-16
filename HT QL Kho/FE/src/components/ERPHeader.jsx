@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import VinamilkLogo from './VinamilkLogo';
 
 const FINANCE_ROLES = [
@@ -48,37 +49,6 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
     setIsRoleDropdownOpen(false);
   };
 
-  const getNavItems = () => {
-    if (module === 'warehouse') {
-      return [
-        { name: 'Tổng quan', path: '/warehouse' },
-        { name: 'Nguyên vật liệu', path: '/warehouse/master-data/materials' },
-        { name: 'Sản phẩm', path: '/warehouse/master-data/products' },
-        { name: 'Nhà cung cấp', path: '/warehouse/master-data/suppliers' },
-        { name: 'Nhập NVL', path: '/warehouse/inbound/materials' },
-        { name: 'Nhập SP', path: '/warehouse/inbound/products' },
-        { name: 'Xuất NVL', path: '/warehouse/outbound/materials' },
-        { name: 'Xuất SP (FEFO)', path: '/warehouse/outbound/products' },
-        { name: 'Tồn kho', path: '/warehouse/inventory/lots' },
-        { name: 'Báo cáo', path: '/warehouse/reports/summary' }
-      ];
-    }
-    if (module === 'finance') {
-      return [
-        { name: 'Tổng quan', path: '/finance' },
-        { name: 'Khoản mục thu', path: '/finance/master-data/revenue-categories' },
-        { name: 'Khoản mục chi', path: '/finance/master-data/expense-categories' },
-        { name: 'Đối tượng', path: '/finance/master-data/counterparties' },
-        { name: 'Tài khoản quỹ', path: '/finance/master-data/accounts' },
-        { name: 'Phiếu thu', path: '/finance/receipts' },
-        { name: 'Phiếu chi', path: '/finance/payments' },
-        { name: 'Báo cáo', path: '/finance/reports' }
-      ];
-    }
-    return [];
-  };
-
-  const navItems = getNavItems();
   const activeRoleInfo = FINANCE_ROLES.find(r => r.id === currentRole) || FINANCE_ROLES[0];
   const initial = activeRoleInfo.name.charAt(0);
 
@@ -125,6 +95,16 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
         </div>
 
         <div className="flex items-center gap-4">
+          {module !== 'portal' && (
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#002795] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Cổng Thông Tin Portal</span>
+            </button>
+          )}
+
           {showRoleSwitcher && (
             <div className="relative" ref={dropdownRef}>
               <button 
@@ -172,29 +152,6 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
           )}
         </div>
       </div>
-
-      {/* Sub-navigation bar */}
-      {navItems.length > 0 && (
-        <div className="bg-white border-b border-gray-200 px-6">
-          <nav className="flex flex-row overflow-x-auto gap-7 hide-scrollbar">
-            {navItems.map((item, idx) => (
-              <NavLink
-                key={idx}
-                to={item.path}
-                className={({ isActive }) => 
-                  `whitespace-nowrap py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
-                    isActive 
-                      ? 'border-[#002795] text-[#002795]' 
-                      : 'border-transparent text-gray-500 hover:text-[#002795]'
-                  }`
-                }
-              >
-                {item.name}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-      )}
     </div>
   );
 }

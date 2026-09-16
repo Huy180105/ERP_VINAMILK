@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ERPHeader from './components/ERPHeader';
+import Sidebar from './components/Sidebar';
+import FinanceSidebar from './components/FinanceSidebar';
 import PortalHome from './pages/PortalHome';
 
 // Warehouse Pages
@@ -35,9 +37,12 @@ function WarehousePage({ children }) {
   return (
     <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
       <ERPHeader module="warehouse" />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-6">
-        {children}
-      </main>
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
@@ -47,9 +52,12 @@ function FinancePage({ children }) {
   return (
     <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
       <ERPHeader module="finance" showRoleSwitcher />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-6">
-        {children}
-      </main>
+      <div className="flex flex-1">
+        <FinanceSidebar />
+        <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
