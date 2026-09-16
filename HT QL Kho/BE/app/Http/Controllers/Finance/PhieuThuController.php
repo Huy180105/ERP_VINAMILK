@@ -8,7 +8,7 @@ use App\Models\ChiTietPhieuThu;
 use App\Models\TaiKhoanQuy;
 use App\Models\ThanhToan;
 use App\Models\CongNo;
-use App\Models\HoaDon;
+use App\Models\KhachHang;
 use App\Models\DoiTuongGiaoDich;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +16,18 @@ use Carbon\Carbon;
 
 class PhieuThuController extends Controller
 {
+    /**
+     * Helper kiểm tra thẩm quyền phê duyệt / hủy phiếu
+     */
+    private function isApproverAuthorized(Request $request): bool
+    {
+        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
+        return in_array($userRole, ['KeToanTruong', 'Admin'], true);
+    }
+
+    /**
+     * Danh sách phiếu thu (FI-FR02)
+     */
     public function getReceipts(Request $request)
     {
         $query = PhieuThu::with([
@@ -31,21 +43,10 @@ class PhieuThuController extends Controller
             'hoaDon'
         ]);
 
-        if ($request->filled('trangThai')) {
-            $query->where('trangThai', $request->input('trangThai'));
-        }
-
-        if ($request->filled('maDoiTuong')) {
-            $query->where('maDoiTuong', $request->input('maDoiTuong'));
-        }
-
-        if ($request->filled('tuNgay')) {
-            $query->whereDate('ngayThu', '>=', $request->input('tuNgay'));
-        }
-
-        if ($request->filled('denNgay')) {
-            $query->whereDate('ngayThu', '<=', $request->input('denNgay'));
-        }
+        if ($request->filled('trangThai')) $query->where('trangThai', $request->input('trangThai'));
+        if ($request->filled('maDoiTuong')) $query->where('maDoiTuong', $request->input('maDoiTuong'));
+        if ($request->filled('tuNgay')) $query->whereDate('ngayThu', '>=', $request->input('tuNgay'));
+        if ($request->filled('denNgay')) $query->whereDate('ngayThu', '<=', $request->input('denNgay'));
 
         return response()->json([
             'success' => true,
@@ -53,44 +54,40 @@ class PhieuThuController extends Controller
         ]);
     }
 
+    /**
+     * Lấy danh sách chứng từ bán hàng (ThanhToan) chờ lập phiếu thu (FI-FR03, FI-BR01)
+     */
     public function getPendingSalesReceipts()
     {
-        // Lấy danh sách ThanhToan chưa có PhieuThu hiệu lực (FI-FR03, FI-BR01)
         $mappedThanhToanIds = PhieuThu::whereNotNull('maThanhToan')
             ->where('trangThai', '!=', 'Huy')
-            ->pluck('maThanhToan')
-            ->toArray();
+            ->pluck('maThanhToan');
 
-        $pendingThanhToans = ThanhToan::with(['congNo.khachHang'])
+        $pendingThanhToans = ThanhToan::with('congNo.khachHang')
             ->whereNotIn('maThanhToan', $mappedThanhToanIds)
             ->get();
 
         $data = $pendingThanhToans->map(function ($tt) {
-            $khachHang = null;
-            if ($tt->congNo && $tt->congNo->khachHang) {
-                $khachHang = $tt->congNo->khachHang;
-            } elseif ($tt->maKhachHang) {
-                $khachHang = \App\Models\KhachHang::find($tt->maKhachHang);
-            }
+            $khachHang = $tt->congNo?->khachHang ?? ($tt->maKhachHang ? KhachHang::find($tt->maKhachHang) : null);
 
             return [
                 'maThanhToan' => $tt->maThanhToan,
                 'ngayThanhToan' => $tt->ngayThanhToan,
                 'maDonHang' => $tt->maDonHang,
                 'maKhachHang' => $tt->maKhachHang,
-                'tenKhachHang' => $khachHang ? $khachHang->tenKhachHang : 'Khách vãng lai',
-                'soTien' => (float)$tt->soTien,
+                'tenKhachHang' => $khachHang?->tenKhachHang ?? 'Khách vãng lai',
+                'soTien' => (float) $tt->soTien,
                 'phuongThucThanhToan' => $tt->phuongThucThanhToan,
                 'trangThai' => $tt->trangThai,
             ];
         });
 
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-        ]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
+    /**
+     * Chi tiết 1 phiếu thu
+     */
     public function getReceipt($id)
     {
         $receipt = PhieuThu::with([
@@ -106,12 +103,12 @@ class PhieuThuController extends Controller
             'hoaDon'
         ])->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $receipt,
-        ]);
+        return response()->json(['success' => true, 'data' => $receipt]);
     }
 
+    /**
+     * Lập phiếu thu tiền mới (FI-FR02, FI-BR01)
+     */
     public function createReceipt(Request $request)
     {
         $validated = $request->validate([
@@ -133,24 +130,22 @@ class PhieuThuController extends Controller
             'items.*.soTien' => 'required|numeric|min:0',
         ]);
 
-        // FI-BR01: Một bản ghi ThanhToan chỉ được gắn với tối đa một phiếu thu đang hiệu lực
+        // FI-BR01: Chống trùng lặp chứng từ thanh toán bán hàng
         if (!empty($validated['maThanhToan'])) {
-            $duplicate = PhieuThu::where('maThanhToan', $validated['maThanhToan'])
-                ->where('trangThai', '!=', 'Huy')
-                ->first();
+            $duplicate = PhieuThu::where('maThanhToan', $validated['maThanhToan'])->where('trangThai', '!=', 'Huy')->first();
             if ($duplicate) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Chứng từ thanh toán {$validated['maThanhToan']} đã được gắn với phiếu thu {$duplicate->maPhieuThu}. Không thể tạo trùng."
+                    'message' => "Chứng từ thanh toán {$validated['maThanhToan']} đã được gắn với phiếu thu {$duplicate->maPhieuThu}."
                 ], 400);
             }
         }
 
-        // Tự động tìm hoặc tạo DoiTuongGiaoDich mapping nếu cần
+        // Tự động tìm hoặc tạo ánh xạ DoiTuongGiaoDich nếu liên kết bán hàng
         $maDoiTuong = $validated['maDoiTuong'] ?? null;
         if (!empty($validated['maThanhToan'])) {
             $tt = ThanhToan::find($validated['maThanhToan']);
-            if ($tt && $tt->maKhachHang) {
+            if ($tt?->maKhachHang) {
                 $dt = DoiTuongGiaoDich::firstOrCreate(
                     ['loaiDoiTuong' => 'KH', 'maThamChieu' => $tt->maKhachHang],
                     ['maDoiTuong' => $maDoiTuong ?: ('DT-KH-' . $tt->maKhachHang), 'trangThai' => true]
@@ -196,18 +191,16 @@ class PhieuThuController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi lập phiếu thu: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi lập phiếu thu: ' . $e->getMessage()], 500);
         }
     }
 
+    /**
+     * Phê duyệt phiếu thu (Kế toán trưởng duyệt - FI-BR03)
+     */
     public function approveReceipt(Request $request, $id)
     {
-        // Kiểm tra vai trò: Chỉ Kế toán trưởng mới có quyền duyệt (Use Case 2.5.4.2 d)
-        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
-        if ($userRole !== 'KeToanTruong' && $userRole !== 'Admin') {
+        if (!$this->isApproverAuthorized($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền phê duyệt phiếu thu tiền (Quy tắc 2.5.4.2 d).',
@@ -217,17 +210,11 @@ class PhieuThuController extends Controller
         $receipt = PhieuThu::findOrFail($id);
 
         if ($receipt->trangThai === 'DaDuyet') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Phiếu thu này đã được phê duyệt trước đó',
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Phiếu thu này đã được phê duyệt trước đó'], 400);
         }
 
         if ($receipt->trangThai === 'Huy') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể duyệt phiếu thu đã bị hủy',
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Không thể duyệt phiếu thu đã bị hủy'], 400);
         }
 
         DB::beginTransaction();
@@ -241,7 +228,7 @@ class PhieuThuController extends Controller
                 }
             }
 
-            // Cập nhật trạng thái công nợ liên quan nếu có
+            // Cập nhật công nợ nếu có
             if ($receipt->maCongNo) {
                 $congNo = CongNo::where('maCongNo', $receipt->maCongNo)->first();
                 if ($congNo) {
@@ -269,17 +256,16 @@ class PhieuThuController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi phê duyệt phiếu thu: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi phê duyệt phiếu thu: ' . $e->getMessage()], 500);
         }
     }
 
+    /**
+     * Hủy phiếu thu và hoàn nguyên số dư
+     */
     public function cancelReceipt(Request $request, $id)
     {
-        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
-        if ($userRole !== 'KeToanTruong' && $userRole !== 'Admin') {
+        if (!$this->isApproverAuthorized($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền hủy phiếu thu.',
@@ -294,7 +280,6 @@ class PhieuThuController extends Controller
 
         DB::beginTransaction();
         try {
-            // Nếu đã duyệt thì rollback số dư quỹ
             if ($receipt->trangThai === 'DaDuyet' && $receipt->maTaiKhoanQuy) {
                 $account = TaiKhoanQuy::where('maTaiKhoanQuy', $receipt->maTaiKhoanQuy)->first();
                 if ($account) {
@@ -302,7 +287,6 @@ class PhieuThuController extends Controller
                     $account->save();
                 }
 
-                // Rollback công nợ
                 if ($receipt->maCongNo) {
                     $congNo = CongNo::where('maCongNo', $receipt->maCongNo)->first();
                     if ($congNo) {
@@ -332,6 +316,9 @@ class PhieuThuController extends Controller
         }
     }
 
+    /**
+     * Chuyển trạng thái sang Chờ đối soát ngân hàng (FI-FR06)
+     */
     public function sendToReconcile($id)
     {
         $receipt = PhieuThu::findOrFail($id);
@@ -343,6 +330,9 @@ class PhieuThuController extends Controller
         ]);
     }
 
+    /**
+     * Xóa phiếu thu (chỉ khi trạng thái là Mới)
+     */
     public function deleteReceipt($id)
     {
         $receipt = PhieuThu::findOrFail($id);
@@ -360,16 +350,10 @@ class PhieuThuController extends Controller
             $receipt->delete();
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã xóa phiếu thu thành công',
-            ]);
+            return response()->json(['success' => true, 'message' => 'Đã xóa phiếu thu thành công']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi xóa phiếu thu: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi xóa phiếu thu: ' . $e->getMessage()], 500);
         }
     }
 }

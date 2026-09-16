@@ -2,6 +2,7 @@
 node_modules/
 /HT QL Kho/FE/node_modules/
 /HT QL Kho/FE/dist/
+npm-debug.log*
 .pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -9,6 +10,11 @@ yarn-error.log*
 # Extracted diagram images
 extracted_images/
 /extracted_images/
+
+# Database files
+*.sqlite
+*.sqlite-journal
+*.sqlite3
 
 # Laravel & Backend dependencies
 vendor/
@@ -33,6 +39,9 @@ vendor/
 Thumbs.db
 .idea/
 .vscode/
+.fleet/
+.phpunit.result.cache
+.phpunit.cache
 *.suo
 *.ntvs*
 *.njsproj

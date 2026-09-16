@@ -3,24 +3,19 @@ import { ReceiptAPI, FinanceMasterDataAPI } from '../../services/financeApi';
 import { 
   ArrowDownLeft, 
   Plus, 
-  Search, 
   CheckCircle2, 
   Trash2, 
   FileText, 
   Calendar, 
   ChevronDown, 
   ChevronRight,
-  CreditCard,
-  Wallet,
   X,
-  AlertCircle,
-  Clock,
   Ban,
   Scale,
   ShoppingBag,
-  Send,
   RefreshCw,
-  ShieldAlert
+  ShieldAlert,
+  Clock
 } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
@@ -31,21 +26,21 @@ export default function PhieuThu() {
   const [tuNgay, setTuNgay] = useState('');
   const [denNgay, setDenNgay] = useState('');
 
-  // Role state
+  // Vai trò người dùng (Kế toán trưởng / Kế toán thanh toán / Thủ quỹ)
   const [currentRole, setCurrentRole] = useState(() => {
     return localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
   });
 
-  // Master data for dropdowns
+  // Dữ liệu danh mục tham chiếu
   const [counterparties, setCounterparties] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // Pending Sales Receipts (FI-BR01)
+  // Chứng từ Bán Hàng chờ lập phiếu thu (FI-BR01)
   const [pendingSales, setPendingSales] = useState([]);
   const [loadingSales, setLoadingSales] = useState(false);
 
-  // Expanded rows
+  // Trạng thái mở rộng chi tiết dòng
   const [expandedRows, setExpandedRows] = useState({});
 
   // Modal State
@@ -63,9 +58,7 @@ export default function PhieuThu() {
     maThanhToan: '',
     maCongNo: '',
     maHoaDon: '',
-    items: [
-      { maChiTietThu: 'CT1', maDanhMucThu: '', dienGiai: '', soTien: 0 }
-    ],
+    items: [{ maChiTietThu: 'CT1', maDanhMucThu: '', dienGiai: '', soTien: 0 }],
   });
 
   useEffect(() => {
@@ -83,9 +76,7 @@ export default function PhieuThu() {
     setLoading(true);
     try {
       const res = await ReceiptAPI.getReceipts({ trangThai, tuNgay, denNgay });
-      if (res.data.success) {
-        setReceipts(res.data.data || []);
-      }
+      if (res.data.success) setReceipts(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -112,9 +103,7 @@ export default function PhieuThu() {
     setLoadingSales(true);
     try {
       const res = await ReceiptAPI.getPendingSales();
-      if (res.data.success) {
-        setPendingSales(res.data.data || []);
-      }
+      if (res.data.success) setPendingSales(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -123,7 +112,7 @@ export default function PhieuThu() {
   };
 
   const toggleRow = (id) => {
-    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const openCreateModal = () => {
@@ -151,8 +140,6 @@ export default function PhieuThu() {
   const handleSelectSaleRecord = (sale) => {
     setSelectedSale(sale);
     const timestamp = Date.now().toString().slice(-6);
-    
-    // Tìm đối tượng khớp với khách hàng nếu có
     const matchedDt = counterparties.find(c => c.loaiDoiTuong === 'KH' && c.maThamChieu === sale.maKhachHang);
 
     setFormData(prev => ({
@@ -178,13 +165,13 @@ export default function PhieuThu() {
   const handleAddItem = () => {
     const timestamp = Date.now().toString().slice(-4);
     const newIdx = formData.items.length + 1;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       items: [
-        ...formData.items,
+        ...prev.items,
         { maChiTietThu: `CTPT-${timestamp}-${newIdx}`, maDanhMucThu: categories[0]?.maDanhMucThu || '', dienGiai: '', soTien: 0 }
       ]
-    });
+    }));
   };
 
   const handleRemoveItem = (index) => {
@@ -192,14 +179,13 @@ export default function PhieuThu() {
       alert('Phiếu thu phải có ít nhất 1 dòng chi tiết');
       return;
     }
-    const updated = formData.items.filter((_, idx) => idx !== index);
-    setFormData({ ...formData, items: updated });
+    setFormData(prev => ({ ...prev, items: prev.items.filter((_, idx) => idx !== index) }));
   };
 
   const handleItemChange = (index, field, value) => {
     const updated = [...formData.items];
     updated[index][field] = value;
-    setFormData({ ...formData, items: updated });
+    setFormData(prev => ({ ...prev, items: updated }));
   };
 
   const calculateTotal = () => {
@@ -214,13 +200,8 @@ export default function PhieuThu() {
       return;
     }
 
-    const payload = {
-      ...formData,
-      soTien: total,
-    };
-
     try {
-      const res = await ReceiptAPI.createReceipt(payload);
+      const res = await ReceiptAPI.createReceipt({ ...formData, soTien: total });
       if (res.data.success) {
         setModalOpen(false);
         fetchReceipts();
@@ -232,34 +213,32 @@ export default function PhieuThu() {
 
   const handleApprove = async (id) => {
     if (currentRole !== 'KeToanTruong') {
-      alert('Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền phê duyệt phiếu thu tiền (Quy tắc 2.5.4.2 d). Hãy chuyển vai trò ở góc phải phía trên.');
+      alert('Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền phê duyệt phiếu thu tiền (Quy tắc 2.5.4.2 d).');
       return;
     }
 
-    if (window.confirm(`Xác nhận phê duyệt phiếu thu ${id}? Số dư quỹ sẽ tự động tăng tương ứng.`)) {
-      try {
-        const res = await ReceiptAPI.approveReceipt(id);
-        if (res.data.success) {
-          alert(res.data.message);
-          fetchReceipts();
-        }
-      } catch (err) {
-        alert('Lỗi phê duyệt: ' + (err.response?.data?.message || err.message));
+    if (!window.confirm(`Xác nhận phê duyệt phiếu thu ${id}? Số dư quỹ sẽ tự động tăng tương ứng.`)) return;
+    try {
+      const res = await ReceiptAPI.approveReceipt(id);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchReceipts();
       }
+    } catch (err) {
+      alert('Lỗi phê duyệt: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleSendToReconcile = async (id) => {
-    if (window.confirm(`Chuyển phiếu thu ${id} sang trạng thái Chờ đối soát ngân hàng (FI-FR06)?`)) {
-      try {
-        const res = await ReceiptAPI.sendToReconcile(id);
-        if (res.data.success) {
-          alert(res.data.message);
-          fetchReceipts();
-        }
-      } catch (err) {
-        alert('Lỗi chuyển trạng thái: ' + (err.response?.data?.message || err.message));
+    if (!window.confirm(`Chuyển phiếu thu ${id} sang trạng thái Chờ đối soát ngân hàng (FI-FR06)?`)) return;
+    try {
+      const res = await ReceiptAPI.sendToReconcile(id);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchReceipts();
       }
+    } catch (err) {
+      alert('Lỗi chuyển trạng thái: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -270,29 +249,26 @@ export default function PhieuThu() {
     }
 
     const lyDoHuy = window.prompt(`Nhập lý do hủy phiếu thu ${id} (Số dư quỹ sẽ được hoàn nguyên nếu đã duyệt):`, 'Hủy theo yêu cầu kế toán');
-    if (lyDoHuy !== null) {
-      try {
-        const res = await ReceiptAPI.cancelReceipt(id, { lyDoHuy });
-        if (res.data.success) {
-          alert(res.data.message);
-          fetchReceipts();
-        }
-      } catch (err) {
-        alert('Lỗi hủy phiếu thu: ' + (err.response?.data?.message || err.message));
+    if (lyDoHuy === null) return;
+
+    try {
+      const res = await ReceiptAPI.cancelReceipt(id, { lyDoHuy });
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchReceipts();
       }
+    } catch (err) {
+      alert('Lỗi hủy phiếu thu: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(`Xác nhận xóa phiếu thu ${id}? Chỉ xóa được phiếu ở trạng thái Mới.`)) {
-      try {
-        const res = await ReceiptAPI.deleteReceipt(id);
-        if (res.data.success) {
-          fetchReceipts();
-        }
-      } catch (err) {
-        alert('Lỗi xóa phiếu thu: ' + (err.response?.data?.message || err.message));
-      }
+    if (!window.confirm(`Xác nhận xóa phiếu thu ${id}? Chỉ xóa được phiếu ở trạng thái Mới.`)) return;
+    try {
+      const res = await ReceiptAPI.deleteReceipt(id);
+      if (res.data.success) fetchReceipts();
+    } catch (err) {
+      alert('Lỗi xóa phiếu thu: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -307,7 +283,7 @@ export default function PhieuThu() {
         );
       case 'ChoDoiSoat':
         return (
-          <span className="bg-blue-50/60 text-[#0B2341] font-bold px-2.5 py-1 rounded-full text-[10px] border border-blue-200 flex items-center space-x-1 w-fit">
+          <span className="bg-blue-50 text-[#0B2341] font-bold px-2.5 py-1 rounded-full text-[10px] border border-blue-200 flex items-center space-x-1 w-fit">
             <Scale className="w-3 h-3" />
             <span>Chờ Đối Soát (FI-FR06)</span>
           </span>
@@ -347,7 +323,7 @@ export default function PhieuThu() {
           {currentRole !== 'KeToanTruong' && (
             <div className="hidden sm:flex items-center space-x-1.5 bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-md text-xs">
               <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Vai trò hiện tại không có quyền duyệt</span>
+              <span>Chỉ Kế toán trưởng có quyền duyệt</span>
             </div>
           )}
           <button
@@ -366,7 +342,7 @@ export default function PhieuThu() {
           <select
             value={trangThai}
             onChange={(e) => setTrangThai(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Moi">Mới lập</option>
@@ -396,14 +372,14 @@ export default function PhieuThu() {
 
         <button
           onClick={fetchReceipts}
-          className="p-2 text-slate-500 hover:text-[#0052FF] rounded-md hover:bg-blue-50/60 transition cursor-pointer"
+          className="p-2 text-slate-500 hover:text-[#0052FF] rounded-md hover:bg-blue-50 transition cursor-pointer"
           title="Tải lại danh sách"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#0052FF]' : ''}`} />
         </button>
       </div>
 
-      {/* Table */}
+      {/* Receipts Table */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -447,19 +423,13 @@ export default function PhieuThu() {
                             {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-emerald-700">
-                          {pt.maPhieuThu}
-                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-emerald-700">{pt.maPhieuThu}</td>
                         <td className="py-3 px-4 text-slate-600">
                           {pt.ngayThu ? new Date(pt.ngayThu).toLocaleDateString('vi-VN') : ''}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-800">
-                            {pt.doiTuong ? pt.doiTuong.tenDoiTuong : 'N/A'}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono">
-                            {pt.maDoiTuong}
-                          </div>
+                          <div className="font-semibold text-slate-800">{pt.doiTuong?.tenDoiTuong ?? 'N/A'}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{pt.maDoiTuong}</div>
                         </td>
                         <td className="py-3 px-4 text-slate-700 max-w-xs">
                           <div>{pt.lyDoThu || 'Không có ghi chú'}</div>
@@ -473,16 +443,12 @@ export default function PhieuThu() {
                           {Number(pt.soTien).toLocaleString()}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-slate-700">
-                            {pt.taiKhoanQuy ? pt.taiKhoanQuy.tenTaiKhoanQuy : 'N/A'}
-                          </div>
+                          <div className="font-medium text-slate-700">{pt.taiKhoanQuy?.tenTaiKhoanQuy ?? 'N/A'}</div>
                           <div className="text-[10px] text-slate-400">
-                            Hình thức: {pt.phuongThucThu === 'CK' ? 'Chuyển khoản' : 'Tiền mặt'}
+                            {pt.phuongThucThu === 'CK' ? 'Chuyển khoản' : 'Tiền mặt'}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          {getStatusBadge(pt.trangThai)}
-                        </td>
+                        <td className="py-3 px-4 text-center">{getStatusBadge(pt.trangThai)}</td>
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center space-x-1">
                             {pt.trangThai === 'Moi' && (
@@ -490,18 +456,16 @@ export default function PhieuThu() {
                                 <button
                                   onClick={() => handleApprove(pt.maPhieuThu)}
                                   className={`p-1.5 rounded-lg transition cursor-pointer ${
-                                    currentRole === 'KeToanTruong'
-                                      ? 'text-emerald-600 hover:bg-emerald-50'
-                                      : 'text-slate-300 hover:text-slate-400'
+                                    currentRole === 'KeToanTruong' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-300'
                                   }`}
-                                  title={currentRole === 'KeToanTruong' ? "Duyệt phiếu thu" : "Chỉ Kế toán trưởng có thẩm quyền duyệt"}
+                                  title={currentRole === 'KeToanTruong' ? 'Duyệt phiếu thu' : 'Chỉ Kế toán trưởng có thẩm quyền duyệt'}
                                 >
                                   <CheckCircle2 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleSendToReconcile(pt.maPhieuThu)}
-                                  className="p-1.5 text-[#0052FF] hover:bg-blue-50/60 rounded-lg transition cursor-pointer"
-                                  title="Chuyển sang Chờ đối soát ngân hàng (FI-FR06)"
+                                  className="p-1.5 text-[#0052FF] hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                  title="Chuyển sang Chờ đối soát ngân hàng"
                                 >
                                   <Scale className="w-4 h-4" />
                                 </button>
@@ -562,7 +526,7 @@ export default function PhieuThu() {
                                     <tr key={ct.maChiTietThu}>
                                       <td className="py-2 px-3 font-mono text-slate-600">{ct.maChiTietThu}</td>
                                       <td className="py-2 px-3 font-medium text-slate-800">
-                                        {ct.danhMucThu ? ct.danhMucThu.tenDanhMucThu : 'N/A'}
+                                        {ct.danhMucThu?.tenDanhMucThu ?? 'N/A'}
                                       </td>
                                       <td className="py-2 px-3 text-slate-600">{ct.dienGiai || '-'}</td>
                                       <td className="py-2 px-3 text-right font-mono font-bold text-slate-800">
@@ -573,9 +537,9 @@ export default function PhieuThu() {
                                 </tbody>
                               </table>
                               <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
-                                <span>Người lập: <strong>{pt.nhanVienLap ? pt.nhanVienLap.hoTen : pt.nguoiLap}</strong></span>
+                                <span>Người lập: <strong>{pt.nhanVienLap?.hoTen ?? pt.nguoiLap}</strong></span>
                                 {pt.nguoiDuyet && (
-                                  <span>Người duyệt: <strong>{pt.nhanVienDuyet ? pt.nhanVienDuyet.hoTen : pt.nguoiDuyet}</strong></span>
+                                  <span>Người duyệt: <strong>{pt.nhanVienDuyet?.hoTen ?? pt.nguoiDuyet}</strong></span>
                                 )}
                               </div>
                             </div>
@@ -591,10 +555,10 @@ export default function PhieuThu() {
         </div>
       </div>
 
-      {/* Modal Lập Phiếu Thu Mới (2 Tabs: From Sales vs Manual) */}
+      {/* Modal Lập Phiếu Thu Mới */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 -xs p-4">
-          <div className="bg-white rounded-lg shadow-sm w-full max-w-3xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-150 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="bg-white rounded-lg shadow-sm w-full max-w-3xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-2">
                 <ArrowDownLeft className="w-5 h-5" />
@@ -613,9 +577,7 @@ export default function PhieuThu() {
               <button
                 onClick={() => setCreateTab('sales')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
-                  createTab === 'sales'
-                    ? 'border-emerald-600 text-emerald-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  createTab === 'sales' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -624,9 +586,7 @@ export default function PhieuThu() {
               <button
                 onClick={() => setCreateTab('manual')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
-                  createTab === 'manual'
-                    ? 'border-emerald-600 text-emerald-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  createTab === 'manual' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <FileText className="w-4 h-4" />
@@ -635,12 +595,12 @@ export default function PhieuThu() {
             </div>
 
             <div className="overflow-y-auto p-6 space-y-5 flex-1">
-              {/* Tab 1: Select Pending Sales Payment */}
+              {/* Tab 1: Pending Sales Table */}
               {createTab === 'sales' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700">
-                      Chọn chứng từ thanh toán bán hàng chưa lập phiếu thu ({pendingSales.length} chứng từ sẵn sàng):
+                      Chọn chứng từ bán hàng chưa thu tiền ({pendingSales.length} chứng từ sẵn sàng):
                     </span>
                     <button
                       type="button"
@@ -700,9 +660,9 @@ export default function PhieuThu() {
                     <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md text-xs text-emerald-900 flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Đã chọn: <strong>{selectedSale.maThanhToan}</strong> - KH: <strong>{selectedSale.tenKhachHang}</strong> (Số tiền: <strong>{Number(selectedSale.soTien).toLocaleString()} VNĐ</strong>)</span>
+                        <span>Đã chọn: <strong>{selectedSale.maThanhToan}</strong> - KH: <strong>{selectedSale.tenKhachHang}</strong> ({Number(selectedSale.soTien).toLocaleString()} VNĐ)</span>
                       </div>
-                      <span className="text-[10px] bg-emerald-200 text-emerald-800 font-bold px-2 py-0.5 rounded">Khớp FI-BR01</span>
+                      <span className="text-[10px] bg-emerald-200 text-emerald-800 font-bold px-2 py-0.5 rounded">FI-BR01</span>
                     </div>
                   )}
                 </div>
@@ -851,6 +811,7 @@ export default function PhieuThu() {
                           type="button"
                           onClick={() => handleRemoveItem(idx)}
                           className="p-1.5 text-slate-400 hover:text-red-500 rounded-md cursor-pointer"
+                          title="Xóa dòng"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

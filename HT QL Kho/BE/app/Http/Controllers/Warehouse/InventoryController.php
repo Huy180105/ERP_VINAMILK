@@ -14,34 +14,20 @@ class InventoryController extends Controller
     // Tra cứu tồn kho theo lô và lọc (CF-FR51, CF-FR52)
     public function getInventory(Request $request)
     {
-        $query = TonKho::with(['sanPham', 'nguyenVatLieu', 'khoSanPham', 'khoNguyenVatLieu']);
-
-        if ($request->has('type')) {
-            $type = $request->input('type');
-            if ($type === 'product') {
-                $query->whereNotNull('maSP');
-            } elseif ($type === 'material') {
-                $query->whereNotNull('maNVL');
-            }
-        }
-
-        if ($request->has('maSP')) {
-            $query->where('maSP', $request->input('maSP'));
-        }
-
-        if ($request->has('maNVL')) {
-            $query->where('maNVL', $request->input('maNVL'));
-        }
-
-        if ($request->has('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where('maTonKho', 'LIKE', "%{$keyword}%")
-                  ->orWhere('tenTonKho', 'LIKE', "%{$keyword}%");
-        }
+        $data = TonKho::with(['sanPham', 'nguyenVatLieu', 'khoSanPham', 'khoNguyenVatLieu'])
+            ->when($request->input('type') === 'product', fn($q) => $q->whereNotNull('maSP'))
+            ->when($request->input('type') === 'material', fn($q) => $q->whereNotNull('maNVL'))
+            ->when($request->filled('maSP'), fn($q) => $q->where('maSP', $request->input('maSP')))
+            ->when($request->filled('maNVL'), fn($q) => $q->where('maNVL', $request->input('maNVL')))
+            ->when($request->filled('keyword'), function ($q) use ($request) {
+                $kw = $request->input('keyword');
+                $q->where(fn($sub) => $sub->where('maTonKho', 'LIKE', "%{$kw}%")->orWhere('tenTonKho', 'LIKE', "%{$kw}%"));
+            })
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->get(),
+            'data'    => $data,
         ]);
     }
 
@@ -49,29 +35,22 @@ class InventoryController extends Controller
     public function getFefoSuggestions(Request $request)
     {
         $request->validate([
-            'maSP' => 'nullable|string',
+            'maSP'  => 'nullable|string',
             'maNVL' => 'nullable|string',
         ]);
 
-        $query = TonKho::query()
+        $suggestions = TonKho::query()
             ->where('soLuongTonHienTai', '>', 0)
-            ->where('hanSuDung', '>=', Carbon::today()->toDateString());
-
-        if ($request->filled('maSP')) {
-            $query->where('maSP', $request->input('maSP'));
-        }
-
-        if ($request->filled('maNVL')) {
-            $query->where('maNVL', $request->input('maNVL'));
-        }
-
-        // Ưu tiên xếp Hạn sử dụng gần nhất lên đầu (FEFO)
-        $suggestions = $query->orderBy('hanSuDung', 'asc')->get();
+            ->where('hanSuDung', '>=', Carbon::today()->toDateString())
+            ->when($request->filled('maSP'), fn($q) => $q->where('maSP', $request->input('maSP')))
+            ->when($request->filled('maNVL'), fn($q) => $q->where('maNVL', $request->input('maNVL')))
+            ->orderBy('hanSuDung', 'asc')
+            ->get();
 
         return response()->json([
             'success' => true,
             'message' => 'Gợi ý xuất kho theo nguyên tắc FEFO (Hạn dùng gần nhất xuất trước)',
-            'data' => $suggestions,
+            'data'    => $suggestions,
         ]);
     }
 
@@ -88,10 +67,10 @@ class InventoryController extends Controller
             ->get();
 
         return response()->json([
-            'success' => true,
+            'success'       => true,
             'daysThreshold' => $daysThreshold,
-            'count' => $alerts->count(),
-            'data' => $alerts,
+            'count'         => $alerts->count(),
+            'data'          => $alerts,
         ]);
     }
 
@@ -106,10 +85,10 @@ class InventoryController extends Controller
             ->get();
 
         return response()->json([
-            'success' => true,
+            'success'      => true,
             'minThreshold' => $minThreshold,
-            'count' => $alerts->count(),
-            'data' => $alerts,
+            'count'        => $alerts->count(),
+            'data'         => $alerts,
         ]);
     }
 
@@ -118,7 +97,7 @@ class InventoryController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => KhoSanPham::with('tonKho')->get(),
+            'data'    => KhoSanPham::with('tonKho')->get(),
         ]);
     }
 
@@ -126,7 +105,7 @@ class InventoryController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => KhoNguyenVatLieu::with('tonKho')->get(),
+            'data'    => KhoNguyenVatLieu::with('tonKho')->get(),
         ]);
     }
 }

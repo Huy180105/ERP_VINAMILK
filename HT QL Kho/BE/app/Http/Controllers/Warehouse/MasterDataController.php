@@ -16,40 +16,34 @@ class MasterDataController extends Controller
     // Raw Materials Management (CF-FR01 to CF-FR04)
     public function getMaterials(Request $request)
     {
-        $query = NguyenVatLieu::with('loaiNVL');
-
-        if ($request->has('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where('tenNVL', 'LIKE', "%{$keyword}%")
-                  ->orWhere('maNVL', 'LIKE', "%{$keyword}%");
-        }
-
-        if ($request->has('maLoaiNVL')) {
-            $query->where('maLoaiNVL', $request->input('maLoaiNVL'));
-        }
+        $materials = NguyenVatLieu::with('loaiNVL')
+            ->when($request->filled('keyword'), function ($q) use ($request) {
+                $kw = $request->input('keyword');
+                $q->where(fn($sub) => $sub->where('tenNVL', 'LIKE', "%{$kw}%")->orWhere('maNVL', 'LIKE', "%{$kw}%"));
+            })
+            ->when($request->filled('maLoaiNVL'), fn($q) => $q->where('maLoaiNVL', $request->input('maLoaiNVL')))
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->get(),
+            'data'    => $materials,
         ]);
     }
 
     public function createMaterial(Request $request)
     {
         $validated = $request->validate([
-            'maNVL' => 'required|string|unique:NguyenVatLieu,maNVL',
+            'maNVL'     => 'required|string|unique:NguyenVatLieu,maNVL',
             'maLoaiNVL' => 'nullable|string|exists:LoaiNVL,maLoaiNVL',
-            'tenNVL' => 'required|string|max:100',
-            'donVi' => 'nullable|string|max:20',
-            'ghiChu' => 'nullable|string',
+            'tenNVL'    => 'required|string|max:100',
+            'donVi'     => 'nullable|string|max:20',
+            'ghiChu'    => 'nullable|string',
         ]);
-
-        $material = NguyenVatLieu::create($validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Thêm nguyên vật liệu mới thành công',
-            'data' => $material,
+            'data'    => NguyenVatLieu::create($validated),
         ], 201);
     }
 
@@ -59,9 +53,9 @@ class MasterDataController extends Controller
 
         $validated = $request->validate([
             'maLoaiNVL' => 'nullable|string|exists:LoaiNVL,maLoaiNVL',
-            'tenNVL' => 'required|string|max:100',
-            'donVi' => 'nullable|string|max:20',
-            'ghiChu' => 'nullable|string',
+            'tenNVL'    => 'required|string|max:100',
+            'donVi'     => 'nullable|string|max:20',
+            'ghiChu'    => 'nullable|string',
         ]);
 
         $material->update($validated);
@@ -69,14 +63,13 @@ class MasterDataController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật thông tin nguyên vật liệu thành công',
-            'data' => $material,
+            'data'    => $material,
         ]);
     }
 
     public function deleteMaterial($id)
     {
-        $material = NguyenVatLieu::findOrFail($id);
-        $material->delete();
+        NguyenVatLieu::findOrFail($id)->delete();
 
         return response()->json([
             'success' => true,
@@ -89,78 +82,67 @@ class MasterDataController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => LoaiNVL::all(),
+            'data'    => LoaiNVL::all(),
         ]);
     }
 
     // Products Lookup (CF-FR05)
     public function getProducts(Request $request)
     {
-        $query = SanPham::query();
-
-        if ($request->has('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where('tenSanPham', 'LIKE', "%{$keyword}%")
-                  ->orWhere('maSanPham', 'LIKE', "%{$keyword}%");
-        }
+        $products = SanPham::when($request->filled('keyword'), function ($q) use ($request) {
+            $kw = $request->input('keyword');
+            $q->where(fn($sub) => $sub->where('tenSanPham', 'LIKE', "%{$kw}%")->orWhere('maSanPham', 'LIKE', "%{$kw}%"));
+        })->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->get(),
+            'data'    => $products,
         ]);
     }
 
     // Suppliers Management (CF-FR06 to CF-FR09)
     public function getSuppliers(Request $request)
     {
-        $query = NhaCungCap::query();
-
-        if ($request->has('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where('tenNCC', 'LIKE', "%{$keyword}%")
-                  ->orWhere('maNCC', 'LIKE', "%{$keyword}%");
-        }
+        $suppliers = NhaCungCap::when($request->filled('keyword'), function ($q) use ($request) {
+            $kw = $request->input('keyword');
+            $q->where(fn($sub) => $sub->where('tenNCC', 'LIKE', "%{$kw}%")->orWhere('maNCC', 'LIKE', "%{$kw}%"));
+        })->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->get(),
+            'data'    => $suppliers,
         ]);
     }
 
     public function createSupplier(Request $request)
     {
         $validated = $request->validate([
-            'maNCC' => 'required|string|unique:NhaCungCap,maNCC',
-            'tenNCC' => 'required|string|max:100',
-            'maSoThue' => 'nullable|string|max:20',
-            'diaChi' => 'nullable|string|max:200',
+            'maNCC'       => 'required|string|unique:NhaCungCap,maNCC',
+            'tenNCC'      => 'required|string|max:100',
+            'maSoThue'    => 'nullable|string|max:20',
+            'diaChi'      => 'nullable|string|max:200',
             'soDienThoai' => 'nullable|string|max:15',
-            'email' => 'nullable|email|max:100',
+            'email'       => 'nullable|email|max:100',
         ]);
-
-        $supplier = NhaCungCap::create($validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Thêm nhà cung cấp mới thành công',
-            'data' => $supplier,
+            'data'    => NhaCungCap::create($validated),
         ], 201);
     }
 
     // Customers / Distributors Lookup (CF-FR10)
     public function getCustomers(Request $request)
     {
-        $query = KhachHang::query();
-
-        if ($request->has('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where('tenKhachHang', 'LIKE', "%{$keyword}%")
-                  ->orWhere('maKhachHang', 'LIKE', "%{$keyword}%");
-        }
+        $customers = KhachHang::when($request->filled('keyword'), function ($q) use ($request) {
+            $kw = $request->input('keyword');
+            $q->where(fn($sub) => $sub->where('tenKhachHang', 'LIKE', "%{$kw}%")->orWhere('maKhachHang', 'LIKE', "%{$kw}%"));
+        })->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->get(),
+            'data'    => $customers,
         ]);
     }
 
@@ -169,7 +151,7 @@ class MasterDataController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => NhanVien::all(),
+            'data'    => NhanVien::all(),
         ]);
     }
 }

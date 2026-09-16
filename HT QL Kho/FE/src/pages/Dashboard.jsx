@@ -1,20 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { InventoryAPI } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import FefoBadge from '../components/FefoBadge';
 import { 
-  Boxes, 
-  Package, 
-  AlertTriangle, 
-  Clock, 
-  ArrowUpRight, 
-  ShieldCheck, 
-  Zap,
-  Sparkles,
-  TrendingUp
+  Boxes, Package, AlertTriangle, Clock, 
+  ArrowUpRight, ShieldCheck, Zap, Sparkles, TrendingUp 
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [expiryAlerts, setExpiryAlerts] = useState([]);
   const [lowStockAlerts, setLowStockAlerts] = useState([]);
   const [lots, setLots] = useState([]);
@@ -49,16 +44,16 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Hero Banner with Soft Royal Gradient */}
-      <div className="bg-[#0B2341] rounded-lg p-7 text-white soft- flex flex-col md:flex-row items-start md:items-center justify-between relative overflow-hidden border border-blue-800/40">
+      {/* Hero Banner */}
+      <div className="bg-[#0B2341] rounded-lg p-7 text-white flex flex-col md:flex-row items-start md:items-center justify-between relative overflow-hidden border border-blue-800/40">
         <div className="space-y-3 z-10 max-w-2xl">
-          <div className="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 border border-amber-300/30 px-3.5 py-1 rounded-full text-xs font-bold ">
+          <div className="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 border border-amber-300/30 px-3.5 py-1 rounded-full text-xs font-bold">
             <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span>Kích hoạt Thuật toán FEFO (Ưu tiên Lô gần hết hạn trước)</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center space-x-2">
             <span>Hệ Thống Quản Lý Kho Vinamilk ERP</span>
-            <Sparkles className="w-6 h-6 text-amber-300 " />
+            <Sparkles className="w-6 h-6 text-amber-300" />
           </h1>
           <p className="text-blue-100/90 text-xs leading-relaxed font-medium">
             Quản lý tập trung số lượng Tồn kho Nguyên vật liệu & Thành phẩm theo Lô (Batch ID) & Hạn sử dụng (HSD). Đảm bảo chất lượng quốc tế ISO/HACCP cho toàn bộ hệ thống nhà máy Vinamilk.
@@ -67,8 +62,8 @@ export default function Dashboard() {
 
         <div className="mt-5 md:mt-0 z-10">
           <button 
-            onClick={() => window.location.href = '/outbound/products'}
-            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-5 py-3 rounded-lg   transform transition hover:-translate-y-0.5 flex items-center space-x-2"
+            onClick={() => navigate('/warehouse/outbound/products')}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-5 py-3 rounded-lg transform transition hover:-translate-y-0.5 flex items-center space-x-2 cursor-pointer shadow-md"
           >
             <ArrowUpRight className="w-4 h-4" />
             <span>Xuất Hàng FEFO Ngay</span>
@@ -80,9 +75,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stat Cards - Soft Rounded Style */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-lg border border-slate-200/80  transform transition hover:-translate-y-1 flex items-center justify-between">
+        <div className="bg-white p-5 rounded-lg border border-slate-200/80 transform transition hover:-translate-y-1 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng Số Lô Tồn Kho</p>
             <p className="text-3xl font-bold text-[#0B2341] mt-1">{totalLots}</p>
@@ -96,7 +91,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-slate-200/80  transform transition hover:-translate-y-1 flex items-center justify-between">
+        <div className="bg-white p-5 rounded-lg border border-slate-200/80 transform transition hover:-translate-y-1 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lô Nguyên Vật Liệu</p>
             <p className="text-3xl font-bold text-slate-800 mt-1">{materialLots}</p>
@@ -107,7 +102,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-slate-200/80  transform transition hover:-translate-y-1 flex items-center justify-between">
+        <div className="bg-white p-5 rounded-lg border border-slate-200/80 transform transition hover:-translate-y-1 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lô Thành Phẩm Vinamilk</p>
             <p className="text-3xl font-bold text-slate-800 mt-1">{productLots}</p>
@@ -118,7 +113,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-amber-200  transform transition hover:-translate-y-1 flex items-center justify-between border-l-4 border-l-amber-500">
+        <div className="bg-white p-5 rounded-lg border border-amber-200 transform transition hover:-translate-y-1 flex items-center justify-between border-l-4 border-l-amber-500">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cảnh Báo FEFO (Sắp HSD)</p>
             <p className="text-3xl font-bold text-amber-600 mt-1">{expiryAlerts.length}</p>
@@ -132,9 +127,8 @@ export default function Dashboard() {
 
       {/* Main Widgets Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* 1. FEFO Near Expiry Alert List */}
-        <div className="bg-white rounded-lg border border-slate-200/80  p-6 space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200/80 p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 bg-amber-100 text-amber-800 rounded-lg">
@@ -178,7 +172,7 @@ export default function Dashboard() {
                         <td className="p-3 font-bold text-slate-800">{itemName}</td>
                         <td className="p-3 text-slate-600 font-mono font-semibold">{item.hanSuDung}</td>
                         <td className="p-3 text-right font-bold text-slate-900">
-                          {item.soLuongTonHienTai.toLocaleString()}
+                          {item.soLuongTonHienTai?.toLocaleString()}
                         </td>
                         <td className="p-3 text-center">
                           <FefoBadge daysLeft={daysLeft} />
@@ -193,7 +187,7 @@ export default function Dashboard() {
         </div>
 
         {/* 2. Low Stock Alerts */}
-        <div className="bg-white rounded-lg border border-slate-200/80  p-6 space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200/80 p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 bg-rose-100 text-rose-800 rounded-lg">
@@ -234,7 +228,7 @@ export default function Dashboard() {
                         <td className="p-3 font-mono font-bold text-[#0B2341]">{item.maTonKho}</td>
                         <td className="p-3 font-bold text-slate-800">{itemName}</td>
                         <td className="p-3 text-right font-bold text-rose-600">
-                          {item.soLuongTonHienTai.toLocaleString()}
+                          {item.soLuongTonHienTai?.toLocaleString()}
                         </td>
                         <td className="p-3 text-center">
                           <StatusBadge status="Tồn kho thấp" />
@@ -247,7 +241,6 @@ export default function Dashboard() {
             </table>
           </div>
         </div>
-
       </div>
     </div>
   );

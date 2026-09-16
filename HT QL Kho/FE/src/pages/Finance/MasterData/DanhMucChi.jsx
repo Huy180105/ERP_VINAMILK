@@ -24,9 +24,7 @@ export default function DanhMucChi() {
     setLoading(true);
     try {
       const res = await FinanceMasterDataAPI.getExpCategories({ keyword });
-      if (res.data.success) {
-        setCategories(res.data.data || []);
-      }
+      if (res.data.success) setCategories(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -34,25 +32,18 @@ export default function DanhMucChi() {
     }
   };
 
-  const openCreateModal = () => {
-    const autoCode = generateAutoCode(categories, 'maDanhMucChi', 'DMC', 2, false);
-    setEditingItem(null);
-    setFormData({
-      maDanhMucChi: autoCode,
-      tenDanhMucChi: '',
-      moTa: '',
-      trangThai: 1,
-    });
-    setModalOpen(true);
-  };
-
-  const openEditModal = (item) => {
+  const openModal = (item = null) => {
     setEditingItem(item);
-    setFormData({
+    setFormData(item ? {
       maDanhMucChi: item.maDanhMucChi,
       tenDanhMucChi: item.tenDanhMucChi,
       moTa: item.moTa || '',
       trangThai: item.trangThai ? 1 : 0,
+    } : {
+      maDanhMucChi: generateAutoCode(categories, 'maDanhMucChi', 'DMC', 2, false),
+      tenDanhMucChi: '',
+      moTa: '',
+      trangThai: 1,
     });
     setModalOpen(true);
   };
@@ -73,13 +64,12 @@ export default function DanhMucChi() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(`Xác nhận xóa danh mục chi ${id}?`)) {
-      try {
-        await FinanceMasterDataAPI.deleteExpCategory(id);
-        fetchData();
-      } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
-      }
+    if (!window.confirm(`Xác nhận xóa danh mục chi ${id}?`)) return;
+    try {
+      await FinanceMasterDataAPI.deleteExpCategory(id);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -93,11 +83,11 @@ export default function DanhMucChi() {
             <span>Danh Mục Khoản Mục Chi</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Quản lý các khoản mục chi tiền (Bán hàng, thanh lý, lãi ngân hàng...)
+            Quản lý các khoản mục chi tiền (Mua nguyên vật liệu, trả lương, chi phí vận hành, thuế...)
           </p>
         </div>
         <button
-          onClick={openCreateModal}
+          onClick={() => openModal()}
           className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-md shadow-sm transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -145,7 +135,7 @@ export default function DanhMucChi() {
                     <td className="p-3.5 font-semibold text-slate-800">{c.tenDanhMucChi}</td>
                     <td className="p-3.5 text-slate-600">{c.moTa || '—'}</td>
                     <td className="p-3.5 text-center">
-                      <span className={`inline-flex items-center space-x-1 text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
+                      <span className={`inline-flex items-center text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
                         c.trangThai ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {c.trangThai ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
@@ -154,14 +144,16 @@ export default function DanhMucChi() {
                     </td>
                     <td className="p-3.5 text-center space-x-2">
                       <button
-                        onClick={() => openEditModal(c)}
+                        onClick={() => openModal(c)}
                         className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Chỉnh sửa"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(c.maDanhMucChi)}
                         className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Xóa"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -176,7 +168,7 @@ export default function DanhMucChi() {
 
       {/* Modal Add / Edit */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 -xs flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800 border-b pb-3">
               {editingItem ? 'Cập Nhật Khoản Mục Chi' : 'Thêm Mới Khoản Mục Chi'}
@@ -191,7 +183,7 @@ export default function DanhMucChi() {
                   disabled={!!editingItem}
                   onChange={(e) => setFormData({ ...formData, maDanhMucChi: e.target.value })}
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold disabled:opacity-60"
                 />
               </div>
 
@@ -199,7 +191,7 @@ export default function DanhMucChi() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Tên Khoản Mục Chi:</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Chi tiền bán hàng"
+                  placeholder="Ví dụ: Chi tiền mua nguyên vật liệu"
                   value={formData.tenDanhMucChi}
                   onChange={(e) => setFormData({ ...formData, tenDanhMucChi: e.target.value })}
                   required
@@ -224,7 +216,7 @@ export default function DanhMucChi() {
                   id="trangThaiDMC"
                   checked={!!formData.trangThai}
                   onChange={(e) => setFormData({ ...formData, trangThai: e.target.checked ? 1 : 0 })}
-                  className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                  className="rounded border-slate-300 text-rose-600"
                 />
                 <label htmlFor="trangThaiDMC" className="text-xs text-slate-700 font-semibold cursor-pointer">
                   Kích hoạt khoản mục này

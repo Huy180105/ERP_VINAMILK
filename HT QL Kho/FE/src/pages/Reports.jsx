@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ReportAPI } from '../services/api';
-import { FileText, Download, Calendar, RefreshCw } from 'lucide-react';
+import { FileText, Download, RefreshCw } from 'lucide-react';
 
 export default function Reports() {
   const [summary, setSummary] = useState([]);
@@ -38,7 +38,7 @@ export default function Reports() {
         </div>
         <button
           onClick={() => alert('Xuất báo cáo PDF/Excel thành công!')}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-md text-xs shadow transition flex items-center space-x-2"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-md text-xs shadow transition flex items-center space-x-2 cursor-pointer"
         >
           <Download className="w-4 h-4" />
           <span>Xuất Báo Cáo Excel / PDF</span>
@@ -51,18 +51,18 @@ export default function Reports() {
           type="date"
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
-          className="bg-slate-50 border border-slate-200 rounded-lg p-2"
+          className="bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none"
         />
         <span>Đến:</span>
         <input
           type="date"
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
-          className="bg-slate-50 border border-slate-200 rounded-lg p-2"
+          className="bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none"
         />
         <button
           onClick={fetchReport}
-          className="bg-[#0B2341] hover:bg-blue-900 text-white font-medium px-4 py-2 rounded-lg transition flex items-center space-x-1"
+          className="bg-[#0B2341] hover:bg-blue-900 text-white font-medium px-4 py-2 rounded-lg transition flex items-center space-x-1 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Tải Báo Cáo</span>

@@ -9,14 +9,21 @@ use App\Models\TaiKhoanQuy;
 use App\Models\PhieuNhapNVL;
 use App\Models\BangLuong;
 use App\Models\DoiTuongGiaoDich;
-use App\Models\NhaCungCap;
-use App\Models\NhanVien;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class PhieuChiController extends Controller
 {
+    /**
+     * Helper kiểm tra thẩm quyền phê duyệt / hủy phiếu
+     */
+    private function isApproverAuthorized(Request $request): bool
+    {
+        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
+        return in_array($userRole, ['KeToanTruong', 'Admin'], true);
+    }
+
     /**
      * Danh sách phiếu chi (FI-FR03)
      */
@@ -32,29 +39,12 @@ class PhieuChiController extends Controller
             'bangLuong.nhanVien'
         ]);
 
-        if ($request->filled('trangThai')) {
-            $query->where('trangThai', $request->input('trangThai'));
-        }
-
-        if ($request->filled('maDoiTuong')) {
-            $query->where('maDoiTuong', $request->input('maDoiTuong'));
-        }
-
-        if ($request->filled('tuNgay')) {
-            $query->whereDate('ngayChi', '>=', $request->input('tuNgay'));
-        }
-
-        if ($request->filled('denNgay')) {
-            $query->whereDate('ngayChi', '<=', $request->input('denNgay'));
-        }
-
-        if ($request->filled('maPhieuNhapNVL')) {
-            $query->where('maPhieuNhapNVL', $request->input('maPhieuNhapNVL'));
-        }
-
-        if ($request->filled('maBangLuong')) {
-            $query->where('maBangLuong', $request->input('maBangLuong'));
-        }
+        if ($request->filled('trangThai')) $query->where('trangThai', $request->input('trangThai'));
+        if ($request->filled('maDoiTuong')) $query->where('maDoiTuong', $request->input('maDoiTuong'));
+        if ($request->filled('tuNgay')) $query->whereDate('ngayChi', '>=', $request->input('tuNgay'));
+        if ($request->filled('denNgay')) $query->whereDate('ngayChi', '<=', $request->input('denNgay'));
+        if ($request->filled('maPhieuNhapNVL')) $query->where('maPhieuNhapNVL', $request->input('maPhieuNhapNVL'));
+        if ($request->filled('maBangLuong')) $query->where('maBangLuong', $request->input('maBangLuong'));
 
         return response()->json([
             'success' => true,
@@ -78,10 +68,7 @@ class PhieuChiController extends Controller
             'bangLuong.nhanVien'
         ])->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $payment,
-        ]);
+        return response()->json(['success' => true, 'data' => $payment]);
     }
 
     /**
@@ -91,35 +78,25 @@ class PhieuChiController extends Controller
     {
         $linkedPnnvlIds = PhieuChi::whereNotNull('maPhieuNhapNVL')
             ->where('trangThai', '!=', 'Huy')
-            ->pluck('maPhieuNhapNVL')
-            ->toArray();
+            ->pluck('maPhieuNhapNVL');
 
-        $query = PhieuNhapNVL::with(['nhaCungCap', 'chiTiets'])
-            ->whereNotIn('maPhieuNhapNVL', $linkedPnnvlIds);
+        $receipts = PhieuNhapNVL::with(['nhaCungCap', 'chiTiets'])
+            ->whereNotIn('maPhieuNhapNVL', $linkedPnnvlIds)
+            ->when($request->filled('maNCC'), fn($q) => $q->where('maNCC', $request->input('maNCC')))
+            ->orderBy('ngayNhap', 'desc')
+            ->get();
 
-        if ($request->has('maNCC') && $request->input('maNCC') !== '') {
-            $query->where('maNCC', $request->input('maNCC'));
-        }
-
-        $receipts = $query->orderBy('ngayNhap', 'desc')->get();
-
-        $data = $receipts->map(function ($pn) {
-            $tongTien = $pn->chiTiets->sum('thanhTien');
-            return [
-                'maPhieuNhapNVL' => $pn->maPhieuNhapNVL,
-                'ngayNhap' => $pn->ngayNhap,
-                'maNCC' => $pn->maNCC,
-                'tenNCC' => $pn->nhaCungCap ? $pn->nhaCungCap->tenNCC : 'N/A',
-                'trangThai' => $pn->trangThai,
-                'tongTien' => $tongTien,
-                'ghiChu' => $pn->ghiChu,
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $data,
+        $data = $receipts->map(fn($pn) => [
+            'maPhieuNhapNVL' => $pn->maPhieuNhapNVL,
+            'ngayNhap' => $pn->ngayNhap,
+            'maNCC' => $pn->maNCC,
+            'tenNCC' => $pn->nhaCungCap?->tenNCC ?? 'N/A',
+            'trangThai' => $pn->trangThai,
+            'tongTien' => $pn->chiTiets->sum('thanhTien'),
+            'ghiChu' => $pn->ghiChu,
         ]);
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
@@ -129,34 +106,25 @@ class PhieuChiController extends Controller
     {
         $linkedPayrollIds = PhieuChi::whereNotNull('maBangLuong')
             ->where('trangThai', '!=', 'Huy')
-            ->pluck('maBangLuong')
-            ->toArray();
+            ->pluck('maBangLuong');
 
-        $query = BangLuong::with('nhanVien')
-            ->whereNotIn('maBangLuong', $linkedPayrollIds);
+        $payrolls = BangLuong::with('nhanVien')
+            ->whereNotIn('maBangLuong', $linkedPayrollIds)
+            ->when($request->filled('thangNam'), fn($q) => $q->where('thangNam', $request->input('thangNam')))
+            ->orderBy('thangNam', 'desc')
+            ->get();
 
-        if ($request->has('thangNam') && $request->input('thangNam') !== '') {
-            $query->where('thangNam', $request->input('thangNam'));
-        }
-
-        $payrolls = $query->orderBy('thangNam', 'desc')->get();
-
-        $data = $payrolls->map(function ($bl) {
-            return [
-                'maBangLuong' => $bl->maBangLuong,
-                'thangNam' => $bl->thangNam,
-                'maNV' => $bl->maNV,
-                'tenNV' => $bl->nhanVien ? $bl->nhanVien->hoTen : 'N/A',
-                'thucLanh' => $bl->thucLanh,
-                'trangThai' => $bl->trangThai,
-                'ngayLap' => $bl->ngayLap,
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $data,
+        $data = $payrolls->map(fn($bl) => [
+            'maBangLuong' => $bl->maBangLuong,
+            'thangNam' => $bl->thangNam,
+            'maNV' => $bl->maNV,
+            'tenNV' => $bl->nhanVien?->hoTen ?? 'N/A',
+            'thucLanh' => $bl->thucLanh,
+            'trangThai' => $bl->trangThai,
+            'ngayLap' => $bl->ngayLap,
         ]);
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
@@ -182,37 +150,32 @@ class PhieuChiController extends Controller
             'items.*.soTien' => 'required|numeric|min:0',
         ]);
 
-        // FI-BR02: Kiểm tra phiếu nhập NVL trùng lặp
+        // FI-BR02: Kiểm tra chống trùng lặp chứng từ nguồn
         if (!empty($validated['maPhieuNhapNVL'])) {
-            $duplicate = PhieuChi::where('maPhieuNhapNVL', $validated['maPhieuNhapNVL'])
-                ->where('trangThai', '!=', 'Huy')
-                ->first();
+            $duplicate = PhieuChi::where('maPhieuNhapNVL', $validated['maPhieuNhapNVL'])->where('trangThai', '!=', 'Huy')->first();
             if ($duplicate) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Phiếu nhập NVL {$validated['maPhieuNhapNVL']} đã được lập phiếu chi {$duplicate->maPhieuChi}. Không thể tạo trùng."
+                    'message' => "Phiếu nhập NVL {$validated['maPhieuNhapNVL']} đã được lập phiếu chi {$duplicate->maPhieuChi}."
                 ], 400);
             }
         }
 
-        // FI-BR02: Kiểm tra bảng lương trùng lặp
         if (!empty($validated['maBangLuong'])) {
-            $duplicate = PhieuChi::where('maBangLuong', $validated['maBangLuong'])
-                ->where('trangThai', '!=', 'Huy')
-                ->first();
+            $duplicate = PhieuChi::where('maBangLuong', $validated['maBangLuong'])->where('trangThai', '!=', 'Huy')->first();
             if ($duplicate) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Bảng lương {$validated['maBangLuong']} đã được lập phiếu chi {$duplicate->maPhieuChi}. Không thể tạo trùng."
+                    'message' => "Bảng lương {$validated['maBangLuong']} đã được lập phiếu chi {$duplicate->maPhieuChi}."
                 ], 400);
             }
         }
 
-        // Tự động tìm hoặc tạo DoiTuongGiaoDich mapping nếu cần
+        // Tự động tìm hoặc tạo ánh xạ DoiTuongGiaoDich nếu liên kết nguồn
         $maDoiTuong = $validated['maDoiTuong'] ?? null;
         if (!empty($validated['maPhieuNhapNVL'])) {
             $pn = PhieuNhapNVL::find($validated['maPhieuNhapNVL']);
-            if ($pn && $pn->maNCC) {
+            if ($pn?->maNCC) {
                 $dt = DoiTuongGiaoDich::firstOrCreate(
                     ['loaiDoiTuong' => 'NCC', 'maThamChieu' => $pn->maNCC],
                     ['maDoiTuong' => $maDoiTuong ?: ('DT-NCC-' . $pn->maNCC), 'trangThai' => true]
@@ -221,7 +184,7 @@ class PhieuChiController extends Controller
             }
         } elseif (!empty($validated['maBangLuong'])) {
             $bl = BangLuong::find($validated['maBangLuong']);
-            if ($bl && $bl->maNV) {
+            if ($bl?->maNV) {
                 $dt = DoiTuongGiaoDich::firstOrCreate(
                     ['loaiDoiTuong' => 'NV', 'maThamChieu' => $bl->maNV],
                     ['maDoiTuong' => $maDoiTuong ?: ('DT-NV-' . $bl->maNV), 'trangThai' => true]
@@ -266,10 +229,7 @@ class PhieuChiController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi lập phiếu chi: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi lập phiếu chi: ' . $e->getMessage()], 500);
         }
     }
 
@@ -278,9 +238,7 @@ class PhieuChiController extends Controller
      */
     public function approvePayment(Request $request, $id)
     {
-        // Kiểm tra vai trò: Chỉ Kế toán trưởng mới có quyền duyệt (Use Case 2.5.4.3 d)
-        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
-        if ($userRole !== 'KeToanTruong' && $userRole !== 'Admin') {
+        if (!$this->isApproverAuthorized($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền phê duyệt phiếu chi tiền (Quy tắc 2.5.4.3 d).',
@@ -290,17 +248,11 @@ class PhieuChiController extends Controller
         $payment = PhieuChi::findOrFail($id);
 
         if ($payment->trangThai === 'DaDuyet') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Phiếu chi này đã được phê duyệt trước đó',
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Phiếu chi này đã được phê duyệt trước đó'], 400);
         }
 
         if ($payment->trangThai === 'Huy') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể duyệt phiếu chi đã bị hủy',
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Không thể duyệt phiếu chi đã bị hủy'], 400);
         }
 
         DB::beginTransaction();
@@ -309,17 +261,13 @@ class PhieuChiController extends Controller
             if ($payment->maTaiKhoanQuy) {
                 $account = TaiKhoanQuy::where('maTaiKhoanQuy', $payment->maTaiKhoanQuy)->lockForUpdate()->first();
                 if (!$account) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Không tìm thấy tài khoản quỹ được chỉ định trên phiếu chi',
-                    ], 400);
+                    return response()->json(['success' => false, 'message' => 'Không tìm thấy tài khoản quỹ chỉ định'], 400);
                 }
 
                 if ($account->soDuHienTai < $payment->soTien) {
-                    $currentBalance = number_format($account->soDuHienTai);
                     return response()->json([
                         'success' => false,
-                        'message' => "Hạn mức không đủ: Số dư tài khoản quỹ không đủ để thực hiện chi tiền! Số dư hiện tại: {$currentBalance} VNĐ, Số tiền chi yêu cầu: " . number_format($payment->soTien) . " VNĐ (FI-BR04 / FI-FR07).",
+                        'message' => 'Hạn mức không đủ: Số dư tài khoản quỹ hiện tại (' . number_format($account->soDuHienTai) . ' VNĐ) không đủ để chi ' . number_format($payment->soTien) . ' VNĐ (FI-BR04 / FI-FR07).',
                     ], 400);
                 }
 
@@ -338,15 +286,12 @@ class PhieuChiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Phê duyệt phiếu chi thành công! Số dư quỹ đã được tự động trừ đi ' . number_format($payment->soTien) . ' VNĐ.',
+                'message' => 'Phê duyệt phiếu chi thành công! Đã tự động trừ ' . number_format($payment->soTien) . ' VNĐ.',
                 'data' => $payment,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi phê duyệt phiếu chi: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi phê duyệt phiếu chi: ' . $e->getMessage()], 500);
         }
     }
 
@@ -355,8 +300,7 @@ class PhieuChiController extends Controller
      */
     public function cancelPayment(Request $request, $id)
     {
-        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
-        if ($userRole !== 'KeToanTruong' && $userRole !== 'Admin') {
+        if (!$this->isApproverAuthorized($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền hủy phiếu chi.',
@@ -371,7 +315,6 @@ class PhieuChiController extends Controller
 
         DB::beginTransaction();
         try {
-            // Nếu đã duyệt thì hoàn trả lại số dư quỹ
             if ($payment->trangThai === 'DaDuyet' && $payment->maTaiKhoanQuy) {
                 $account = TaiKhoanQuy::where('maTaiKhoanQuy', $payment->maTaiKhoanQuy)->first();
                 if ($account) {
@@ -418,16 +361,10 @@ class PhieuChiController extends Controller
             $payment->delete();
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã xóa phiếu chi thành công',
-            ]);
+            return response()->json(['success' => true, 'message' => 'Đã xóa phiếu chi thành công']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi xóa phiếu chi: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi xóa phiếu chi: ' . $e->getMessage()], 500);
         }
     }
 
@@ -445,5 +382,3 @@ class PhieuChiController extends Controller
         ]);
     }
 }
-
-

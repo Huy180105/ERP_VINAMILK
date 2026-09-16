@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
-import { Building2, Plus, Search, Mail, Phone, MapPin } from 'lucide-react';
+import { Building2, Plus, Mail, Phone, MapPin } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Suppliers() {
@@ -113,7 +113,7 @@ export default function Suppliers() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nhà Cung Cấp Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
@@ -123,7 +123,6 @@ export default function Suppliers() {
                   type="text"
                   required
                   readOnly
-                  placeholder="Tự động phát sinh"
                   value={formData.maNCC}
                   className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed"
                 />
@@ -136,7 +135,7 @@ export default function Suppliers() {
                   placeholder="VD: Nông Trại Bò Sữa Vinamilk Lâm Đồng"
                   value={formData.tenNCC}
                   onChange={(e) => setFormData({ ...formData, tenNCC: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div>
@@ -147,20 +146,42 @@ export default function Suppliers() {
                   maxLength={13}
                   value={formData.maSoThue}
                   onChange={(e) => setFormData({ ...formData, maSoThue: e.target.value.replace(/\D/g, '') })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 font-mono"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 font-mono outline-none"
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Địa Chỉ</label>
+                <label className="block font-semibold text-slate-700 mb-1">Địa Chỉ Chi Nhánh / Nông Trại</label>
                 <input
                   type="text"
-                  placeholder="Đà Lạt, Lâm Đồng"
+                  placeholder="VD: Tu Tra, Đơn Dương, Lâm Đồng"
                   value={formData.diaChi}
                   onChange={(e) => setFormData({ ...formData, diaChi: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
-              <div className="flex justify-end space-x-2 pt-2 border-t">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Số Điện Thoại</label>
+                  <input
+                    type="text"
+                    placeholder="VD: 02633844..."
+                    value={formData.soDienThoai}
+                    onChange={(e) => setFormData({ ...formData, soDienThoai: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Email Liên Hệ</label>
+                  <input
+                    type="email"
+                    placeholder="contact@..."
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 pt-3 border-t">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -172,7 +193,7 @@ export default function Suppliers() {
                   type="submit"
                   className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium cursor-pointer"
                 >
-                  Lưu NCC
+                  Thêm Nhà Cung Cấp
                 </button>
               </div>
             </form>

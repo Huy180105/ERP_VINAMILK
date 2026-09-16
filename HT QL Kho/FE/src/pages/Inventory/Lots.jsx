@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { InventoryAPI } from '../../services/api';
-import { Clock, Search, Filter, Layers, Zap } from 'lucide-react';
-import StatusBadge from '../../components/StatusBadge';
+import { Clock, Search } from 'lucide-react';
 import FefoBadge from '../../components/FefoBadge';
 
 export default function InventoryLots() {
@@ -26,6 +25,11 @@ export default function InventoryLots() {
     }
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchLots();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
@@ -40,30 +44,30 @@ export default function InventoryLots() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-md border border-slate-200 shadow-sm">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-md border border-slate-200 shadow-sm">
         <div className="flex-1 relative">
           <input
             type="text"
             placeholder="Tra cứu theo Mã lô (Batch ID), tên sản phẩm, tên NVL..."
             value={searchKey}
             onChange={(e) => setSearchKey(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
         </div>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 font-medium"
+          className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 font-medium outline-none"
         >
           <option value="">Tất cả Loại Lô Tồn Kho</option>
           <option value="product">Chỉ Lô Thành Phẩm Sữa</option>
           <option value="material">Chỉ Lô Nguyên Vật Liệu</option>
         </select>
-        <button onClick={fetchLots} className="bg-[#0B2341] hover:bg-blue-900 text-white text-xs font-medium px-4 py-2 rounded-lg transition">
+        <button type="submit" className="bg-[#0B2341] hover:bg-blue-900 text-white text-xs font-medium px-4 py-2 rounded-lg transition cursor-pointer">
           Lọc Dữ Liệu
         </button>
-      </div>
+      </form>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -87,7 +91,7 @@ export default function InventoryLots() {
               ) : (
                 lots.map((l) => {
                   const daysLeft = Math.ceil((new Date(l.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
-                  const itemName = l.san_pham?.tenSanPham || l.nguyen_vat_lieu?.tenNVL || '-';
+                  const itemName = l.sanPham?.tenSanPham || l.nguyenVatLieu?.tenNVL || '-';
                   return (
                     <tr key={l.maTonKho} className="hover:bg-slate-50 transition">
                       <td className="p-3 font-mono font-bold text-[#0B2341]">{l.maTonKho}</td>

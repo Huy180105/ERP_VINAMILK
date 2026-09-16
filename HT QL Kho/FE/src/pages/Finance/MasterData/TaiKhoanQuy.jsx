@@ -27,9 +27,7 @@ export default function TaiKhoanQuy() {
     setLoading(true);
     try {
       const res = await FinanceMasterDataAPI.getAccounts({ keyword, loaiTaiKhoan });
-      if (res.data.success) {
-        setAccounts(res.data.data || []);
-      }
+      if (res.data.success) setAccounts(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -37,23 +35,9 @@ export default function TaiKhoanQuy() {
     }
   };
 
-  const openCreateModal = () => {
-    setEditingItem(null);
-    setFormData({
-      maTaiKhoanQuy: `TKQ-${String(Date.now()).slice(-4)}`,
-      tenTaiKhoanQuy: '',
-      loaiTaiKhoan: 'TM',
-      soTaiKhoan: '',
-      nganHang: '',
-      soDuHienTai: 0,
-      trangThai: 1,
-    });
-    setModalOpen(true);
-  };
-
-  const openEditModal = (item) => {
+  const openModal = (item = null) => {
     setEditingItem(item);
-    setFormData({
+    setFormData(item ? {
       maTaiKhoanQuy: item.maTaiKhoanQuy,
       tenTaiKhoanQuy: item.tenTaiKhoanQuy,
       loaiTaiKhoan: item.loaiTaiKhoan,
@@ -61,6 +45,14 @@ export default function TaiKhoanQuy() {
       nganHang: item.nganHang || '',
       soDuHienTai: item.soDuHienTai || 0,
       trangThai: item.trangThai ? 1 : 0,
+    } : {
+      maTaiKhoanQuy: `TKQ-${String(Date.now()).slice(-4)}`,
+      tenTaiKhoanQuy: '',
+      loaiTaiKhoan: 'TM',
+      soTaiKhoan: '',
+      nganHang: '',
+      soDuHienTai: 0,
+      trangThai: 1,
     });
     setModalOpen(true);
   };
@@ -81,13 +73,12 @@ export default function TaiKhoanQuy() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(`Xác nhận xóa tài khoản quỹ ${id}?`)) {
-      try {
-        await FinanceMasterDataAPI.deleteAccount(id);
-        fetchData();
-      } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
-      }
+    if (!window.confirm(`Xác nhận xóa tài khoản quỹ ${id}?`)) return;
+    try {
+      await FinanceMasterDataAPI.deleteAccount(id);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -96,6 +87,7 @@ export default function TaiKhoanQuy() {
 
   return (
     <div className="space-y-6">
+      {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center space-x-2">
@@ -107,7 +99,7 @@ export default function TaiKhoanQuy() {
           </p>
         </div>
         <button
-          onClick={openCreateModal}
+          onClick={() => openModal()}
           className="bg-[#0B2341] hover:bg-[#132F4C] text-white font-bold text-xs px-4 py-2.5 rounded-md shadow-sm transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -115,16 +107,18 @@ export default function TaiKhoanQuy() {
         </button>
       </div>
 
+      {/* KPI Total Balance Card */}
       <div className="bg-gradient-to-r from-purple-800 to-indigo-800 text-white p-5 rounded-lg shadow-sm flex items-center justify-between">
         <div className="space-y-1">
           <span className="text-xs text-purple-200 uppercase tracking-wide font-bold">Tổng Số Dư Khả Dụng Trong Các Quỹ</span>
           <div className="text-2xl font-bold">{formatVND(totalBalance)}</div>
         </div>
-        <div className="p-3 bg-white/10 rounded-lg -xs">
+        <div className="p-3 bg-white/10 rounded-lg">
           <Wallet className="w-8 h-8 text-purple-200" />
         </div>
       </div>
 
+      {/* Filter / Search Bar */}
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="relative w-72">
@@ -133,7 +127,7 @@ export default function TaiKhoanQuy() {
               placeholder="Tìm theo tên quỹ, mã, số TK..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           </div>
@@ -152,6 +146,7 @@ export default function TaiKhoanQuy() {
         <span className="text-xs text-slate-400 font-medium">Tổng số: <b>{accounts.length}</b> tài khoản quỹ</span>
       </div>
 
+      {/* Table */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -203,14 +198,16 @@ export default function TaiKhoanQuy() {
                     </td>
                     <td className="p-3.5 text-center space-x-2">
                       <button
-                        onClick={() => openEditModal(item)}
-                        className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50/60 rounded-lg transition"
+                        onClick={() => openModal(item)}
+                        className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50 rounded-lg transition"
+                        title="Chỉnh sửa"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(item.maTaiKhoanQuy)}
                         className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Xóa"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -223,8 +220,9 @@ export default function TaiKhoanQuy() {
         </div>
       </div>
 
+      {/* Modal Add / Edit */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 -xs flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800 border-b pb-3">
               {editingItem ? 'Cập Nhật Tài Khoản Quỹ' : 'Thêm Mới Tài Khoản Quỹ'}
@@ -240,7 +238,7 @@ export default function TaiKhoanQuy() {
                     disabled={!!editingItem}
                     onChange={(e) => setFormData({ ...formData, maTaiKhoanQuy: e.target.value })}
                     required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold disabled:opacity-60"
                   />
                 </div>
                 <div>

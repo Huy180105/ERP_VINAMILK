@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
-import { Boxes, Plus, Search, Trash2, Edit3, CheckCircle2 } from 'lucide-react';
+import { Boxes, Plus, Search, Trash2 } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Materials() {
@@ -10,7 +10,6 @@ export default function Materials() {
   const [searchKey, setSearchKey] = useState('');
   const [selectedType, setSelectedType] = useState('');
   
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     maNVL: '',
@@ -132,7 +131,7 @@ export default function Materials() {
             </option>
           ))}
         </select>
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition">
+        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition cursor-pointer">
           Lọc Dữ Liệu
         </button>
       </form>
@@ -179,7 +178,7 @@ export default function Materials() {
 
       {/* Add Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nguyên Vật Liệu Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
@@ -201,7 +200,7 @@ export default function Materials() {
                   placeholder="VD: Hương Liệu Dâu Tự Nhiên"
                   value={formData.tenNVL}
                   onChange={(e) => setFormData({ ...formData, tenNVL: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div>
@@ -209,7 +208,7 @@ export default function Materials() {
                 <select
                   value={formData.donVi}
                   onChange={(e) => setFormData({ ...formData, donVi: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="Kg">Kg</option>
                   <option value="Lít">Lít</option>
@@ -224,20 +223,20 @@ export default function Materials() {
                   rows="2"
                   value={formData.ghiChu}
                   onChange={(e) => setFormData({ ...formData, ghiChu: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 ></textarea>
               </div>
               <div className="flex justify-end space-x-2 pt-2 border-t">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium cursor-pointer"
                 >
                   Lưu NVL
                 </button>
