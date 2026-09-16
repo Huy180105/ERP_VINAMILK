@@ -10,6 +10,7 @@ import { generateAutoCode } from '../../utils/codeGenerator';
 export default function InboundProducts() {
   const [receipts, setReceipts] = useState([]);
   const [productsList, setProductsList] = useState([]);
+  const [pendingHandovers, setPendingHandovers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [keyword, setKeyword] = useState('');
@@ -79,12 +80,18 @@ export default function InboundProducts() {
     setEditingReceipt(null);
     setFormErrors([]);
     let nextCode = '';
+    let handovers = [];
     try {
-      const codeRes = await InboundAPI.getNextProductReceiptCode();
+      const [codeRes, handoverRes] = await Promise.all([
+        InboundAPI.getNextProductReceiptCode(),
+        InboundAPI.getPendingProductionHandovers()
+      ]);
       nextCode = codeRes.data.code;
+      handovers = handoverRes.data?.data || [];
     } catch (e) {
       console.error(e);
     }
+    setPendingHandovers(handovers);
 
     if (!nextCode) {
       nextCode = generateAutoCode(receipts, 'maPhieuNhapSP', 'PNSP', 3, true);
@@ -111,6 +118,36 @@ export default function InboundProducts() {
       ]
     });
     setIsFormModalOpen(true);
+  };
+
+  const handleSelectHandover = (code) => {
+    if (!code) {
+      setFormData(prev => ({ ...prev, maPhieuYCXSP: '' }));
+      return;
+    }
+    const selected = pendingHandovers.find(h => h.maPhieuYCXSP === code);
+    if (selected && selected.chi_tiets && selected.chi_tiets.length > 0) {
+      const defaultMfg = selected.phieu_nghiem_thu?.ngayNghiemThu || selected.ngayYeuCau || todayStr;
+      const items = selected.chi_tiets.map(ct => {
+        const mfg = ct.ngaySanXuat || defaultMfg;
+        const exp = ct.hanSuDung || calculateDefaultExpiry(mfg, ct.maSanPham);
+        return {
+          maSP: ct.maSanPham,
+          soLuongNhap: ct.soLuong,
+          ngaySanXuat: mfg,
+          hanSuDung: exp,
+          ghiChu: ct.ghiChu || `Nhập kho theo phiếu bàn giao ${code}`
+        };
+      });
+      setFormData(prev => ({
+        ...prev,
+        maPhieuYCXSP: code,
+        ghiChu: prev.ghiChu || `Nhập kho theo phiếu bàn giao từ SX (${code})`,
+        items: items
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, maPhieuYCXSP: code }));
+    }
   };
 
   const handleOpenEditModal = (receipt) => {
@@ -626,17 +663,18 @@ export default function InboundProducts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Mã Phiếu YCXSP</label>
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Mã Phiếu YCXSP (Bàn giao từ SX)</label>
                   <select
                     value={formData.maPhieuYCXSP}
-                    onChange={(e) => setFormData({ ...formData, maPhieuYCXSP: e.target.value })}
+                    onChange={(e) => handleSelectHandover(e.target.value)}
                     className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
-                    <option value="">-- Không chọn --</option>
-                    <option value="YCXSP20260901">YCXSP20260901 - Bàn giao Sữa tươi UHT Batch 01</option>
-                    <option value="YCXSP20260902">YCXSP20260902 - Bàn giao Sữa chua ăn Batch 02</option>
-                    <option value="YCXSP20260903">YCXSP20260903 - Bàn giao Sữa hạt hạnh nhân Batch 03</option>
-                    <option value="YCXSP20260904">YCXSP20260904 - Bàn giao Sữa Probi Batch 04</option>
+                    <option value="">-- Nhập thủ công (Không chọn) --</option>
+                    {pendingHandovers.map(h => (
+                      <option key={h.maPhieuYCXSP} value={h.maPhieuYCXSP}>
+                        {h.maPhieuYCXSP} - {h.ghiChu || `Phiếu bàn giao ${h.maPhieuYCXSP}`}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

@@ -66,6 +66,7 @@ export const InboundAPI = {
   
   // Product Inbound Receipts (PhieuNhapSP)
   getNextProductReceiptCode: () => api.get('/inbound/products/next-code'),
+  getPendingProductionHandovers: () => api.get('/inbound/products/pending-handovers'),
   getProductReceipts: (params) => api.get('/inbound/products', { params }),
   createProductReceipt: (data) => api.post('/inbound/products', data),
   updateProductReceipt: (id, data) => api.put(`/inbound/products/${id}`, data),

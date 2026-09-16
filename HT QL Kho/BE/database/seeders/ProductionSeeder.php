@@ -259,6 +259,8 @@ class ProductionSeeder extends Seeder
                 'maPhieuYCXSP' => 'YCXSP20260901',
                 'maSanPham' => 'SP001',
                 'soLuong' => 19980,
+                'ngaySanXuat' => Carbon::now()->subDays(10)->toDateString(),
+                'hanSuDung' => Carbon::now()->addDays(170)->toDateString(),
                 'ghiChu' => 'Đã nhập vào Lô LOT-SP-20260908-FEFO2',
             ]
         ]);

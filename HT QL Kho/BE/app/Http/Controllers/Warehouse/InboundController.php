@@ -7,6 +7,7 @@ use App\Models\PhieuNhapNVL;
 use App\Models\ChiTietPhieuNhapNVL;
 use App\Models\PhieuNhapSP;
 use App\Models\ChiTietPhieuNhapSP;
+use App\Models\PhieuYeuCauXuatSP;
 use App\Models\TonKho;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,21 @@ use Carbon\Carbon;
 
 class InboundController extends Controller
 {
+    /**
+     * Lấy danh sách Phiếu Yêu Cầu Xuất (Bàn giao thành phẩm) từ Sản Xuất chưa xử lý
+     */
+    public function getPendingProductionHandovers()
+    {
+        $handovers = PhieuYeuCauXuatSP::with(['chiTiets.sanPham', 'phieuNghiemThu', 'nhanVien'])
+            ->where('trangThai', 'Chưa xử lý')
+            ->orderBy('ngayYeuCau', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $handovers,
+        ]);
+    }
     // =========================================================================
     // 1. NHẬP KHO NGUYÊN VẬT LIỆU TỪ NHÀ CUNG CẤP (CF-FR11 đến CF-FR19)
     // =========================================================================
@@ -262,6 +278,11 @@ class InboundController extends Controller
                 'ghiChu' => $validated['ghiChu'],
                 'maPhieuYCXSP' => $validated['maPhieuYCXSP'] ?? null,
             ]);
+
+            if (!empty($validated['maPhieuYCXSP'])) {
+                PhieuYeuCauXuatSP::where('maPhieuYCXSP', $validated['maPhieuYCXSP'])
+                    ->update(['trangThai' => 'Đã nhập kho']);
+            }
 
             foreach ($validated['items'] as $item) {
                 ChiTietPhieuNhapSP::create([

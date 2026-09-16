@@ -18,6 +18,7 @@ Route::prefix('warehouse/inbound')->group(function () {
 
     // Nhập kho Sản phẩm từ Xưởng sản xuất (CF-FR20 -> CF-FR29)
     Route::get('/products/next-code', [InboundController::class, 'getNextProductReceiptCode']);
+    Route::get('/products/pending-handovers', [InboundController::class, 'getPendingProductionHandovers']);
     Route::get('/products', [InboundController::class, 'getProductReceipts']);
     Route::post('/products', [InboundController::class, 'createProductReceipt']);
     Route::put('/products/{id}', [InboundController::class, 'updateProductReceipt']);

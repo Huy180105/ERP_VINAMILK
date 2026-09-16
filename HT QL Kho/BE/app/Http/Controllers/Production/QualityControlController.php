@@ -160,11 +160,19 @@ class QualityControlController extends Controller
                 'ghiChu' => $validated['ghiChu'] ?? 'Bàn giao thành phẩm đạt chất lượng sang Kho Vinamilk',
             ]);
 
+            $pnt = PhieuNghiemThu::where('maPhieuNghiemThu', $validated['maPhieuNghiemThu'])->first();
+            $defaultMfg = $pnt ? $pnt->ngayNghiemThu : $validated['ngayYeuCau'];
+
             foreach ($validated['items'] as $item) {
+                $mfgDate = $item['ngaySanXuat'] ?? $defaultMfg;
+                $expDate = $item['hanSuDung'] ?? Carbon::parse($mfgDate)->addDays(180)->toDateString();
+
                 ChiTietPhieuYeuCauXuatSP::create([
                     'maPhieuYCXSP' => $reqCode,
                     'maSanPham' => $item['maSanPham'],
                     'soLuong' => $item['soLuong'],
+                    'ngaySanXuat' => $mfgDate,
+                    'hanSuDung' => $expDate,
                     'ghiChu' => $item['ghiChu'] ?? null,
                 ]);
             }
