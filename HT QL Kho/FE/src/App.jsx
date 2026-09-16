@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ERPHeader from './components/ERPHeader';
 import Sidebar from './components/Sidebar';
 import FinanceSidebar from './components/FinanceSidebar';
+import ProductionLayout from './components/ProductionLayout';
 import PortalHome from './pages/PortalHome';
 
 // Warehouse Pages
@@ -27,9 +28,17 @@ import PhieuThu from './pages/Finance/PhieuThu';
 import PhieuChi from './pages/Finance/PhieuChi';
 import FinanceBaoCao from './pages/Finance/BaoCao';
 
+// Production Pages
+import ProductionDashboard from './pages/Production/ProductionDashboard';
+import ProductionOrders from './pages/Production/ProductionOrders';
+import ProductionStages from './pages/Production/ProductionStages';
+import MaterialRequests from './pages/Production/MaterialRequests';
+import SemiFinishedGoods from './pages/Production/SemiFinishedGoods';
+import QualityControl from './pages/Production/QualityControl';
+import ProductionReports from './pages/Production/ProductionReports';
+
 // Subsystem Preview Pages
 import HRModule from './pages/Subsystems/HRModule';
-import ProductionModule from './pages/Subsystems/ProductionModule';
 import SalesModule from './pages/Subsystems/SalesModule';
 
 // Warehouse App Shell Wrapper Component
@@ -106,9 +115,18 @@ export default function App() {
         <Route path="/finance/payments" element={<FinancePage><PhieuChi /></FinancePage>} />
         <Route path="/finance/reports" element={<FinancePage><FinanceBaoCao /></FinancePage>} />
 
-        {/* Route 6: Other ERP Subsystems */}
+        {/* Route 6: Production Subsystem (Phân Hệ Quản Lý Sản Xuất) */}
+        <Route path="/production" element={<ProductionLayout><ProductionDashboard /></ProductionLayout>} />
+        <Route path="/production/orders" element={<ProductionLayout><ProductionOrders /></ProductionLayout>} />
+        <Route path="/production/stages" element={<ProductionLayout><ProductionStages /></ProductionLayout>} />
+        <Route path="/production/material-requests" element={<ProductionLayout><MaterialRequests /></ProductionLayout>} />
+        <Route path="/production/semi-finished" element={<ProductionLayout><SemiFinishedGoods /></ProductionLayout>} />
+        <Route path="/production/quality-control" element={<ProductionLayout><QualityControl /></ProductionLayout>} />
+        <Route path="/production/compensations" element={<ProductionLayout><QualityControl /></ProductionLayout>} />
+        <Route path="/production/reports" element={<ProductionLayout><ProductionReports /></ProductionLayout>} />
+
+        {/* Route 7: Other ERP Subsystems */}
         <Route path="/hr" element={<WarehousePage><HRModule /></WarehousePage>} />
-        <Route path="/production" element={<WarehousePage><ProductionModule /></WarehousePage>} />
         <Route path="/sales" element={<WarehousePage><SalesModule /></WarehousePage>} />
 
         {/* Fallback for any unknown route -> Portal Home */}

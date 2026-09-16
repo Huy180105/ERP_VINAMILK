@@ -31,3 +31,8 @@ require __DIR__ . '/api/finance/master_data.php';
 require __DIR__ . '/api/finance/receipts.php';
 require __DIR__ . '/api/finance/payments.php';
 require __DIR__ . '/api/finance/reports.php';
+
+// ============================================================================
+// Phân Hệ Quản Lý Sản Xuất (Production Management)
+// ============================================================================
+require __DIR__ . '/api/production.php';
