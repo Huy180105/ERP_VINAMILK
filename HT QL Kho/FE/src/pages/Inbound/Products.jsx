@@ -5,6 +5,7 @@ import {
   Printer, Edit2, Trash2, PackageCheck, AlertTriangle, FileText, Calendar, User, Eye
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function InboundProducts() {
   const [receipts, setReceipts] = useState([]);
@@ -65,11 +66,10 @@ export default function InboundProducts() {
     if (!mfgDateStr) return '';
     const mfg = new Date(mfgDateStr);
     
-    // Tính hạn sử dụng theo thuộc tính loại sản phẩm trong bảng SanPham (phân hệ sản xuất):
-    let daysToAdd = 365; // Mặc định 1 năm
-    if (maSP === 'SP003' || maSP === 'SP006') daysToAdd = 210; // Sữa chua / Probi: 7 tháng
-    else if (maSP === 'SP004') daysToAdd = 270; // Sữa hạt: 9 tháng
-    else if (maSP === 'SP007') daysToAdd = 730; // Sữa bột: 2 năm
+    let daysToAdd = 365;
+    if (maSP === 'SP003' || maSP === 'SP006') daysToAdd = 210;
+    else if (maSP === 'SP004') daysToAdd = 270;
+    else if (maSP === 'SP007') daysToAdd = 730;
 
     mfg.setDate(mfg.getDate() + daysToAdd);
     return mfg.toISOString().split('T')[0];
@@ -84,6 +84,10 @@ export default function InboundProducts() {
       nextCode = codeRes.data.code;
     } catch (e) {
       console.error(e);
+    }
+
+    if (!nextCode) {
+      nextCode = generateAutoCode(receipts, 'maPhieuNhapSP', 'PNSP', 3, true);
     }
 
     const defaultMfg = todayStr;

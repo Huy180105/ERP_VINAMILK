@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { OutboundAPI } from '../../services/api';
 import { ArrowUpRight, Plus, CheckCircle2, Boxes } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function OutboundRawMaterials() {
   const [dispatches, setDispatches] = useState([]);
@@ -31,6 +32,16 @@ export default function OutboundRawMaterials() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenModal = () => {
+    const autoCode = generateAutoCode(dispatches, 'maPhieuXuatNVL', 'PXNVL', 3, true);
+    setFormData({
+      ...formData,
+      maPhieuXuatNVL: autoCode,
+      ngayXuat: new Date().toISOString().split('T')[0],
+    });
+    setShowModal(true);
   };
 
   const handleCreate = async (e) => {
@@ -81,12 +92,8 @@ export default function OutboundRawMaterials() {
           </p>
         </div>
         <button
-          onClick={() => {
-            const autoCode = 'PXNVL-' + Date.now().toString().slice(-4);
-            setFormData({ ...formData, maPhieuXuatNVL: autoCode });
-            setShowModal(true);
-          }}
-          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
+          onClick={handleOpenModal}
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Lập Phiếu Xuất NVL Mới</span>
@@ -131,7 +138,7 @@ export default function OutboundRawMaterials() {
                       {d.trangThai !== 'Hoàn thành' && (
                         <button
                           onClick={() => handleComplete(d.maPhieuXuatNVL)}
-                          className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1"
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1 cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Xác Nhận Xuất Kho</span>
@@ -152,13 +159,13 @@ export default function OutboundRawMaterials() {
             <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Lập Phiếu Xuất NVL Cho Sản Xuất</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Xuất *</label>
+                <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Xuất (Tự động) *</label>
                 <input
                   type="text"
                   required
+                  readOnly
                   value={formData.maPhieuXuatNVL}
-                  onChange={(e) => setFormData({ ...formData, maPhieuXuatNVL: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900"
+                  className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed"
                 />
               </div>
               <div>

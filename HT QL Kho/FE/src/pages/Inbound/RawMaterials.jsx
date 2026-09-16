@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { InboundAPI, MasterDataAPI } from '../../services/api';
 import { ArrowDownLeft, Plus, CheckCircle2, FileText, Clock } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function InboundRawMaterials() {
   const [receipts, setReceipts] = useState([]);
@@ -36,6 +37,20 @@ export default function InboundRawMaterials() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenModal = () => {
+    const autoCode = generateAutoCode(receipts, 'maPhieuNhapNVL', 'PNNVL', 3, true);
+    const autoLot = generateAutoCode(receipts.flatMap(r => r.chi_tiets || []), 'maTonKho', 'TK-NVL-', 3, true);
+    setFormData({
+      ...formData,
+      maPhieuNhapNVL: autoCode,
+      maTonKho: autoLot,
+      ngayNhap: new Date().toISOString().split('T')[0],
+      ngaySanXuat: new Date().toISOString().split('T')[0],
+      hanSuDung: new Date(Date.now() + 180*24*60*60*1000).toISOString().split('T')[0],
+    });
+    setShowModal(true);
   };
 
   const handleCreate = async (e) => {
@@ -90,13 +105,8 @@ export default function InboundRawMaterials() {
           </p>
         </div>
         <button
-          onClick={() => {
-            const autoCode = 'PNNVL-' + Date.now().toString().slice(-4);
-            const autoLot = 'TK-NVL-' + Date.now().toString().slice(-6);
-            setFormData({ ...formData, maPhieuNhapNVL: autoCode, maTonKho: autoLot });
-            setShowModal(true);
-          }}
-          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
+          onClick={handleOpenModal}
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Lập Phiếu Nhập NVL Mới</span>
@@ -141,7 +151,7 @@ export default function InboundRawMaterials() {
                       {r.trangThai !== 'Hoàn thành' && (
                         <button
                           onClick={() => handleComplete(r.maPhieuNhapNVL)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1 cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Xác Nhận Nhập Kho</span>
@@ -163,13 +173,13 @@ export default function InboundRawMaterials() {
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Nhập *</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Nhập (Tự động) *</label>
                   <input
                     type="text"
                     required
+                    readOnly
                     value={formData.maPhieuNhapNVL}
-                    onChange={(e) => setFormData({ ...formData, maPhieuNhapNVL: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900"
+                    className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed"
                   />
                 </div>
                 <div>

@@ -16,12 +16,15 @@ import {
   AlertCircle,
   Clock,
   Ban,
-  Boxes,
-  Users,
-  AlertTriangle,
+  Scale,
+  ShoppingBag,
+  Send,
   RefreshCw,
-  ShieldAlert
+  ShieldAlert,
+  Users,
+  Building2
 } from 'lucide-react';
+import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function PhieuChi() {
   const [payments, setPayments] = useState([]);
@@ -40,10 +43,10 @@ export default function PhieuChi() {
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // Pending Purchases and Payrolls (FI-BR02)
+  // Pending Purchases (FI-BR02) & Payrolls (FI-BR03)
   const [pendingPurchases, setPendingPurchases] = useState([]);
-  const [pendingPayrolls, setPendingPayrolls] = useState([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
+  const [pendingPayrolls, setPendingPayrolls] = useState([]);
   const [loadingPayrolls, setLoadingPayrolls] = useState(false);
 
   // Expanded rows
@@ -142,12 +145,12 @@ export default function PhieuChi() {
   };
 
   const openCreateModal = () => {
-    const timestamp = Date.now().toString().slice(-6);
+    const autoCode = generateAutoCode(payments, 'maPhieuChi', 'PC', 3, true);
     setSelectedPurchase(null);
     setSelectedPayroll(null);
     setCreateTab('purchase');
     setFormData({
-      maPhieuChi: `PC-${timestamp}`,
+      maPhieuChi: autoCode,
       ngayChi: new Date().toISOString().split('T')[0],
       maDoiTuong: counterparties[0]?.maDoiTuong || '',
       lyDoChi: '',
@@ -156,7 +159,7 @@ export default function PhieuChi() {
       maPhieuNhapNVL: '',
       maBangLuong: '',
       items: [
-        { maChiTietChi: `CTPC-${timestamp}-1`, maDanhMucChi: categories[0]?.maDanhMucChi || '', dienGiai: '', soTien: 0 }
+        { maChiTietChi: `CTPC-${Date.now().toString().slice(-4)}-1`, maDanhMucChi: categories[0]?.maDanhMucChi || '', dienGiai: '', soTien: 0 }
       ],
     });
     setModalOpen(true);

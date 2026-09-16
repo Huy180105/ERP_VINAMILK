@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
 import { Boxes, Plus, Search, Trash2, Edit3, CheckCircle2 } from 'lucide-react';
+import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Materials() {
   const [materials, setMaterials] = useState([]);
@@ -50,6 +51,18 @@ export default function Materials() {
     fetchMaterials();
   };
 
+  const handleOpenModal = () => {
+    const autoCode = generateAutoCode(materials, 'maNVL', 'NVL', 3, false);
+    setFormData({
+      maNVL: autoCode,
+      maLoaiNVL: materialTypes[0]?.maLoaiNVL || '',
+      tenNVL: '',
+      donVi: 'Kg',
+      ghiChu: '',
+    });
+    setShowModal(true);
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -87,8 +100,8 @@ export default function Materials() {
           </p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
-          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
+          onClick={handleOpenModal}
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Nguyên Vật Liệu Mới</span>
@@ -152,7 +165,7 @@ export default function Materials() {
                     <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50 rounded-lg">{m.donVi || 'Kg'}</td>
                     <td className="p-3 text-slate-500">{m.ghiChu || '-'}</td>
                     <td className="p-3 text-center space-x-2">
-                      <button onClick={() => handleDelete(m.maNVL)} className="p-1 text-rose-600 hover:bg-rose-50 rounded">
+                      <button onClick={() => handleDelete(m.maNVL)} className="p-1 text-rose-600 hover:bg-rose-50 rounded cursor-pointer">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
@@ -171,14 +184,13 @@ export default function Materials() {
             <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nguyên Vật Liệu Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Mã NVL *</label>
+                <label className="block font-semibold text-slate-700 mb-1">Mã NVL (Tự động) *</label>
                 <input
                   type="text"
                   required
-                  placeholder="VD: NVL003"
+                  readOnly
                   value={formData.maNVL}
-                  onChange={(e) => setFormData({ ...formData, maNVL: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed"
                 />
               </div>
               <div>

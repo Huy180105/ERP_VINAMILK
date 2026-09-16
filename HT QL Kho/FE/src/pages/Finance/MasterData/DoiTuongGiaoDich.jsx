@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FinanceMasterDataAPI } from '../../../services/financeApi';
 import { Users, Plus, Search, Trash2, Phone, Mail, MapPin, ToggleLeft, ToggleRight, CheckCircle2, XCircle, Building2, User, RefreshCw, X } from 'lucide-react';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 
 export default function DoiTuongGiaoDich() {
   const [list, setList] = useState([]);
@@ -57,8 +58,9 @@ export default function DoiTuongGiaoDich() {
 
   const openCreateModal = () => {
     const loai = 'KH';
+    const autoCode = generateAutoCode(list, 'maDoiTuong', 'DT', 3, false);
     setFormData({
-      maDoiTuong: '',
+      maDoiTuong: autoCode,
       maThamChieu: '',
       loaiDoiTuong: loai,
       trangThai: 1,

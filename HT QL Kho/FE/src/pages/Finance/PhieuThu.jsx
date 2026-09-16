@@ -22,6 +22,7 @@ import {
   RefreshCw,
   ShieldAlert
 } from 'lucide-react';
+import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function PhieuThu() {
   const [receipts, setReceipts] = useState([]);
@@ -126,11 +127,11 @@ export default function PhieuThu() {
   };
 
   const openCreateModal = () => {
-    const timestamp = Date.now().toString().slice(-6);
+    const autoCode = generateAutoCode(receipts, 'maPhieuThu', 'PT', 3, true);
     setSelectedSale(null);
     setCreateTab('sales');
     setFormData({
-      maPhieuThu: `PT-${timestamp}`,
+      maPhieuThu: autoCode,
       ngayThu: new Date().toISOString().split('T')[0],
       maDoiTuong: counterparties[0]?.maDoiTuong || '',
       lyDoThu: '',
@@ -140,7 +141,7 @@ export default function PhieuThu() {
       maCongNo: '',
       maHoaDon: '',
       items: [
-        { maChiTietThu: `CTPT-${timestamp}-1`, maDanhMucThu: categories[0]?.maDanhMucThu || '', dienGiai: '', soTien: 0 }
+        { maChiTietThu: `CTPT-${Date.now().toString().slice(-4)}-1`, maDanhMucThu: categories[0]?.maDanhMucThu || '', dienGiai: '', soTien: 0 }
       ],
     });
     setModalOpen(true);

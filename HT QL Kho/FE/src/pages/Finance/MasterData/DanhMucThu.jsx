@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FinanceMasterDataAPI } from '../../../services/financeApi';
 import { ListTree, Plus, Search, Edit2, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 
 export default function DanhMucThu() {
   const [categories, setCategories] = useState([]);
@@ -34,9 +35,10 @@ export default function DanhMucThu() {
   };
 
   const openCreateModal = () => {
+    const autoCode = generateAutoCode(categories, 'maDanhMucThu', 'DMT', 2, false);
     setEditingItem(null);
     setFormData({
-      maDanhMucThu: `DMT${String(Date.now()).slice(-4)}`,
+      maDanhMucThu: autoCode,
       tenDanhMucThu: '',
       moTa: '',
       trangThai: 1,
