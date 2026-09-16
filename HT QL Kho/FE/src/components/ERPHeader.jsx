@@ -56,6 +56,7 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
     switch (module) {
       case 'warehouse': return 'QUẢN LÝ KHO';
       case 'finance': return 'TÀI CHÍNH KẾ TOÁN';
+      case 'production': return 'QUẢN LÝ SẢN XUẤT';
       default: return 'CỔNG THÔNG TIN';
     }
   };
