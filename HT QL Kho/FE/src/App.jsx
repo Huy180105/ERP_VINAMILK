@@ -39,7 +39,8 @@ import ProductionReports from './pages/Production/ProductionReports';
 
 // Subsystem Preview Pages
 import HRModule from './pages/Subsystems/HRModule';
-import SalesModule from './pages/Subsystems/SalesModule';
+import SalesDashboard from './modules/Sales/pages/Dashboard';
+import SalesOrders from './modules/Sales/pages/Orders';
 
 // Warehouse App Shell Wrapper Component
 function WarehousePage({ children }) {
@@ -127,7 +128,8 @@ export default function App() {
 
         {/* Route 7: Other ERP Subsystems */}
         <Route path="/hr" element={<WarehousePage><HRModule /></WarehousePage>} />
-        <Route path="/sales" element={<WarehousePage><SalesModule /></WarehousePage>} />
+        <Route path="/sales" element={<WarehousePage><SalesDashboard /></WarehousePage>} />
+        <Route path="/sales/orders" element={<WarehousePage><SalesOrders /></WarehousePage>} />
 
         {/* Fallback for any unknown route -> Portal Home */}
         <Route path="*" element={<PortalHome />} />

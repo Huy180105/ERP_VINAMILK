@@ -34,6 +34,8 @@ const productionApi = axios.create({
   },
 });
 
+export { api };
+
 export const MasterDataAPI = {
   getMaterials: (params) => api.get('/master-data/materials', { params }),
   createMaterial: (data) => api.post('/master-data/materials', data),
@@ -80,6 +82,19 @@ export const OutboundAPI = {
   completeRawMaterialDispatch: (id) => api.put(`/outbound/raw-materials/${id}/complete`),
   getProductDispatches: (params) => api.get('/outbound/products', { params }),
   completeProductDispatch: (id) => api.put(`/outbound/products/${id}/complete`),
+};
+
+export const SalesAPI = {
+  getDashboard: () => api.get('/sales/dashboard'),
+  getOrders: (params) => api.get('/sales/orders', { params }),
+  createOrder: (data) => api.post('/sales/orders', data),
+  updateOrder: (id, data) => api.put(`/sales/orders/${id}`, data),
+  deleteOrder: (id) => api.delete(`/sales/orders/${id}`),
+  updateOrderStatus: (id, status) => api.put(`/sales/orders/${id}/status`, { trangThai: status }),
+  getCustomers: (params) => api.get('/sales/customers', { params }),
+  getDeliveries: (params) => api.get('/sales/deliveries', { params }),
+  getInvoices: (params) => api.get('/sales/invoices', { params }),
+  getReceivables: (params) => api.get('/sales/receivables', { params }),
 };
 
 export const ReportAPI = {

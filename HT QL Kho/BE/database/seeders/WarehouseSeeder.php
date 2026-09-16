@@ -196,8 +196,8 @@ class WarehouseSeeder extends Seeder
                 'maNVL' => null,
                 'maSP' => 'SP001',
                 'tenTonKho' => 'Lô Thành Phẩm Sữa Tươi 100% Ít Đường 180ml (Batch FEFO-1)',
-                'soLuongNhap' => 5000,
-                'soLuongTonHienTai' => 1200, // FEFO Priority 1: Expiry in 10 days
+                'soLuongNhap' => 10,
+                'soLuongTonHienTai' => 10, // Tồn kho mẫu để kiểm thử bán hàng
                 'ngaySanXuat' => Carbon::now()->subDays(45)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(10)->toDateString(),
                 'trangThai' => 'Ưu tiên xuất FEFO',
@@ -208,8 +208,8 @@ class WarehouseSeeder extends Seeder
                 'maNVL' => null,
                 'maSP' => 'SP001',
                 'tenTonKho' => 'Lô Thành Phẩm Sữa Tươi 100% Ít Đường 180ml (Batch FEFO-2)',
-                'soLuongNhap' => 15000,
-                'soLuongTonHienTai' => 14200,
+                'soLuongNhap' => 0,
+                'soLuongTonHienTai' => 0,
                 'ngaySanXuat' => Carbon::now()->subDays(5)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(120)->toDateString(),
                 'trangThai' => 'Còn hạn',

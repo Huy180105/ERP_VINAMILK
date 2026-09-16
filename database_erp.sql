@@ -2151,3 +2151,10 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-09-16 11:30:30
+
+-- Sample Inventory Lots
+INSERT INTO `TonKho` (`maTonKho`, `tenTonKho`, `maSP`, `maNVL`, `ngaySanXuat`, `hanSuDung`, `soLuongNhap`, `soLuongTonHienTai`, `trangThai`) VALUES
+('TK-SP001-202609', 'Lô Sữa Tươi 180ml Th9/2026', 'SP001', NULL, '2026-09-01', '2027-03-01', 10, 10, 'Còn hạn'),
+('TK-NVL001-202609', 'Lô Sữa Bò Tươi Nhập Th9/2026', NULL, 'NVL001', '2026-09-01', '2026-09-15', 5000, 3500, 'Còn hạn');
+
+SET FOREIGN_KEY_CHECKS = 1;
