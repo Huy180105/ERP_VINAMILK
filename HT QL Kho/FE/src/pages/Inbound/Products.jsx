@@ -36,9 +36,9 @@ export default function InboundProducts() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <Layers className="w-6 h-6 text-blue-600" />
             <span>Nhập Kho Thành Phẩm (Bàn Giao Từ Xưởng Sản Xuất)</span>
           </h1>
@@ -48,7 +48,7 @@ export default function InboundProducts() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -69,7 +69,7 @@ export default function InboundProducts() {
               ) : (
                 receipts.map((r) => (
                   <tr key={r.maPhieuNhapSP} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-[#001E50]">{r.maPhieuNhapSP}</td>
+                    <td className="p-3 font-mono font-bold text-[#0B2341]">{r.maPhieuNhapSP}</td>
                     <td className="p-3 font-medium text-slate-700">{r.maPhieuYCXSP || 'Bàn giao trực tiếp'}</td>
                     <td className="p-3 text-slate-600 font-mono">{r.ngayNhap}</td>
                     <td className="p-3 space-y-1">

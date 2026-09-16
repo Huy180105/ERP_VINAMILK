@@ -26,9 +26,9 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <Package className="w-6 h-6 text-blue-600" />
             <span>Danh Mục Sản Phẩm Thành Phẩm Vinamilk</span>
           </h1>
@@ -36,13 +36,13 @@ export default function Products() {
             Các dòng sản phẩm sữa đạt chuẩn chất lượng quốc tế được đồng bộ trực tiếp từ phân hệ Sản xuất
           </p>
         </div>
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center space-x-1.5">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold px-3 py-1.5 rounded-md flex items-center space-x-1.5">
           <Award className="w-4 h-4 text-emerald-600" />
           <span>Đạt chuẩn Quốc tế Monde Selection</span>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -62,7 +62,7 @@ export default function Products() {
               ) : (
                 products.map((p) => (
                   <tr key={p.maSanPham} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-[#001E50]">{p.maSanPham}</td>
+                    <td className="p-3 font-mono font-bold text-[#0B2341]">{p.maSanPham}</td>
                     <td className="p-3 font-semibold text-slate-800 flex items-center space-x-2">
                       <span className="w-2 h-2 rounded-full bg-blue-600"></span>
                       <span>{p.tenSanPham}</span>

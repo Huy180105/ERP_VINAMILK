@@ -28,9 +28,9 @@ export default function InventoryLots() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <Clock className="w-6 h-6 text-blue-600" />
             <span>Tra Cứu Tồn Kho Theo Lô & Hạn Sử Dụng (FEFO)</span>
           </h1>
@@ -40,7 +40,7 @@ export default function InventoryLots() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-md border border-slate-200 shadow-sm">
         <div className="flex-1 relative">
           <input
             type="text"
@@ -60,12 +60,12 @@ export default function InventoryLots() {
           <option value="product">Chỉ Lô Thành Phẩm Sữa</option>
           <option value="material">Chỉ Lô Nguyên Vật Liệu</option>
         </select>
-        <button onClick={fetchLots} className="bg-[#001E50] hover:bg-blue-900 text-white text-xs font-medium px-4 py-2 rounded-lg transition">
+        <button onClick={fetchLots} className="bg-[#0B2341] hover:bg-blue-900 text-white text-xs font-medium px-4 py-2 rounded-lg transition">
           Lọc Dữ Liệu
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -90,12 +90,12 @@ export default function InventoryLots() {
                   const itemName = l.san_pham?.tenSanPham || l.nguyen_vat_lieu?.tenNVL || '-';
                   return (
                     <tr key={l.maTonKho} className="hover:bg-slate-50 transition">
-                      <td className="p-3 font-mono font-bold text-[#001E50]">{l.maTonKho}</td>
+                      <td className="p-3 font-mono font-bold text-[#0B2341]">{l.maTonKho}</td>
                       <td className="p-3 font-semibold text-slate-800">{l.tenTonKho}</td>
                       <td className="p-3 text-slate-600 font-medium">{itemName}</td>
                       <td className="p-3 text-slate-500 font-mono">{l.ngaySanXuat}</td>
                       <td className="p-3 font-mono font-bold text-slate-900">{l.hanSuDung}</td>
-                      <td className="p-3 text-right font-extrabold text-emerald-700">
+                      <td className="p-3 text-right font-semibold text-emerald-700">
                         {l.soLuongTonHienTai?.toLocaleString()}
                       </td>
                       <td className="p-3 text-center">

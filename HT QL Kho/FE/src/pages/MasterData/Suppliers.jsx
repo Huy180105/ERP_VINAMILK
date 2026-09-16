@@ -45,9 +45,9 @@ export default function Suppliers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <Building2 className="w-6 h-6 text-blue-600" />
             <span>Danh Mục Nhà Cung Cấp & Trang Trại Sữa Vinamilk</span>
           </h1>
@@ -57,7 +57,7 @@ export default function Suppliers() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#001E50] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-2"
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Nhà Cung Cấp Mới</span>
@@ -69,7 +69,7 @@ export default function Suppliers() {
           <p className="text-slate-400 text-xs">Đang tải danh sách...</p>
         ) : (
           suppliers.map((s) => (
-            <div key={s.maNCC} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div key={s.maNCC} className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
               <div className="flex items-start justify-between border-b pb-3">
                 <div>
                   <span className="font-mono text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">
@@ -99,9 +99,9 @@ export default function Suppliers() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-[#001E50] border-b pb-2">Thêm Nhà Cung Cấp Mới</h3>
+        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
+            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nhà Cung Cấp Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Mã NCC *</label>
@@ -155,7 +155,7 @@ export default function Suppliers() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#001E50] hover:bg-blue-900 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
                 >
                   Lưu NCC
                 </button>

@@ -8,10 +8,10 @@ export default function FefoBadge({ daysLeft }) {
   let label = `Còn ${daysLeft} ngày`;
 
   if (daysLeft <= 0) {
-    style = 'bg-rose-100 text-rose-900 border-rose-300 font-extrabold animate-pulse';
+    style = 'bg-rose-100 text-rose-900 border-rose-300 font-semibold ';
     label = 'ĐÃ HẾT HẠN';
   } else if (daysLeft <= 30) {
-    style = 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-950 border-amber-300 font-extrabold shadow-xs';
+    style = 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-950 border-amber-300 font-semibold shadow-sm';
     label = `ƯU TIÊN FEFO (${daysLeft} NÀY)`;
   }
 

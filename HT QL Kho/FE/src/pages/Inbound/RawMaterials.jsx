@@ -79,9 +79,9 @@ export default function InboundRawMaterials() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <ArrowDownLeft className="w-6 h-6 text-emerald-600" />
             <span>Nhập Kho Nguyên Vật Liệu (Từ Nhà Cung Cấp)</span>
           </h1>
@@ -96,14 +96,14 @@ export default function InboundRawMaterials() {
             setFormData({ ...formData, maPhieuNhapNVL: autoCode, maTonKho: autoLot });
             setShowModal(true);
           }}
-          className="bg-[#001E50] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-2"
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>Lập Phiếu Nhập NVL Mới</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -124,7 +124,7 @@ export default function InboundRawMaterials() {
               ) : (
                 receipts.map((r) => (
                   <tr key={r.maPhieuNhapNVL} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-[#001E50]">{r.maPhieuNhapNVL}</td>
+                    <td className="p-3 font-mono font-bold text-[#0B2341]">{r.maPhieuNhapNVL}</td>
                     <td className="p-3 font-medium text-slate-800">{r.nha_cung_cap?.tenNCC || r.maNCC}</td>
                     <td className="p-3 text-slate-600 font-mono">{r.ngayNhap}</td>
                     <td className="p-3 space-y-1">
@@ -157,9 +157,9 @@ export default function InboundRawMaterials() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-base font-bold text-[#001E50] border-b pb-2">Lập Phiếu Nhập Nguyên Vật Liệu Mới</h3>
+        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-sm max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Lập Phiếu Nhập Nguyên Vật Liệu Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -279,7 +279,7 @@ export default function InboundRawMaterials() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#001E50] hover:bg-blue-900 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
                 >
                   Tạo Phiếu Nhập
                 </button>

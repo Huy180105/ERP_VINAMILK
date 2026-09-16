@@ -70,9 +70,9 @@ export default function OutboundRawMaterials() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <ArrowUpRight className="w-6 h-6 text-amber-600" />
             <span>Xuất Kho Nguyên Vật Liệu Cấp Phát Cho Sản Xuất</span>
           </h1>
@@ -86,14 +86,14 @@ export default function OutboundRawMaterials() {
             setFormData({ ...formData, maPhieuXuatNVL: autoCode });
             setShowModal(true);
           }}
-          className="bg-[#001E50] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-2"
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>Lập Phiếu Xuất NVL Mới</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -114,7 +114,7 @@ export default function OutboundRawMaterials() {
               ) : (
                 dispatches.map((d) => (
                   <tr key={d.maPhieuXuatNVL} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-[#001E50]">{d.maPhieuXuatNVL}</td>
+                    <td className="p-3 font-mono font-bold text-[#0B2341]">{d.maPhieuXuatNVL}</td>
                     <td className="p-3 font-semibold text-slate-800">{d.maXuong || 'Xưởng Sản Xuất 1'}</td>
                     <td className="p-3 text-slate-600 font-mono">{d.ngayXuat}</td>
                     <td className="p-3 space-y-1">
@@ -147,9 +147,9 @@ export default function OutboundRawMaterials() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-[#001E50] border-b pb-2">Lập Phiếu Xuất NVL Cho Sản Xuất</h3>
+        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
+            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Lập Phiếu Xuất NVL Cho Sản Xuất</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Xuất *</label>
@@ -192,7 +192,7 @@ export default function OutboundRawMaterials() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#001E50] hover:bg-blue-900 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
                 >
                   Lưu Phiếu Xuất
                 </button>

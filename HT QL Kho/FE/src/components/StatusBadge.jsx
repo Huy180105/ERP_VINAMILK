@@ -10,24 +10,24 @@ export default function StatusBadge({ status }) {
     case 'Đã duyệt':
     case 'Đang kinh doanh':
     case 'Còn hạn':
-      style = 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-xs';
+      style = 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm';
       Icon = CheckCircle2;
       break;
     case 'Chờ duyệt':
     case 'Chờ xác nhận':
     case 'Chờ xử lý':
-      style = 'bg-amber-50 text-amber-800 border-amber-200 shadow-xs';
+      style = 'bg-amber-50 text-amber-800 border-amber-200 shadow-sm';
       Icon = Clock;
       break;
     case 'Từ chối':
     case 'Hủy':
     case 'Hết hạn':
-      style = 'bg-rose-50 text-rose-800 border-rose-200 shadow-xs';
+      style = 'bg-rose-50 text-rose-800 border-rose-200 shadow-sm';
       Icon = XCircle;
       break;
     case 'Sắp hết hạn':
     case 'Tồn kho thấp':
-      style = 'bg-orange-50 text-orange-800 border-orange-200 shadow-xs';
+      style = 'bg-orange-50 text-orange-800 border-orange-200 shadow-sm';
       Icon = AlertCircle;
       break;
     default:
