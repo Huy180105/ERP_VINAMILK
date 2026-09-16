@@ -26,6 +26,9 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . /var/www/html
 
+# Clear bootstrap cache files
+RUN rm -f bootstrap/cache/*.php
+
 # Install dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 

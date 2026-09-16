@@ -316,16 +316,18 @@ DROP TABLE IF EXISTS `ChiTietPhieuNhapSP`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ChiTietPhieuNhapSP` (
+  `maChiTietPhieuNhapSP` int(11) NOT NULL AUTO_INCREMENT,
   `maPhieuNhapSP` varchar(20) NOT NULL,
-  `maTonKho` varchar(50) NOT NULL,
-  `soLuong` int(11) DEFAULT 0,
+  `maSP` varchar(20) NOT NULL,
+  `soLuongNhap` int(11) DEFAULT 0,
   `ngaySanXuat` date DEFAULT NULL,
   `hanSuDung` date DEFAULT NULL,
-  `ghiChu` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  PRIMARY KEY (`maPhieuNhapSP`,`maTonKho`),
-  KEY `fk_ctpnsp_tk` (`maTonKho`),
+  `ghiChu` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`maChiTietPhieuNhapSP`),
+  KEY `fk_ctpnsp_phieu` (`maPhieuNhapSP`),
+  KEY `fk_ctpnsp_sp` (`maSP`),
   CONSTRAINT `fk_ctpnsp_phieu` FOREIGN KEY (`maPhieuNhapSP`) REFERENCES `PhieuNhapSP` (`maPhieuNhapSP`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ctpnsp_tk` FOREIGN KEY (`maTonKho`) REFERENCES `TonKho` (`maTonKho`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_ctpnsp_sp` FOREIGN KEY (`maSP`) REFERENCES `SanPham` (`maSanPham`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -336,9 +338,9 @@ CREATE TABLE `ChiTietPhieuNhapSP` (
 LOCK TABLES `ChiTietPhieuNhapSP` WRITE;
 /*!40000 ALTER TABLE `ChiTietPhieuNhapSP` DISABLE KEYS */;
 INSERT INTO `ChiTietPhieuNhapSP` VALUES
-('PNSP2026090201','LOT-SP-20260902-FEFO1',5000,'2026-08-02','2026-09-26','QC đạt chuẩn Monde Selection'),
-('PNSP2026090402','LOT-SP-20260904-SC01',3000,'2026-08-25','2026-09-24','Bảo quản kho mát ngay'),
-('PNSP2026090803','LOT-SP-20260908-FEFO2',15000,'2026-09-11','2027-01-14','Nhập kho tổng');
+(1,'PNSP2026090201','SP001',5000,'2026-08-02','2027-04-04','QC đạt chuẩn Monde Selection'),
+(2,'PNSP2026090402','SP003',3000,'2026-08-25','2027-03-25','Bảo quản kho mát ngay'),
+(3,'PNSP2026090803','SP001',15000,'2026-09-11','2027-09-16','Nhập kho tổng');
 /*!40000 ALTER TABLE `ChiTietPhieuNhapSP` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1820,20 +1822,23 @@ DROP TABLE IF EXISTS `TonKho`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `TonKho` (
   `maTonKho` varchar(50) NOT NULL COMMENT 'Mã lô tồn kho',
-  `tenTonKho` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL COMMENT 'Nhãn mô tả lô',
+  `tenTonKho` varchar(100) DEFAULT NULL COMMENT 'Nhãn mô tả lô',
   `maSP` varchar(20) DEFAULT NULL COMMENT 'Mã SP (nếu là lô thành phẩm)',
   `maNVL` varchar(20) DEFAULT NULL COMMENT 'Mã NVL (nếu là lô nguyên vật liệu)',
   `ngaySanXuat` date DEFAULT NULL COMMENT 'Ngày sản xuất lô',
   `hanSuDung` date DEFAULT NULL COMMENT 'Hạn sử dụng lô',
   `soLuongNhap` int(11) DEFAULT 0 COMMENT 'Số lượng ban đầu nhập',
   `soLuongTonHienTai` int(11) DEFAULT 0 COMMENT 'Số lượng tồn khả dụng hiện tại',
-  `trangThai` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT 'Còn hạn' COMMENT 'Trạng thái (Còn hạn, Sắp hết hạn, Hết hạn)',
-  `ghiChu` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `trangThai` varchar(50) DEFAULT 'Còn hạn' COMMENT 'Trạng thái (Còn hạn, Sắp hết hạn, Hết hạn)',
+  `ghiChu` varchar(255) DEFAULT NULL,
+  `maChiTietPhieuNhapSP` int(11) DEFAULT NULL COMMENT 'FK -> ChiTietPhieuNhapSP',
   PRIMARY KEY (`maTonKho`),
   KEY `fk_tk_sp` (`maSP`),
   KEY `fk_tk_nvl` (`maNVL`),
+  KEY `fk_tk_ctpnsp` (`maChiTietPhieuNhapSP`),
   CONSTRAINT `fk_tk_nvl` FOREIGN KEY (`maNVL`) REFERENCES `NguyenVatLieu` (`maNVL`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_tk_sp` FOREIGN KEY (`maSP`) REFERENCES `SanPham` (`maSanPham`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `fk_tk_sp` FOREIGN KEY (`maSP`) REFERENCES `SanPham` (`maSanPham`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_tk_ctpnsp` FOREIGN KEY (`maChiTietPhieuNhapSP`) REFERENCES `ChiTietPhieuNhapSP` (`maChiTietPhieuNhapSP`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý chi tiết tồn kho theo Lô và HSD';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1843,7 +1848,7 @@ CREATE TABLE `TonKho` (
 
 LOCK TABLES `TonKho` WRITE;
 /*!40000 ALTER TABLE `TonKho` DISABLE KEYS */;
-INSERT INTO `TonKho` VALUES
+INSERT INTO `TonKho` (`maTonKho`, `tenTonKho`, `maSP`, `maNVL`, `ngaySanXuat`, `hanSuDung`, `soLuongNhap`, `soLuongTonHienTai`, `trangThai`, `ghiChu`) VALUES
 ('LOT-NVL-20260901-01','Lô Sữa Tươi Nguyên Chất Thô Mộc Châu - Đợt 1',NULL,'NVL001','2026-09-06','2026-10-01',20000,15500,'Ưu tiên xuất FEFO','Bảo quản kho lạnh UHT 2-4 độ C'),
 ('LOT-NVL-20260902-06','Lô Men Probiotics LGG Chr. Hansen Đan Mạch',NULL,'NVL006','2026-09-01','2026-12-15',200,45,'Tồn kho thấp','Men vi sinh sống đông khô'),
 ('LOT-NVL-20260905-02','Lô Đường Tinh Luyện Biên Hòa Grade A',NULL,'NVL002','2026-08-17','2027-09-16',10000,8500,'Còn hạn','Kho khô ráo'),
