@@ -31,19 +31,19 @@ class PhieuThuController extends Controller
             'hoaDon'
         ]);
 
-        if ($request->has('trangThai') && $request->input('trangThai') !== '') {
+        if ($request->filled('trangThai')) {
             $query->where('trangThai', $request->input('trangThai'));
         }
 
-        if ($request->has('maDoiTuong') && $request->input('maDoiTuong') !== '') {
+        if ($request->filled('maDoiTuong')) {
             $query->where('maDoiTuong', $request->input('maDoiTuong'));
         }
 
-        if ($request->has('tuNgay') && $request->input('tuNgay') !== '') {
+        if ($request->filled('tuNgay')) {
             $query->whereDate('ngayThu', '>=', $request->input('tuNgay'));
         }
 
-        if ($request->has('denNgay') && $request->input('denNgay') !== '') {
+        if ($request->filled('denNgay')) {
             $query->whereDate('ngayThu', '<=', $request->input('denNgay'));
         }
 

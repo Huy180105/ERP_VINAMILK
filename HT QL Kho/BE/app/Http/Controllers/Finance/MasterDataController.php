@@ -22,7 +22,7 @@ class MasterDataController extends Controller
     public function getRevCategories(Request $request)
     {
         $query = DanhMucThu::query();
-        if ($request->has('keyword') && $request->input('keyword') !== '') {
+        if ($request->filled('keyword')) {
             $keyword = $request->input('keyword');
             $query->where(function ($q) use ($keyword) {
                 $q->where('tenDanhMucThu', 'LIKE', "%{$keyword}%")
@@ -106,7 +106,7 @@ class MasterDataController extends Controller
     public function getExpCategories(Request $request)
     {
         $query = DanhMucChi::query();
-        if ($request->has('keyword') && $request->input('keyword') !== '') {
+        if ($request->filled('keyword')) {
             $keyword = $request->input('keyword');
             $query->where(function ($q) use ($keyword) {
                 $q->where('tenDanhMucChi', 'LIKE', "%{$keyword}%")
@@ -191,17 +191,17 @@ class MasterDataController extends Controller
     {
         $query = DoiTuongGiaoDich::with(['khachHang', 'nhaCungCap', 'nhanVien']);
 
-        if ($request->has('loaiDoiTuong') && $request->input('loaiDoiTuong') !== '') {
+        if ($request->filled('loaiDoiTuong')) {
             $query->where('loaiDoiTuong', $request->input('loaiDoiTuong'));
         }
 
-        if ($request->has('trangThai') && $request->input('trangThai') !== '') {
+        if ($request->filled('trangThai')) {
             $query->where('trangThai', $request->input('trangThai'));
         }
 
         $list = $query->get();
 
-        if ($request->has('keyword') && $request->input('keyword') !== '') {
+        if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->input('keyword'));
             $list = $list->filter(function ($item) use ($keyword) {
                 return str_contains(mb_strtolower($item->maDoiTuong), $keyword) ||
@@ -325,10 +325,10 @@ class MasterDataController extends Controller
     public function getAccounts(Request $request)
     {
         $query = TaiKhoanQuy::query();
-        if ($request->has('loaiTaiKhoan') && $request->input('loaiTaiKhoan') !== '') {
+        if ($request->filled('loaiTaiKhoan')) {
             $query->where('loaiTaiKhoan', $request->input('loaiTaiKhoan'));
         }
-        if ($request->has('keyword') && $request->input('keyword') !== '') {
+        if ($request->filled('keyword')) {
             $keyword = $request->input('keyword');
             $query->where(function ($q) use ($keyword) {
                 $q->where('tenTaiKhoanQuy', 'LIKE', "%{$keyword}%")
