@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class PhieuXuatNVL extends Model
+{
+    use HasFactory;
+
+    protected $table = 'PhieuXuatNVL';
+    protected $primaryKey = 'maPhieuXuatNVL';
+    public $incrementing = false;
+    protected $keyType = 'string';
+    public $timestamps = false;
+
+    protected $fillable = [
+        'maPhieuXuatNVL',
+        'maXuong',
+        'maNVTao',
+        'maNVNhan',
+        'ngayXuat',
+        'trangThai',
+        'ghiChu',
+        'maPhieuYeuCauNVL',
+    ];
+
+    public function nhanVienTao()
+    {
+        return $this->belongsTo(NhanVien::class, 'maNVTao', 'maNV');
+    }
+
+    public function nhanVienNhan()
+    {
+        return $this->belongsTo(NhanVien::class, 'maNVNhan', 'maNV');
+    }
+
+    public function chiTiets()
+    {
+        return $this->hasMany(ChiTietPhieuXuatNVL::class, 'maPhieuXuatNVL', 'maPhieuXuatNVL');
+    }
+}
