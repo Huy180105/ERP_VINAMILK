@@ -63,10 +63,10 @@ export default function PortalHome() {
       subtitle: 'Mega Plant & Tự động hóa',
       desc: 'Lập Kế hoạch & Lệnh sản xuất, Điều phối các công đoạn Tiệt trùng UHT, Đồng hóa, Chiết rót vô trùng. Theo dõi Bán thành phẩm, Định mức NVL và Nghiệm thu chất lượng KCS.',
       icon: Factory,
-      badge: 'TÍCH HỢP THAM CHIẾU',
-      badgeColor: 'bg-blue-100 text-[#002795]',
+      badge: 'ĐANG HOẠT ĐỘNG',
+      badgeColor: 'bg-emerald-500 text-white',
       path: '/production',
-      active: false,
+      active: true,
       stats: '14 Bảng CSDL · 42 Quy trình',
       highlights: ['Lệnh sản xuất & KCS', 'Công đoạn tiệt trùng & chiết rót', 'Quản lý bán thành phẩm']
     },
