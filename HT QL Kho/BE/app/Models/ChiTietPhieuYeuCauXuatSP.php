@@ -17,6 +17,8 @@ class ChiTietPhieuYeuCauXuatSP extends Model
         'maPhieuYCXSP',
         'maSanPham',
         'soLuong',
+        'ngaySanXuat',
+        'hanSuDung',
         'ghiChu',
     ];
 
