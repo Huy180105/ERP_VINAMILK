@@ -11,6 +11,7 @@ export default function DoiTuongGiaoDich() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [sourceEntities, setSourceEntities] = useState([]);
+  const [alreadyMapped, setAlreadyMapped] = useState([]);
   const [loadingSources, setLoadingSources] = useState(false);
   const [selectedSource, setSelectedSource] = useState(null);
 
@@ -45,6 +46,7 @@ export default function DoiTuongGiaoDich() {
       const res = await FinanceMasterDataAPI.getAvailableSourceEntities({ loaiDoiTuong: loai });
       if (res.data.success) {
         setSourceEntities(res.data.data || []);
+        setAlreadyMapped(res.data.mapped || []);
       }
     } catch (err) {
       console.error(err);
@@ -56,7 +58,7 @@ export default function DoiTuongGiaoDich() {
   const openCreateModal = () => {
     const loai = 'KH';
     setFormData({
-      maDoiTuong: `DT-KH-${Date.now().toString().slice(-4)}`,
+      maDoiTuong: '',
       maThamChieu: '',
       loaiDoiTuong: loai,
       trangThai: 1,
@@ -72,7 +74,7 @@ export default function DoiTuongGiaoDich() {
       ...prev,
       loaiDoiTuong: newLoai,
       maThamChieu: '',
-      maDoiTuong: `DT-${newLoai}-${Date.now().toString().slice(-4)}`,
+      maDoiTuong: '',
     }));
     setSelectedSource(null);
     fetchSources(newLoai);
@@ -80,12 +82,23 @@ export default function DoiTuongGiaoDich() {
 
   const handleSelectSource = (e) => {
     const maGoc = e.target.value;
-    const found = sourceEntities.find(s => s.maGoc === maGoc);
+    const found = sourceEntities.find(s => (s.maGoc || s.id) === maGoc);
     setSelectedSource(found || null);
+
+    // Chuẩn hóa mã ánh xạ ngắn gọn theo chuẩn Vinamilk ERP (ví dụ: DT-NCC003, DT-KH002, DT-NV003)
+    let generatedCode = '';
+    if (maGoc) {
+      if (maGoc.startsWith(formData.loaiDoiTuong)) {
+        generatedCode = `DT-${maGoc}`;
+      } else {
+        generatedCode = `DT-${formData.loaiDoiTuong}-${maGoc}`;
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       maThamChieu: maGoc,
-      maDoiTuong: maGoc ? `DT-${prev.loaiDoiTuong}-${maGoc}` : prev.maDoiTuong,
+      maDoiTuong: generatedCode || prev.maDoiTuong,
     }));
   };
 
@@ -103,7 +116,13 @@ export default function DoiTuongGiaoDich() {
         fetchData();
       }
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      const errorMsg = err.response?.data?.message || err.message;
+      const errorsObj = err.response?.data?.errors;
+      let detailedMsg = errorMsg;
+      if (errorsObj) {
+        detailedMsg += '\n' + Object.values(errorsObj).flat().join('\n');
+      }
+      alert('Lỗi: ' + detailedMsg);
     }
   };
 
@@ -340,6 +359,8 @@ export default function DoiTuongGiaoDich() {
                   <input
                     type="text"
                     required
+                    maxLength={50}
+                    placeholder="Ví dụ: DT-NCC003"
                     value={formData.maDoiTuong}
                     onChange={(e) => setFormData({ ...formData, maDoiTuong: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
@@ -358,11 +379,15 @@ export default function DoiTuongGiaoDich() {
                   className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
                 >
                   <option value="">-- Chọn từ danh sách phân hệ nguồn --</option>
-                  {sourceEntities.map((s) => (
-                    <option key={s.maGoc} value={s.maGoc}>
-                      {s.maGoc} - {s.ten} {s.soDienThoai ? `(${s.soDienThoai})` : ''}
-                    </option>
-                  ))}
+                  {sourceEntities.map((s) => {
+                    const code = s.maGoc || s.id;
+                    const isMapped = alreadyMapped.includes(code);
+                    return (
+                      <option key={code} value={code} disabled={isMapped}>
+                        {code} - {s.ten} {s.soDienThoai ? `(${s.soDienThoai})` : ''}{isMapped ? ' [ĐÃ ÁNH XẠ]' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
                 {loadingSources && (
                   <p className="text-[11px] text-[#0052FF] mt-1">Đang tải danh sách từ phân hệ nguồn...</p>
@@ -383,7 +408,7 @@ export default function DoiTuongGiaoDich() {
                     </div>
                     <div>
                       <span className="text-slate-500">Mã gốc: </span>
-                      <strong className="text-[#0B2341] font-mono">{selectedSource.maGoc}</strong>
+                      <strong className="text-[#0B2341] font-mono">{selectedSource.maGoc || selectedSource.id}</strong>
                     </div>
                     {selectedSource.soDienThoai && (
                       <div>

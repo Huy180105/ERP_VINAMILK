@@ -103,7 +103,7 @@ class WarehouseSeeder extends Seeder
             ['maSanPham' => 'SP010', 'tenSanPham' => 'Phô Mai Con Bò Cười Vinamilk 112g (8 Miếng)', 'donViTinh' => 'Hộp', 'donGia' => 35000, 'trangThai' => 'Đang kinh doanh'],
         ]);
 
-        // 4. Seed NhaCungCap (6 Suppliers)
+        // 4. Seed NhaCungCap (15 Suppliers)
         DB::table('NhaCungCap')->insert([
             ['maNCC' => 'NCC001', 'tenNCC' => 'Tập Đoàn Bao Bì Tetra Pak Việt Nam', 'maSoThue' => '0301458999', 'diaChi' => 'KCN Việt Nam - Singapore, Bình Dương', 'soDienThoai' => '02743756888', 'email' => 'contact.vn@tetrapak.com'],
             ['maNCC' => 'NCC002', 'tenNCC' => 'Công Ty Cổ Phần Đường Biên Hòa (TTC Sugar)', 'maSoThue' => '3600258147', 'diaChi' => 'KCN Biên Hòa 1, Đồng Nai', 'soDienThoai' => '02513836121', 'email' => 'sales@ttcsugar.com.vn'],
@@ -111,9 +111,18 @@ class WarehouseSeeder extends Seeder
             ['maNCC' => 'NCC004', 'tenNCC' => 'Tập Đoàn Dinh Dưỡng Fonterra New Zealand Ltd', 'maSoThue' => '9900112233', 'diaChi' => 'Auckland, New Zealand / CN TP.HCM', 'soDienThoai' => '02838279999', 'email' => 'nzmp.vietnam@fonterra.com'],
             ['maNCC' => 'NCC005', 'tenNCC' => 'Công Ty Men Sống Chr. Hansen Denmark A/S', 'maSoThue' => '9900445566', 'diaChi' => 'Hoersholm, Đan Mạch', 'soDienThoai' => '02839101122', 'email' => 'chrhansen@danishmicrobiology.dk'],
             ['maNCC' => 'NCC006', 'tenNCC' => 'Trang Trại Sinh Thái Vinamilk Green Farm Tây Ninh', 'maSoThue' => '3901234567', 'diaChi' => 'Huyện Bến Cầu, Tây Ninh', 'soDienThoai' => '02763888999', 'email' => 'greenfarm.tayninh@vinamilk.com.vn'],
+            ['maNCC' => 'NCC007', 'tenNCC' => 'Trang Trại Bò Sữa Hữu Cơ Vinamilk Organic Đà Lạt', 'maSoThue' => '5801239988', 'diaChi' => 'Xã Tu Tra, Đơn Dương, Lâm Đồng', 'soDienThoai' => '02633844555', 'email' => 'organic.dalat@vinamilk.com.vn'],
+            ['maNCC' => 'NCC008', 'tenNCC' => 'Công Ty TNHH Hương Liệu Thực Phẩm Kerry Ingredients VN', 'maSoThue' => '3700987654', 'diaChi' => 'KCN VSIP 1, Thuận An, Bình Dương', 'soDienThoai' => '02743789123', 'email' => 'contact.vn@kerry.com'],
+            ['maNCC' => 'NCC009', 'tenNCC' => 'Tập Đoàn Hóa Chất & Vi Chất Dinh Dưỡng DSM Thụy Sĩ', 'maSoThue' => '9900554433', 'diaChi' => 'Kaiseraugst, Thụy Sĩ / CN Q.1, TP.HCM', 'soDienThoai' => '02838234567', 'email' => 'nutrition.vn@dsm.com'],
+            ['maNCC' => 'NCC010', 'tenNCC' => 'Hợp Tác Xã Chăn Nuôi Bò Sữa Đơn Dương (Lâm Đồng)', 'maSoThue' => '5800456123', 'diaChi' => 'Thị trấn Thạnh Mỹ, Đơn Dương, Lâm Đồng', 'soDienThoai' => '02633888777', 'email' => 'donduongmilk@lamdongcoop.vn'],
+            ['maNCC' => 'NCC011', 'tenNCC' => 'Công Ty Cổ Phần Nhựa Bao Bì Duy Tân', 'maSoThue' => '0302234567', 'diaChi' => 'KCN Tân Bình, Tây Thạnh, Tân Phú, TP.HCM', 'soDienThoai' => '02838163333', 'email' => 'sales@duytan.com'],
+            ['maNCC' => 'NCC012', 'tenNCC' => 'Công Ty TNHH Vận Tải Lạnh Chuỗi Cung Ứng ABA Cooltrans', 'maSoThue' => '0310246810', 'diaChi' => 'KCN Cát Lái 2, TP. Thủ Đức, TP.HCM', 'soDienThoai' => '02837425555', 'email' => 'dispatch@abacooltrans.vn'],
+            ['maNCC' => 'NCC013', 'tenNCC' => 'Trang Trại Bò Sữa Công Nghệ Cao Vinamilk Thanh Hóa', 'maSoThue' => '2801998877', 'diaChi' => 'Thị trấn Thống Nhất, Yên Định, Thanh Hóa', 'soDienThoai' => '02373899222', 'email' => 'farm.thanhhoa@vinamilk.com.vn'],
+            ['maNCC' => 'NCC014', 'tenNCC' => 'Công Ty Cổ Phần Cơ Điện Lạnh & Thiết Bị Sữa REE Corp', 'maSoThue' => '0301122334', 'diaChi' => '364 Cộng Hòa, Phường 13, Tân Bình, TP.HCM', 'soDienThoai' => '02838100011', 'email' => 'ree@reepower.com.vn'],
+            ['maNCC' => 'NCC015', 'tenNCC' => 'Công Ty Cổ Phần Bao Bì Thùng Giấy Tân Á', 'maSoThue' => '3601556677', 'diaChi' => 'KCN Amata, Biên Hòa, Đồng Nai', 'soDienThoai' => '02513998877', 'email' => 'packaging@tana-box.com.vn'],
         ]);
 
-        // 5. Seed KhachHang (6 Supermarket Chains / Distributors)
+        // 5. Seed KhachHang (15 Supermarket Chains / Distributors / Institutions)
         DB::table('KhachHang')->insert([
             ['maKhachHang' => 'KH001', 'tenKhachHang' => 'Hệ Thống Siêu Thị Co.opmart Toàn Quốc (Saigon Co.op)', 'soDienThoai' => '02838360143', 'diaChi' => '131 Điện Biên Phủ, Phường 15, Bình Thạnh, TP.HCM', 'hanMucCongNo' => 500000000],
             ['maKhachHang' => 'KH002', 'tenKhachHang' => 'Chuỗi Cửa Hàng Vinamilk Giấc Mơ Sữa Việt', 'soDienThoai' => '1900636979', 'diaChi' => '10 Tân Trào, Tân Phú, Quận 7, TP.HCM', 'hanMucCongNo' => 1000000000],
@@ -121,6 +130,15 @@ class WarehouseSeeder extends Seeder
             ['maKhachHang' => 'KH004', 'tenKhachHang' => 'Đại Lý Tổng Phân Phối Sữa Miền Tây (Hậu Giang)', 'soDienThoai' => '02933878999', 'diaChi' => 'KCN Sông Hậu, Huyện Châu Thành, Hậu Giang', 'hanMucCongNo' => 350000000],
             ['maKhachHang' => 'KH005', 'tenKhachHang' => 'Tập Đoàn Bách Hóa Xanh (MWG)', 'soDienThoai' => '19001908', 'diaChi' => 'KCN Tân Bình, Tân Phú, TP.HCM', 'hanMucCongNo' => 600000000],
             ['maKhachHang' => 'KH006', 'tenKhachHang' => 'Hệ Thống Đại Lý Xuất Khẩu Sữa Trung Đông (Dubai UAE)', 'soDienThoai' => '00971432100', 'diaChi' => 'Jebel Ali Free Zone, Dubai, UAE', 'hanMucCongNo' => 2000000000],
+            ['maKhachHang' => 'KH007', 'tenKhachHang' => 'Đại Siêu Thị GO! & Tops Market (Central Retail Việt Nam)', 'soDienThoai' => '02839958368', 'diaChi' => 'Tòa nhà Central Plaza, 163 Phan Đăng Lưu, Phú Nhuận, TP.HCM', 'hanMucCongNo' => 750000000],
+            ['maKhachHang' => 'KH008', 'tenKhachHang' => 'Hệ Thống Bán Sỉ MM Mega Market Việt Nam (An Phú)', 'soDienThoai' => '02835190390', 'diaChi' => 'Khu B, KĐT mới An Phú - An Khánh, TP. Thủ Đức, TP.HCM', 'hanMucCongNo' => 900000000],
+            ['maKhachHang' => 'KH009', 'tenKhachHang' => 'Chuỗi Siêu Thị AEON Mall Nhật Bản (Tân Phú & Bình Tân)', 'soDienThoai' => '02862887733', 'diaChi' => 'Số 30 Bờ Bao Tân Thắng, Sơn Kỳ, Tân Phú, TP.HCM', 'hanMucCongNo' => 1200000000],
+            ['maKhachHang' => 'KH010', 'tenKhachHang' => 'Hệ Thống Siêu Thị Lotte Mart Nam Sài Gòn', 'soDienThoai' => '02837753232', 'diaChi' => '469 Nguyễn Hữu Thọ, Tân Hưng, Quận 7, TP.HCM', 'hanMucCongNo' => 650000000],
+            ['maKhachHang' => 'KH011', 'tenKhachHang' => 'Chuỗi Cửa Hàng Tiện Lợi Circle K Việt Nam', 'soDienThoai' => '02836207070', 'diaChi' => '160 Bùi Thị Xuân, Phạm Ngũ Lão, Quận 1, TP.HCM', 'hanMucCongNo' => 450000000],
+            ['maKhachHang' => 'KH012', 'tenKhachHang' => 'Chuỗi Bán Lẻ Tiện Ích GS25 (Sơn Kim Retail)', 'soDienThoai' => '02873022525', 'diaChi' => 'Toà nhà Empress Tower, 138 Hai Bà Trưng, Quận 1, TP.HCM', 'hanMucCongNo' => 400000000],
+            ['maKhachHang' => 'KH013', 'tenKhachHang' => 'Ban Điều Hành Đề Án Sữa Học Đường TP. Hồ Chí Minh', 'soDienThoai' => '02838299666', 'diaChi' => '66-68 Lê Thánh Tôn, Bến Nghé, Quận 1, TP.HCM', 'hanMucCongNo' => 1500000000],
+            ['maKhachHang' => 'KH014', 'tenKhachHang' => 'Khoa Dinh Dưỡng & Căn Tin Bệnh Viện Chợ Rẫy', 'soDienThoai' => '02838554137', 'diaChi' => '201B Nguyễn Chí Thanh, Phường 12, Quận 5, TP.HCM', 'hanMucCongNo' => 300000000],
+            ['maKhachHang' => 'KH015', 'tenKhachHang' => 'Công Ty Cổ Phần Phân Phối Tiêu Dùng Miền Bắc (Hà Nội)', 'soDienThoai' => '02437896688', 'diaChi' => 'Khu Công Nghiệp Đài Tư, Sài Đồng, Long Biên, Hà Nội', 'hanMucCongNo' => 850000000],
         ]);
 
         // 6. Seed TonKho (12 Lots - FEFO priority, near expiry, low stock & normal)

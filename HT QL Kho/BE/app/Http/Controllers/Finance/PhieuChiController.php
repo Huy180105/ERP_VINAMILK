@@ -32,27 +32,27 @@ class PhieuChiController extends Controller
             'bangLuong.nhanVien'
         ]);
 
-        if ($request->has('trangThai') && $request->input('trangThai') !== '') {
+        if ($request->filled('trangThai')) {
             $query->where('trangThai', $request->input('trangThai'));
         }
 
-        if ($request->has('maDoiTuong') && $request->input('maDoiTuong') !== '') {
+        if ($request->filled('maDoiTuong')) {
             $query->where('maDoiTuong', $request->input('maDoiTuong'));
         }
 
-        if ($request->has('tuNgay') && $request->input('tuNgay') !== '') {
+        if ($request->filled('tuNgay')) {
             $query->whereDate('ngayChi', '>=', $request->input('tuNgay'));
         }
 
-        if ($request->has('denNgay') && $request->input('denNgay') !== '') {
+        if ($request->filled('denNgay')) {
             $query->whereDate('ngayChi', '<=', $request->input('denNgay'));
         }
 
-        if ($request->has('maPhieuNhapNVL') && $request->input('maPhieuNhapNVL') !== '') {
+        if ($request->filled('maPhieuNhapNVL')) {
             $query->where('maPhieuNhapNVL', $request->input('maPhieuNhapNVL'));
         }
 
-        if ($request->has('maBangLuong') && $request->input('maBangLuong') !== '') {
+        if ($request->filled('maBangLuong')) {
             $query->where('maBangLuong', $request->input('maBangLuong'));
         }
 
