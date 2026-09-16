@@ -1,7 +1,6 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ERPHeader from './components/ERPHeader';
 import PortalHome from './pages/PortalHome';
 
 // Warehouse Pages
@@ -16,37 +15,41 @@ import OutboundProducts from './pages/Outbound/Products';
 import InventoryLots from './pages/Inventory/Lots';
 import Reports from './pages/Reports';
 
+// Finance Layout & Pages
+import FinanceDashboard from './pages/Finance/Dashboard';
+import DanhMucThu from './pages/Finance/MasterData/DanhMucThu';
+import DanhMucChi from './pages/Finance/MasterData/DanhMucChi';
+import DoiTuongGiaoDich from './pages/Finance/MasterData/DoiTuongGiaoDich';
+import TaiKhoanQuy from './pages/Finance/MasterData/TaiKhoanQuy';
+import PhieuThu from './pages/Finance/PhieuThu';
+import PhieuChi from './pages/Finance/PhieuChi';
+import FinanceBaoCao from './pages/Finance/BaoCao';
+
 // Subsystem Preview Pages
 import HRModule from './pages/Subsystems/HRModule';
 import ProductionModule from './pages/Subsystems/ProductionModule';
 import SalesModule from './pages/Subsystems/SalesModule';
-import FinanceModule from './pages/Subsystems/FinanceModule';
 
 // Warehouse App Shell Wrapper Component
 function WarehousePage({ children }) {
-  const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Header />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-6 overflow-y-auto">
-          {/* Quick Back to Portal Button */}
-          <div className="mb-4 flex items-center justify-between bg-blue-50/70 border border-blue-200/60 p-2.5 rounded-xl text-xs">
-            <span className="font-semibold text-[#00249C]">
-              📌 Đang làm việc tại: <b>Phân Hệ Quản Lý Kho Vinamilk ERP</b>
-            </span>
-            <button 
-              onClick={() => navigate('/')}
-              className="bg-[#00249C] hover:bg-blue-900 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition shadow-xs cursor-pointer"
-            >
-              ← Về Cổng Thông Tin Portal 5 Phân Hệ
-            </button>
-          </div>
+    <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
+      <ERPHeader module="warehouse" />
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-6">
+        {children}
+      </main>
+    </div>
+  );
+}
 
-          {children}
-        </main>
-      </div>
+// Finance App Shell Wrapper Component
+function FinancePage({ children }) {
+  return (
+    <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
+      <ERPHeader module="finance" showRoleSwitcher />
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-6">
+        {children}
+      </main>
     </div>
   );
 }
@@ -73,7 +76,7 @@ export default function App() {
         <Route path="/warehouse/inventory/alerts" element={<WarehousePage><Dashboard /></WarehousePage>} />
         <Route path="/warehouse/reports/summary" element={<WarehousePage><Reports /></WarehousePage>} />
 
-        {/* Route 4: Warehouse Sub-pages WITHOUT /warehouse prefix (Direct Access Support) */}
+        {/* Route 4: Warehouse Sub-pages WITHOUT /warehouse prefix */}
         <Route path="/master-data/materials" element={<WarehousePage><Materials /></WarehousePage>} />
         <Route path="/master-data/products" element={<WarehousePage><Products /></WarehousePage>} />
         <Route path="/master-data/suppliers" element={<WarehousePage><Suppliers /></WarehousePage>} />
@@ -85,11 +88,20 @@ export default function App() {
         <Route path="/inventory/alerts" element={<WarehousePage><Dashboard /></WarehousePage>} />
         <Route path="/reports/summary" element={<WarehousePage><Reports /></WarehousePage>} />
 
-        {/* Other ERP Subsystems */}
+        {/* Route 5: Finance Subsystem (Phân Hệ Quản Lý Thu Chi) */}
+        <Route path="/finance" element={<FinancePage><FinanceDashboard /></FinancePage>} />
+        <Route path="/finance/master-data/revenue-categories" element={<FinancePage><DanhMucThu /></FinancePage>} />
+        <Route path="/finance/master-data/expense-categories" element={<FinancePage><DanhMucChi /></FinancePage>} />
+        <Route path="/finance/master-data/counterparties" element={<FinancePage><DoiTuongGiaoDich /></FinancePage>} />
+        <Route path="/finance/master-data/accounts" element={<FinancePage><TaiKhoanQuy /></FinancePage>} />
+        <Route path="/finance/receipts" element={<FinancePage><PhieuThu /></FinancePage>} />
+        <Route path="/finance/payments" element={<FinancePage><PhieuChi /></FinancePage>} />
+        <Route path="/finance/reports" element={<FinancePage><FinanceBaoCao /></FinancePage>} />
+
+        {/* Route 6: Other ERP Subsystems */}
         <Route path="/hr" element={<WarehousePage><HRModule /></WarehousePage>} />
         <Route path="/production" element={<WarehousePage><ProductionModule /></WarehousePage>} />
         <Route path="/sales" element={<WarehousePage><SalesModule /></WarehousePage>} />
-        <Route path="/finance" element={<WarehousePage><FinanceModule /></WarehousePage>} />
 
         {/* Fallback for any unknown route -> Portal Home */}
         <Route path="*" element={<PortalHome />} />

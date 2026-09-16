@@ -51,9 +51,9 @@ export default function OutboundProducts() {
   return (
     <div className="space-y-6">
       {/* Header Banner with FEFO Highlight */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <Truck className="w-6 h-6 text-amber-600" />
             <span>Xuất Kho Thành Phẩm Cho Nhà Phân Phối / Khách Hàng (FEFO Engine)</span>
           </h1>
@@ -63,7 +63,7 @@ export default function OutboundProducts() {
         </div>
         <button
           onClick={() => setShowFefoModal(true)}
-          className="bg-[#D97706] hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center space-x-2"
+          className="bg-[#D97706] hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-md shadow transition flex items-center space-x-2"
         >
           <Zap className="w-4 h-4" />
           <span>Tra Cứu Lô Gợi Ý FEFO</span>
@@ -71,7 +71,7 @@ export default function OutboundProducts() {
       </div>
 
       {/* FEFO Quick Recommendation Cards */}
-      <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 space-y-3">
+      <div className="bg-amber-50/70 border border-amber-200/80 rounded-lg p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Zap className="w-5 h-5 text-amber-600" />
@@ -86,9 +86,9 @@ export default function OutboundProducts() {
           {fefoSuggestions.slice(0, 3).map((lot, idx) => {
             const daysLeft = Math.ceil((new Date(lot.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
             return (
-              <div key={idx} className="bg-white p-3.5 rounded-xl border border-amber-200 shadow-sm space-y-2">
+              <div key={idx} className="bg-white p-3.5 rounded-md border border-amber-200 shadow-sm space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-[#001E50] text-xs">{lot.maTonKho}</span>
+                  <span className="font-mono font-bold text-[#0B2341] text-xs">{lot.maTonKho}</span>
                   <FefoBadge daysLeft={daysLeft} />
                 </div>
                 <p className="text-xs font-semibold text-slate-800">{lot.tenTonKho}</p>
@@ -103,7 +103,7 @@ export default function OutboundProducts() {
       </div>
 
       {/* Dispatch List Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -124,7 +124,7 @@ export default function OutboundProducts() {
               ) : (
                 dispatches.map((d) => (
                   <tr key={d.maPhieuXuatSP} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-[#001E50]">{d.maPhieuXuatSP}</td>
+                    <td className="p-3 font-mono font-bold text-[#0B2341]">{d.maPhieuXuatSP}</td>
                     <td className="p-3 font-semibold text-slate-800">{d.khach_hang?.tenKhachHang || d.maKhachHang || 'Đại Lý Phân Phối Miền Nam'}</td>
                     <td className="p-3 text-slate-600 font-mono">{d.ngayXuat}</td>
                     <td className="p-3 space-y-1">
@@ -158,10 +158,10 @@ export default function OutboundProducts() {
 
       {/* FEFO Modal Lookup */}
       {showFefoModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4">
+        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-sm max-w-xl w-full p-6 space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="text-base font-bold text-[#001E50] flex items-center space-x-2">
+              <h3 className="text-base font-bold text-[#0B2341] flex items-center space-x-2">
                 <Zap className="w-5 h-5 text-amber-500" />
                 <span>Thuật Toán Gợi Ý Xuất Hàng FEFO</span>
               </h3>
@@ -182,7 +182,7 @@ export default function OutboundProducts() {
                 <option value="SP002">SP002 - Sữa Chua Ăn Vinamilk Có Đường 100g</option>
               </select>
 
-              <div className="divide-y border rounded-xl overflow-hidden">
+              <div className="divide-y border rounded-md overflow-hidden">
                 {fefoSuggestions.map((lot, idx) => {
                   const daysLeft = Math.ceil((new Date(lot.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
                   return (

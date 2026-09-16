@@ -618,18 +618,12 @@ CREATE TABLE `DanhMucChi` (
 DROP TABLE IF EXISTS `DoiTuongGiaoDich`;
 CREATE TABLE `DoiTuongGiaoDich` (
   `maDoiTuong` VARCHAR(50) NOT NULL,
-  `maThamChieu` VARCHAR(50) DEFAULT NULL COMMENT 'Mã thật từ bảng KhachHang/NhaCungCap/NhanVien',
-  `loaiDoiTuong` VARCHAR(20) DEFAULT 'KH' COMMENT 'KH, NCC, NV, Khac',
-  `tenDoiTuong` NVARCHAR(150) NOT NULL,
-  `maSoThue` VARCHAR(20) DEFAULT NULL,
-  `diaChi` NVARCHAR(255) DEFAULT NULL,
-  `soDienThoai` VARCHAR(20) DEFAULT NULL,
-  `email` VARCHAR(100) DEFAULT NULL,
-  `soTaiKhoan` VARCHAR(50) DEFAULT NULL,
-  `nganHang` VARCHAR(100) DEFAULT NULL,
-  `trangThai` BIT(1) DEFAULT b'1',
-  PRIMARY KEY (`maDoiTuong`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `maThamChieu` VARCHAR(50) NOT NULL COMMENT 'Mã gốc thật sự của KH / NCC / NV',
+  `loaiDoiTuong` VARCHAR(20) NOT NULL COMMENT 'Loại đối tượng: KH, NCC, NV, Khac',
+  `trangThai` BIT(1) DEFAULT b'1' COMMENT 'Trạng thái hoạt động của đối tượng',
+  PRIMARY KEY (`maDoiTuong`),
+  UNIQUE KEY `uk_dt_loai_thamchieu` (`loaiDoiTuong`, `maThamChieu`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng ánh xạ đối tượng giao dịch từ Bán hàng, Kho, Nhân sự';
 
 -- 46. Bảng Tài Khoản Quỹ / Ngân Hàng
 DROP TABLE IF EXISTS `TaiKhoanQuy`;
@@ -652,19 +646,25 @@ CREATE TABLE `PhieuThu` (
   `maDoiTuong` VARCHAR(50) DEFAULT NULL,
   `lyDoThu` NVARCHAR(255) DEFAULT NULL,
   `soTien` DECIMAL(18,2) DEFAULT 0.00,
-  `phuongThucThu` VARCHAR(20) DEFAULT 'TM',
+  `phuongThucThu` VARCHAR(20) DEFAULT 'TM' COMMENT 'Phương thức thu: TM, CK',
   `maTaiKhoanQuy` VARCHAR(50) DEFAULT NULL,
-  `trangThai` VARCHAR(20) DEFAULT 'Moi',
-  `nguoiLap` VARCHAR(20) DEFAULT NULL,
+  `trangThai` VARCHAR(20) DEFAULT 'Moi' COMMENT 'Trạng thái: Moi, DaDuyet, Huy, ChoDoiSoat',
+  `nguoiLap` VARCHAR(50) DEFAULT NULL,
   `ngayLap` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `nguoiDuyet` VARCHAR(20) DEFAULT NULL,
+  `nguoiDuyet` VARCHAR(50) DEFAULT NULL,
   `ngayDuyet` DATETIME DEFAULT NULL,
+  `maThanhToan` VARCHAR(50) DEFAULT NULL COMMENT 'FK -> ThanhToan (Bán hàng) - nullable',
+  `maCongNo` VARCHAR(50) DEFAULT NULL COMMENT 'FK -> CongNo (Bán hàng) - nullable',
+  `maHoaDon` VARCHAR(50) DEFAULT NULL COMMENT 'FK -> HoaDon (Bán hàng) - nullable',
   PRIMARY KEY (`maPhieuThu`),
   CONSTRAINT `fk_pt_dt` FOREIGN KEY (`maDoiTuong`) REFERENCES `DoiTuongGiaoDich` (`maDoiTuong`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_pt_tkq` FOREIGN KEY (`maTaiKhoanQuy`) REFERENCES `TaiKhoanQuy` (`maTaiKhoanQuy`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_pt_nvlap` FOREIGN KEY (`nguoiLap`) REFERENCES `NhanVien` (`maNV`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_pt_nvduyet` FOREIGN KEY (`nguoiDuyet`) REFERENCES `NhanVien` (`maNV`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `fk_pt_nvduyet` FOREIGN KEY (`nguoiDuyet`) REFERENCES `NhanVien` (`maNV`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pt_tt` FOREIGN KEY (`maThanhToan`) REFERENCES `ThanhToan` (`maThanhToan`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pt_cn` FOREIGN KEY (`maCongNo`) REFERENCES `CongNo` (`maCongNo`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pt_hd` FOREIGN KEY (`maHoaDon`) REFERENCES `HoaDon` (`maHoaDon`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý Phiếu Thu Tiền';
 
 -- 48. Bảng Chi Tiết Phiếu Thu
 DROP TABLE IF EXISTS `ChiTietPhieuThu`;
@@ -687,19 +687,23 @@ CREATE TABLE `PhieuChi` (
   `maDoiTuong` VARCHAR(50) DEFAULT NULL,
   `lyDoChi` NVARCHAR(255) DEFAULT NULL,
   `soTien` DECIMAL(18,2) DEFAULT 0.00,
-  `phuongThucChi` VARCHAR(20) DEFAULT 'TM',
+  `phuongThucChi` VARCHAR(20) DEFAULT 'TM' COMMENT 'Phương thức chi: TM, CK',
   `maTaiKhoanQuy` VARCHAR(50) DEFAULT NULL,
-  `trangThai` VARCHAR(20) DEFAULT 'Moi',
-  `nguoiLap` VARCHAR(20) DEFAULT NULL,
+  `trangThai` VARCHAR(20) DEFAULT 'Moi' COMMENT 'Trạng thái: Moi, DaDuyet, Huy',
+  `nguoiLap` VARCHAR(50) DEFAULT NULL,
   `ngayLap` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `nguoiDuyet` VARCHAR(20) DEFAULT NULL,
+  `nguoiDuyet` VARCHAR(50) DEFAULT NULL,
   `ngayDuyet` DATETIME DEFAULT NULL,
+  `maPhieuNhapNVL` VARCHAR(50) DEFAULT NULL COMMENT 'FK -> PhieuNhapNVL (Kho) - nullable',
+  `maBangLuong` VARCHAR(50) DEFAULT NULL COMMENT 'FK -> BangLuong (Nhân sự) - nullable',
   PRIMARY KEY (`maPhieuChi`),
   CONSTRAINT `fk_pc_dt` FOREIGN KEY (`maDoiTuong`) REFERENCES `DoiTuongGiaoDich` (`maDoiTuong`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_pc_tkq` FOREIGN KEY (`maTaiKhoanQuy`) REFERENCES `TaiKhoanQuy` (`maTaiKhoanQuy`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_pc_nvlap` FOREIGN KEY (`nguoiLap`) REFERENCES `NhanVien` (`maNV`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_pc_nvduyet` FOREIGN KEY (`nguoiDuyet`) REFERENCES `NhanVien` (`maNV`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `fk_pc_nvduyet` FOREIGN KEY (`nguoiDuyet`) REFERENCES `NhanVien` (`maNV`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pc_pnnvl` FOREIGN KEY (`maPhieuNhapNVL`) REFERENCES `PhieuNhapNVL` (`maPhieuNhapNVL`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pc_bl` FOREIGN KEY (`maBangLuong`) REFERENCES `BangLuong` (`maBangLuong`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý Phiếu Chi Tiền';
 
 -- 50. Bảng Chi Tiết Phiếu Chi
 DROP TABLE IF EXISTS `ChiTietPhieuChi`;

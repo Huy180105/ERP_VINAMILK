@@ -23,3 +23,11 @@ require __DIR__ . '/api/warehouse/outbound.php';
 
 // 5. Báo cáo & Thống kê Kho (Reports)
 require __DIR__ . '/api/warehouse/reports.php';
+
+// ============================================================================
+// Phân Hệ 5: QUẢN LÝ THU CHI (FINANCE & CASH/BANK)
+// ============================================================================
+require __DIR__ . '/api/finance/master_data.php';
+require __DIR__ . '/api/finance/receipts.php';
+require __DIR__ . '/api/finance/payments.php';
+require __DIR__ . '/api/finance/reports.php';

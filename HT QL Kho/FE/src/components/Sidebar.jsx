@@ -61,11 +61,11 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[#FAF8F5] border-r border-slate-200/70 min-h-[calc(100vh-61px)] flex flex-col justify-between p-3 soft-shadow">
+    <aside className="w-64 bg-[#FAF8F5] border-r border-slate-200/70 min-h-[calc(100vh-61px)] flex flex-col justify-between p-3 ">
       <div className="space-y-5">
         {navItems.map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-1">
-            <h3 className="px-3 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
+            <h3 className="px-3 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
               {group.title}
             </h3>
             <div className="space-y-1 mt-1">
@@ -77,17 +77,17 @@ export default function Sidebar() {
                     to={item.path}
                     end={item.path === '/warehouse'}
                     className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 ${
+                      `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                         isActive
-                          ? 'bg-[#00249C] text-white shadow-md shadow-blue-900/20 translate-x-1'
-                          : 'text-slate-600 hover:bg-blue-50/70 hover:text-[#00249C]'
+                          ? 'bg-[#0B2341] text-white shadow-sm  translate-x-1'
+                          : 'text-slate-600 hover:bg-blue-50/70 hover:text-[#0B2341]'
                       }`
                     }
                   >
-                    <Icon className={`w-4 h-4 ${item.highlight ? 'text-amber-500 animate-bounce' : ''}`} />
+                    <Icon className={`w-4 h-4 ${item.highlight ? 'text-amber-500 ' : ''}`} />
                     <span>{item.name}</span>
                     {item.highlight && (
-                      <span className="ml-auto text-[9px] bg-gradient-to-r from-amber-500 to-amber-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs">
+                      <span className="ml-auto text-[9px] bg-amber-600 text-white font-semibold px-2 py-0.5 rounded-full uppercase shadow-sm">
                         FEFO
                       </span>
                     )}
@@ -100,7 +100,7 @@ export default function Sidebar() {
       </div>
 
       {/* Eco Dairy Soft Card */}
-      <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-2xl text-emerald-900 text-xs shadow-xs space-y-1">
+      <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-lg text-emerald-900 text-xs shadow-sm space-y-1">
         <div className="font-bold flex items-center space-x-1.5 text-emerald-800">
           <Heart className="w-4 h-4 text-emerald-600 fill-emerald-500" />
           <span>Vinamilk Green Farm</span>

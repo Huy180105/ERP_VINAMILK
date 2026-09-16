@@ -76,9 +76,9 @@ export default function Materials() {
   return (
     <div className="space-y-6">
       {/* Header & Filter */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
+          <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <Boxes className="w-6 h-6 text-blue-600" />
             <span>Danh Mục Nguyên Vật Liệu Vinamilk</span>
           </h1>
@@ -88,7 +88,7 @@ export default function Materials() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#001E50] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-2"
+          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-md text-xs font-semibold shadow transition flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Nguyên Vật Liệu Mới</span>
@@ -96,7 +96,7 @@ export default function Materials() {
       </div>
 
       {/* Filter Bar */}
-      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-md border border-slate-200 shadow-sm">
         <div className="flex-1 relative">
           <input
             type="text"
@@ -125,7 +125,7 @@ export default function Materials() {
       </form>
 
       {/* Table List */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
@@ -146,7 +146,7 @@ export default function Materials() {
               ) : (
                 materials.map((m) => (
                   <tr key={m.maNVL} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-[#001E50]">{m.maNVL}</td>
+                    <td className="p-3 font-mono font-bold text-[#0B2341]">{m.maNVL}</td>
                     <td className="p-3 font-semibold text-slate-800">{m.tenNVL}</td>
                     <td className="p-3 text-slate-600">{m.loai_n_v_l?.tenLoaiNVL || m.maLoaiNVL || 'Khác'}</td>
                     <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50 rounded-lg">{m.donVi || 'Kg'}</td>
@@ -166,9 +166,9 @@ export default function Materials() {
 
       {/* Add Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-[#001E50] border-b pb-2">Thêm Nguyên Vật Liệu Mới</h3>
+        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
+            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nguyên Vật Liệu Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Mã NVL *</label>
@@ -225,7 +225,7 @@ export default function Materials() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#001E50] hover:bg-blue-900 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
                 >
                   Lưu NVL
                 </button>

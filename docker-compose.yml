@@ -26,6 +26,7 @@ services:
       - "8000:8000"
     volumes:
       - "./HT QL Kho/BE:/var/www/html"
+      - /var/www/html/vendor
       - "./HT QL Kho/BE/.env.docker:/var/www/html/.env"
     depends_on:
       - db
