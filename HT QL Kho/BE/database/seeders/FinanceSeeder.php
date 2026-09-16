@@ -218,5 +218,34 @@ class FinanceSeeder extends Seeder
                 'soTien' => 15600000.00,
             ],
         ]);
+
+        // 7. BaoCaoThuChi
+        DB::table('BaoCaoThuChi')->truncate();
+        DB::table('BaoCaoThuChi')->insert([
+            [
+                'maBaoCao' => 'BCTC-2026-Q2',
+                'loaiBaoCao' => 'TongHop',
+                'tuNgay' => '2026-04-01',
+                'denNgay' => '2026-06-30',
+                'ngayLap' => '2026-07-05 10:00:00',
+                'nguoiLap' => 'NV002',
+            ],
+            [
+                'maBaoCao' => 'BCTC-2026-T08',
+                'loaiBaoCao' => 'ThuChiThang',
+                'tuNgay' => '2026-08-01',
+                'denNgay' => '2026-08-31',
+                'ngayLap' => '2026-09-02 09:30:00',
+                'nguoiLap' => 'NV002',
+            ],
+            [
+                'maBaoCao' => 'BCTC-2026-T09',
+                'loaiBaoCao' => 'DoiChieuQuy',
+                'tuNgay' => '2026-09-01',
+                'denNgay' => '2026-09-30',
+                'ngayLap' => Carbon::now()->toDateTimeString(),
+                'nguoiLap' => 'NV002',
+            ],
+        ]);
     }
 }
