@@ -223,11 +223,11 @@ class MasterDataController extends Controller
         $data = [];
 
         if ($loai === 'KH') {
-            $data = KhachHang::select('maKhachHang as id', 'tenKhachHang as ten', 'soDienThoai', 'diaChi', 'maSoThue', 'email')->get();
+            $data = KhachHang::select('maKhachHang as id', 'maKhachHang as maGoc', 'tenKhachHang as ten', 'soDienThoai', 'diaChi', 'maSoThue', 'email')->get();
         } elseif ($loai === 'NCC') {
-            $data = NhaCungCap::select('maNCC as id', 'tenNCC as ten', 'soDienThoai', 'diaChi', 'maSoThue', 'email')->get();
+            $data = NhaCungCap::select('maNCC as id', 'maNCC as maGoc', 'tenNCC as ten', 'soDienThoai', 'diaChi', 'maSoThue', 'email')->get();
         } elseif ($loai === 'NV') {
-            $data = NhanVien::select('maNV as id', 'hoTen as ten', 'soDienThoai', 'diaChi', 'email')->get();
+            $data = NhanVien::select('maNV as id', 'maNV as maGoc', 'hoTen as ten', 'soDienThoai', 'diaChi', 'email')->get();
         }
 
         $existingMapped = DoiTuongGiaoDich::where('loaiDoiTuong', $loai)
