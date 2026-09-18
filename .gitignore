@@ -2,6 +2,8 @@
 node_modules/
 /HT QL Kho/FE/node_modules/
 /HT QL Kho/FE/dist/
+/HT QL Ban Hang/FE/node_modules/
+/HT QL Ban Hang/FE/dist/
 .pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
