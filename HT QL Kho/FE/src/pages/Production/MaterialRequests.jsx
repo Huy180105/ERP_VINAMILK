@@ -40,16 +40,17 @@ export default function MaterialRequests() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [reqRes, stockRes, ordRes, matRes] = await Promise.all([
+      const results = await Promise.allSettled([
         ProductionAPI.getMaterialRequests(),
         ProductionAPI.checkMaterialAvailability(),
         ProductionAPI.getOrders(),
         MasterDataAPI.getMaterials()
       ]);
-      setRequests(reqRes.data.data || []);
-      setStockAvailability(stockRes.data.data || []);
-      setOrders(ordRes.data.data || []);
-      setMaterials(matRes.data.data || []);
+
+      if (results[0].status === 'fulfilled') setRequests(results[0].value.data.data || []);
+      if (results[1].status === 'fulfilled') setStockAvailability(results[1].value.data.data || []);
+      if (results[2].status === 'fulfilled') setOrders(results[2].value.data.data || []);
+      if (results[3].status === 'fulfilled') setMaterials(results[3].value.data.data || []);
     } catch (err) {
       console.error('Error fetching material data:', err);
     } finally {

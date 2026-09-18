@@ -114,7 +114,7 @@ class MaterialRequestController extends Controller
             // Sum available stock from TonKho
             $stock = TonKho::where('maNVL', $m->maNVL)
                 ->where('trangThai', 'Còn hạn')
-                ->sum('soLuongTon');
+                ->sum('soLuongTonHienTai');
 
             return [
                 'maNVL' => $m->maNVL,
