@@ -39,3 +39,8 @@ require __DIR__ . '/api/production.php';
 
 // 6. Bán hàng & Phân phối (Sales & Distribution)
 require __DIR__ . '/api/warehouse/sales.php';
+
+// ============================================================================
+// Phân Hệ Quản Lý Nhân Sự & Tiền Lương (HRM & Payroll)
+// ============================================================================
+require __DIR__ . '/api/hr.php';

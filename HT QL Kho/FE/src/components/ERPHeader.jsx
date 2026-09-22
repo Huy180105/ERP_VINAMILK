@@ -45,14 +45,51 @@ const SALES_ROLES = [
   }
 ];
 
+const HR_ROLES = [
+  {
+    id: 'QuanLyNhanSu',
+    name: 'Quản lý nhân sự',
+    description: 'Toàn quyền hồ sơ, hợp đồng, bảng lương & tài khoản',
+    badge: 'HR Manager'
+  },
+  {
+    id: 'ChuyenVienNhanSu',
+    name: 'Chuyên viên nhân sự',
+    description: 'Quản lý hồ sơ, chấm công, hợp đồng & lập bảng lương',
+    badge: 'HR Specialist'
+  },
+  {
+    id: 'NhanVien',
+    name: 'Nhân viên',
+    description: 'Tra cứu công cá nhân, xem lương & đổi mật khẩu',
+    badge: 'Employee'
+  }
+];
+
 export default function ERPHeader({ module = 'portal', showRoleSwitcher = false }) {
   const navigate = useNavigate();
   const isSales = module === 'sales';
-  const roleStorageKey = isSales ? 'vinamilk_sales_role' : 'vinamilk_finance_role';
-  const rolesList = isSales ? SALES_ROLES : FINANCE_ROLES;
+  const isHR = module === 'hr';
+
+  let roleStorageKey = 'vinamilk_finance_role';
+  let rolesList = FINANCE_ROLES;
+  let defaultRole = 'KeToanTruong';
+  let eventName = 'finance_role_changed';
+
+  if (isSales) {
+    roleStorageKey = 'vinamilk_sales_role';
+    rolesList = SALES_ROLES;
+    defaultRole = 'NhanVienBanHang';
+    eventName = 'sales_role_changed';
+  } else if (isHR) {
+    roleStorageKey = 'vinamilk_hr_role';
+    rolesList = HR_ROLES;
+    defaultRole = 'QuanLyNhanSu';
+    eventName = 'hr_role_changed';
+  }
 
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem(roleStorageKey) || (isSales ? 'NhanVienBanHang' : 'KeToanTruong');
+    return localStorage.getItem(roleStorageKey) || defaultRole;
   });
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -70,7 +107,6 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
   const handleRoleSelect = (roleId) => {
     setCurrentRole(roleId);
     localStorage.setItem(roleStorageKey, roleId);
-    const eventName = isSales ? 'sales_role_changed' : 'finance_role_changed';
     window.dispatchEvent(new CustomEvent(eventName, { detail: roleId }));
     setIsRoleDropdownOpen(false);
   };
@@ -84,6 +120,7 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
       case 'finance': return 'TÀI CHÍNH KẾ TOÁN';
       case 'production': return 'QUẢN LÝ SẢN XUẤT';
       case 'sales': return 'QUẢN LÝ BÁN HÀNG';
+      case 'hr': return 'QUẢN LÝ NHÂN SỰ';
       default: return 'CỔNG THÔNG TIN';
     }
   };

@@ -17,6 +17,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Current Database: `quanly_erp`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `quanly_erp` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
+
+USE `quanly_erp`;
+
+--
 -- Table structure for table `BangCong`
 --
 
@@ -24,11 +32,14 @@ DROP TABLE IF EXISTS `BangCong`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `BangCong` (
-  `maBangCong` varchar(20) NOT NULL COMMENT 'Mã bảng chấm công',
+  `maBangCong` varchar(50) NOT NULL,
   `maNV` varchar(20) NOT NULL COMMENT 'Mã nhân viên',
   `thang` varchar(7) NOT NULL COMMENT 'Tháng chấm công (MM/YYYY)',
   `soNgayCong` int(11) DEFAULT 0 COMMENT 'Số ngày công thực tế',
   `soGioTangCa` decimal(6,2) DEFAULT 0.00 COMMENT 'Số giờ tăng ca trong tháng',
+  `soNgayNghiPhep` int(11) DEFAULT 0,
+  `trangThai` varchar(20) DEFAULT 'DangChot',
+  `lyDoGiaiTrinh` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`maBangCong`),
   KEY `fk_bc_nv` (`maNV`),
   CONSTRAINT `fk_bc_nv` FOREIGN KEY (`maNV`) REFERENCES `NhanVien` (`maNV`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -42,26 +53,26 @@ CREATE TABLE `BangCong` (
 LOCK TABLES `BangCong` WRITE;
 /*!40000 ALTER TABLE `BangCong` DISABLE KEYS */;
 INSERT INTO `BangCong` VALUES
-('BC-202608-1','NV001','08/2026',22,12.00),
-('BC-202608-10','NV010','08/2026',22,12.00),
-('BC-202608-2','NV002','08/2026',22,6.00),
-('BC-202608-3','NV003','08/2026',22,6.00),
-('BC-202608-4','NV004','08/2026',22,12.00),
-('BC-202608-5','NV005','08/2026',22,6.00),
-('BC-202608-6','NV006','08/2026',22,6.00),
-('BC-202608-7','NV007','08/2026',22,12.00),
-('BC-202608-8','NV008','08/2026',22,6.00),
-('BC-202608-9','NV009','08/2026',22,6.00),
-('BC-202609-1','NV001','09/2026',21,8.00),
-('BC-202609-10','NV010','09/2026',21,4.00),
-('BC-202609-2','NV002','09/2026',21,4.00),
-('BC-202609-3','NV003','09/2026',21,8.00),
-('BC-202609-4','NV004','09/2026',21,4.00),
-('BC-202609-5','NV005','09/2026',21,8.00),
-('BC-202609-6','NV006','09/2026',21,4.00),
-('BC-202609-7','NV007','09/2026',21,8.00),
-('BC-202609-8','NV008','09/2026',21,4.00),
-('BC-202609-9','NV009','09/2026',21,8.00);
+('BC-202608-1','NV001','08/2026',22,12.00,0,'DangChot',NULL),
+('BC-202608-10','NV010','08/2026',22,12.00,0,'DangChot',NULL),
+('BC-202608-2','NV002','08/2026',22,6.00,0,'DangChot',NULL),
+('BC-202608-3','NV003','08/2026',22,6.00,0,'DangChot',NULL),
+('BC-202608-4','NV004','08/2026',22,12.00,0,'DangChot',NULL),
+('BC-202608-5','NV005','08/2026',22,6.00,0,'DangChot',NULL),
+('BC-202608-6','NV006','08/2026',22,6.00,0,'DangChot',NULL),
+('BC-202608-7','NV007','08/2026',22,12.00,0,'DangChot',NULL),
+('BC-202608-8','NV008','08/2026',22,6.00,0,'DangChot',NULL),
+('BC-202608-9','NV009','08/2026',22,6.00,0,'DangChot',NULL),
+('BC-202609-1','NV001','09/2026',21,8.00,0,'DangChot',NULL),
+('BC-202609-10','NV010','09/2026',21,4.00,0,'DangChot',NULL),
+('BC-202609-2','NV002','09/2026',21,4.00,0,'DangChot',NULL),
+('BC-202609-3','NV003','09/2026',21,8.00,0,'DangChot',NULL),
+('BC-202609-4','NV004','09/2026',21,4.00,0,'DangChot',NULL),
+('BC-202609-5','NV005','09/2026',21,8.00,0,'DangChot',NULL),
+('BC-202609-6','NV006','09/2026',21,4.00,0,'DangChot',NULL),
+('BC-202609-7','NV007','09/2026',21,8.00,0,'DangChot',NULL),
+('BC-202609-8','NV008','09/2026',21,4.00,0,'DangChot',NULL),
+('BC-202609-9','NV009','09/2026',21,8.00,0,'DangChot',NULL);
 /*!40000 ALTER TABLE `BangCong` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -73,16 +84,23 @@ DROP TABLE IF EXISTS `BangLuong`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `BangLuong` (
-  `maBangLuong` varchar(20) NOT NULL COMMENT 'Mã bảng lương',
+  `maBangLuong` varchar(50) NOT NULL,
   `maNV` varchar(20) NOT NULL COMMENT 'Mã nhân viên nhận lương',
-  `maBangCong` varchar(20) DEFAULT NULL COMMENT 'Bảng công căn cứ',
+  `maBangCong` varchar(50) DEFAULT NULL,
   `maHopDong` varchar(20) DEFAULT NULL COMMENT 'Hợp đồng căn cứ mức lương',
   `thang` varchar(7) NOT NULL COMMENT 'Tháng tính lương (MM/YYYY)',
+  `luongCoBan` decimal(15,2) DEFAULT 0.00,
+  `phuCap` decimal(15,2) DEFAULT 0.00,
+  `luongTangCa` decimal(15,2) DEFAULT 0.00,
+  `khauTru` decimal(15,2) DEFAULT 0.00,
   `tongThucNhan` decimal(15,2) DEFAULT 0.00 COMMENT 'Tổng lương thực nhận',
+  `trangThai` varchar(20) DEFAULT 'TamTinh',
+  `nguoiSua` varchar(50) DEFAULT NULL,
+  `lyDoSua` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`maBangLuong`),
   KEY `fk_bl_nv` (`maNV`),
-  KEY `fk_bl_bc` (`maBangCong`),
   KEY `fk_bl_hd` (`maHopDong`),
+  KEY `fk_bl_bc` (`maBangCong`),
   CONSTRAINT `fk_bl_bc` FOREIGN KEY (`maBangCong`) REFERENCES `BangCong` (`maBangCong`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_bl_hd` FOREIGN KEY (`maHopDong`) REFERENCES `HopDong` (`maHopDong`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_bl_nv` FOREIGN KEY (`maNV`) REFERENCES `NhanVien` (`maNV`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -96,26 +114,27 @@ CREATE TABLE `BangLuong` (
 LOCK TABLES `BangLuong` WRITE;
 /*!40000 ALTER TABLE `BangLuong` DISABLE KEYS */;
 INSERT INTO `BangLuong` VALUES
-('BL-202608-1','NV001','BC-202608-1','HD2020-001','08/2026',33000000.00),
-('BL-202608-10','NV010','BC-202608-10','HD2023-010','08/2026',18500000.00),
-('BL-202608-2','NV002','BC-202608-2','HD2020-002','08/2026',38000000.00),
-('BL-202608-3','NV003','BC-202608-3','HD2019-003','08/2026',30500000.00),
-('BL-202608-4','NV004','BC-202608-4','HD2022-004','08/2026',18500000.00),
-('BL-202608-5','NV005','BC-202608-5','HD2022-005','08/2026',75000000.00),
-('BL-202608-6','NV006','BC-202608-6','HD2022-006','08/2026',18000000.00),
-('BL-202608-7','NV007','BC-202608-7','HD2022-007','08/2026',20500000.00),
-('BL-202608-8','NV008','BC-202608-8','HD2023-008','08/2026',16500000.00),
-('BL-202608-9','NV009','BC-202608-9','HD2023-009','08/2026',17500000.00),
-('BL-202609-1','NV001','BC-202609-1','HD2020-001','09/2026',32500000.00),
-('BL-202609-10','NV010','BC-202609-10','HD2023-010','09/2026',18000000.00),
-('BL-202609-2','NV002','BC-202609-2','HD2020-002','09/2026',37000000.00),
-('BL-202609-3','NV003','BC-202609-3','HD2019-003','09/2026',29800000.00),
-('BL-202609-4','NV004','BC-202609-4','HD2022-004','09/2026',18000000.00),
-('BL-202609-5','NV005','BC-202609-5','HD2022-005','09/2026',75000000.00),
-('BL-202609-6','NV006','BC-202609-6','HD2022-006','09/2026',17500000.00),
-('BL-202609-7','NV007','BC-202609-7','HD2022-007','09/2026',20000000.00),
-('BL-202609-8','NV008','BC-202609-8','HD2023-008','09/2026',16000000.00),
-('BL-202609-9','NV009','BC-202609-9','HD2023-009','09/2026',17000000.00);
+('BL-202608-1','NV001','BC-202608-1','HD2020-001','08/2026',28000000.00,5000000.00,0.00,0.00,33000000.00,'DaKhoa',NULL,NULL),
+('BL-202608-10','NV010','BC-202608-10','HD2023-010','08/2026',0.00,0.00,0.00,0.00,18500000.00,'TamTinh',NULL,NULL),
+('BL-202608-2','NV002','BC-202608-2','HD2020-002','08/2026',0.00,0.00,0.00,0.00,38000000.00,'TamTinh',NULL,NULL),
+('BL-202608-3','NV003','BC-202608-3','HD2019-003','08/2026',26000000.00,4500000.00,0.00,0.00,30500000.00,'DaKhoa',NULL,NULL),
+('BL-202608-4','NV004','BC-202608-4','HD2022-004','08/2026',16000000.00,2500000.00,0.00,0.00,18500000.00,'DaKhoa',NULL,NULL),
+('BL-202608-5','NV005','BC-202608-5','HD2022-005','08/2026',0.00,0.00,0.00,0.00,75000000.00,'TamTinh',NULL,NULL),
+('BL-202608-6','NV006','BC-202608-6','HD2022-006','08/2026',15000000.00,3000000.00,0.00,0.00,18000000.00,'DaKhoa',NULL,NULL),
+('BL-202608-7','NV007','BC-202608-7','HD2022-007','08/2026',0.00,0.00,0.00,0.00,20500000.00,'TamTinh',NULL,NULL),
+('BL-202608-8','NV008','BC-202608-8','HD2023-008','08/2026',14000000.00,2500000.00,0.00,0.00,16500000.00,'DaKhoa',NULL,NULL),
+('BL-202608-9','NV009','BC-202608-9','HD2023-009','08/2026',15000000.00,2500000.00,0.00,0.00,17500000.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV_TEST_1790089532','NV_TEST_1790089532',NULL,'HD_TEST_1790089533','09/2026',18000000.00,3000000.00,0.00,1890000.00,19110000.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV001','NV001','BC-202609-1','HD2020-001','09/2026',28000000.00,5000000.00,1909091.00,2940000.00,30696364.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV002','NV002','BC-202609-2','HD2021-002','09/2026',32000000.00,6000000.00,1090909.00,3360000.00,34276364.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV003','NV003','BC-202609-3','HD2019-003','09/2026',26000000.00,4500000.00,1772727.00,2730000.00,28360909.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV004','NV004','BC-202609-4','HD2022-004','09/2026',16000000.00,2500000.00,545455.00,1680000.00,16638182.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV005','NV005','BC-202609-5','HD2018-005','09/2026',60000000.00,15000000.00,4090909.00,6300000.00,70063636.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV006','NV006','BC-202609-6','HD2022-006','09/2026',15000000.00,3000000.00,511364.00,1575000.00,16254546.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV007','NV007','BC-202609-7','HD2021-007','09/2026',18000000.00,2500000.00,1227273.00,1890000.00,19019091.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV008','NV008','BC-202609-8','HD2023-008','09/2026',14000000.00,2500000.00,477273.00,1470000.00,14870909.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV009','NV009','BC-202609-9','HD2023-009','09/2026',15000000.00,2500000.00,1022727.00,1575000.00,16265909.00,'DaKhoa',NULL,NULL),
+('BL-202609-NV010','NV010','BC-202609-10','HD2022-010','09/2026',16000000.00,2500000.00,545455.00,1680000.00,16638182.00,'DaKhoa',NULL,NULL);
 /*!40000 ALTER TABLE `BangLuong` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -366,18 +385,16 @@ DROP TABLE IF EXISTS `ChiTietPhieuNhapSP`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ChiTietPhieuNhapSP` (
-  `maChiTietPhieuNhapSP` int(11) NOT NULL AUTO_INCREMENT,
   `maPhieuNhapSP` varchar(20) NOT NULL,
-  `maSP` varchar(20) NOT NULL,
-  `soLuongNhap` int(11) DEFAULT 0,
+  `maTonKho` varchar(50) NOT NULL,
+  `soLuong` int(11) DEFAULT 0,
   `ngaySanXuat` date DEFAULT NULL,
   `hanSuDung` date DEFAULT NULL,
-  `ghiChu` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`maChiTietPhieuNhapSP`),
-  KEY `fk_ctpnsp_phieu` (`maPhieuNhapSP`),
-  KEY `fk_ctpnsp_sp` (`maSP`),
+  `ghiChu` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  PRIMARY KEY (`maPhieuNhapSP`,`maTonKho`),
+  KEY `fk_ctpnsp_tk` (`maTonKho`),
   CONSTRAINT `fk_ctpnsp_phieu` FOREIGN KEY (`maPhieuNhapSP`) REFERENCES `PhieuNhapSP` (`maPhieuNhapSP`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ctpnsp_sp` FOREIGN KEY (`maSP`) REFERENCES `SanPham` (`maSanPham`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_ctpnsp_tk` FOREIGN KEY (`maTonKho`) REFERENCES `TonKho` (`maTonKho`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -388,9 +405,9 @@ CREATE TABLE `ChiTietPhieuNhapSP` (
 LOCK TABLES `ChiTietPhieuNhapSP` WRITE;
 /*!40000 ALTER TABLE `ChiTietPhieuNhapSP` DISABLE KEYS */;
 INSERT INTO `ChiTietPhieuNhapSP` VALUES
-(1,'PNSP2026090201','SP001',5000,'2026-08-02','2027-04-04','QC đạt chuẩn Monde Selection'),
-(2,'PNSP2026090402','SP003',3000,'2026-08-25','2027-03-25','Bảo quản kho mát ngay'),
-(3,'PNSP2026090803','SP001',15000,'2026-09-11','2027-09-16','Nhập kho tổng');
+('PNSP2026090201','LOT-SP-20260902-FEFO1',5000,'2026-08-02','2026-09-26','QC đạt chuẩn Monde Selection'),
+('PNSP2026090402','LOT-SP-20260904-SC01',3000,'2026-08-25','2026-09-24','Bảo quản kho mát ngay'),
+('PNSP2026090803','LOT-SP-20260908-FEFO2',15000,'2026-09-11','2027-01-14','Nhập kho tổng');
 /*!40000 ALTER TABLE `ChiTietPhieuNhapSP` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1053,7 +1070,9 @@ CREATE TABLE `HopDong` (
   `maNV` varchar(20) NOT NULL COMMENT 'Mã nhân viên ký hợp đồng',
   `loaiHopDong` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL COMMENT 'Loại hợp đồng (Thử việc/Xác định thời hạn/Không xác định)',
   `ngayHieuLuc` date DEFAULT NULL COMMENT 'Ngày hợp đồng có hiệu lực',
+  `ngayHetHan` date DEFAULT NULL,
   `mucLuongCoBan` decimal(15,2) DEFAULT 0.00 COMMENT 'Mức lương cơ bản theo hợp đồng',
+  `trangThai` varchar(30) DEFAULT 'Hiệu lực',
   PRIMARY KEY (`maHopDong`),
   KEY `fk_hd_nv` (`maNV`),
   CONSTRAINT `fk_hd_nv` FOREIGN KEY (`maNV`) REFERENCES `NhanVien` (`maNV`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -1067,16 +1086,17 @@ CREATE TABLE `HopDong` (
 LOCK TABLES `HopDong` WRITE;
 /*!40000 ALTER TABLE `HopDong` DISABLE KEYS */;
 INSERT INTO `HopDong` VALUES
-('HD2018-005','NV005','Không xác định thời hạn','2018-01-01',60000000.00),
-('HD2019-003','NV003','Không xác định thời hạn','2019-11-01',26000000.00),
-('HD2020-001','NV001','Không xác định thời hạn','2020-03-15',28000000.00),
-('HD2021-002','NV002','Không xác định thời hạn','2021-06-10',32000000.00),
-('HD2021-007','NV007','Xác định thời hạn 3 năm','2021-09-05',18000000.00),
-('HD2022-004','NV004','Xác định thời hạn 3 năm','2022-02-20',16000000.00),
-('HD2022-006','NV006','Xác định thời hạn 3 năm','2022-08-15',15000000.00),
-('HD2022-010','NV010','Không xác định thời hạn','2022-10-01',16000000.00),
-('HD2023-008','NV008','Xác định thời hạn 1 năm','2023-04-12',14000000.00),
-('HD2023-009','NV009','Xác định thời hạn 1 năm','2023-01-10',15000000.00);
+('HD_TEST_1790089533','NV_TEST_1790089532','Xác định thời hạn','2026-09-01',NULL,18000000.00,'Hiệu lực'),
+('HD2018-005','NV005','Không xác định thời hạn','2018-01-01',NULL,60000000.00,'Hiệu lực'),
+('HD2019-003','NV003','Không xác định thời hạn','2019-11-01',NULL,26000000.00,'Hiệu lực'),
+('HD2020-001','NV001','Không xác định thời hạn','2020-03-15',NULL,28000000.00,'Hiệu lực'),
+('HD2021-002','NV002','Không xác định thời hạn','2021-06-10',NULL,32000000.00,'Hiệu lực'),
+('HD2021-007','NV007','Xác định thời hạn 3 năm','2021-09-05',NULL,18000000.00,'Hiệu lực'),
+('HD2022-004','NV004','Xác định thời hạn 3 năm','2022-02-20',NULL,16000000.00,'Hiệu lực'),
+('HD2022-006','NV006','Xác định thời hạn 3 năm','2022-08-15',NULL,15000000.00,'Hiệu lực'),
+('HD2022-010','NV010','Không xác định thời hạn','2022-10-01',NULL,16000000.00,'Hiệu lực'),
+('HD2023-008','NV008','Xác định thời hạn 1 năm','2023-04-12',NULL,14000000.00,'Hiệu lực'),
+('HD2023-009','NV009','Xác định thời hạn 1 năm','2023-01-10',NULL,15000000.00,'Hiệu lực');
 /*!40000 ALTER TABLE `HopDong` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1249,6 +1269,39 @@ INSERT INTO `LenhSanXuat` VALUES
 UNLOCK TABLES;
 
 --
+-- Table structure for table `LichSuNhanSu`
+--
+
+DROP TABLE IF EXISTS `LichSuNhanSu`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `LichSuNhanSu` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `maNV` varchar(20) NOT NULL,
+  `loaiThayDoi` varchar(50) NOT NULL COMMENT 'DieuChuyenPhongBan, DieuChuyenChucVu, ThayDoiLuong, DoiMatKhau, SuaBangLuong, TaoMoi',
+  `noiDung` text NOT NULL,
+  `nguoiThucHien` varchar(50) DEFAULT 'Quản lý nhân sự',
+  `ngayTao` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `fk_ls_nv` (`maNV`),
+  CONSTRAINT `fk_ls_nv` FOREIGN KEY (`maNV`) REFERENCES `NhanVien` (`maNV`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử biến động nhân sự và điều chỉnh lương';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `LichSuNhanSu`
+--
+
+LOCK TABLES `LichSuNhanSu` WRITE;
+/*!40000 ALTER TABLE `LichSuNhanSu` DISABLE KEYS */;
+INSERT INTO `LichSuNhanSu` VALUES
+(1,'NV_TEST_1790089492','TaoMoi','Tiếp nhận nhân sự mới: Nguyễn Kiểm Thử Tự Động (NV_TEST_1790089492). Phòng ban: Phòng Quản Lý Kho Vận & Chuỗi Cung Ứng, Chức vụ: Thủ Kho Trưởng / Kiểm Soát FEFO. Tự động cấp tài khoản đăng nhập (SĐT: 0988089492).','Quản lý nhân sự','2026-09-22 15:04:53'),
+(2,'NV_TEST_1790089532','TaoMoi','Tiếp nhận nhân sự mới: Nguyễn Kiểm Thử Tự Động (NV_TEST_1790089532). Phòng ban: Phòng Quản Lý Kho Vận & Chuỗi Cung Ứng, Chức vụ: Thủ Kho Trưởng / Kiểm Soát FEFO. Tự động cấp tài khoản đăng nhập (SĐT: 0988089532).','Quản lý nhân sự','2026-09-22 15:05:32'),
+(3,'NV_TEST_1790089532','ThayDoiLuong','Ký mới hợp đồng [HD_TEST_1790089533] (Xác định thời hạn), mức lương cơ bản: 18.000.000 VNĐ.','Quản lý nhân sự','2026-09-22 15:05:33');
+/*!40000 ALTER TABLE `LichSuNhanSu` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `LoaiNVL`
 --
 
@@ -1371,11 +1424,17 @@ DROP TABLE IF EXISTS `NhanVien`;
 CREATE TABLE `NhanVien` (
   `maNV` varchar(20) NOT NULL COMMENT 'Mã nhân viên',
   `hoTen` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT 'Họ và tên nhân viên',
+  `soDienThoai` varchar(20) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `ngaySinh` date DEFAULT NULL,
+  `gioiTinh` varchar(10) DEFAULT 'Nam',
+  `trinhDo` varchar(50) DEFAULT 'Đại học',
   `maPhongBan` varchar(20) DEFAULT NULL COMMENT 'Mã phòng ban trực thuộc',
   `maChucVu` varchar(20) DEFAULT NULL COMMENT 'Mã chức vụ hiện tại',
   `ngayVaoLam` date DEFAULT NULL COMMENT 'Ngày bắt đầu làm việc',
   `trangThai` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT 'Đang làm việc' COMMENT 'Trạng thái làm việc',
   PRIMARY KEY (`maNV`),
+  UNIQUE KEY `uk_nv_sdt` (`soDienThoai`),
   KEY `fk_nv_pb` (`maPhongBan`),
   KEY `fk_nv_cv` (`maChucVu`),
   CONSTRAINT `fk_nv_cv` FOREIGN KEY (`maChucVu`) REFERENCES `ChucVu` (`maChucVu`) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -1390,16 +1449,18 @@ CREATE TABLE `NhanVien` (
 LOCK TABLES `NhanVien` WRITE;
 /*!40000 ALTER TABLE `NhanVien` DISABLE KEYS */;
 INSERT INTO `NhanVien` VALUES
-('NV001','Nguyễn Văn Hùng','PB02','CV03','2020-03-15','Đang làm việc'),
-('NV002','Trần Thị Thu Thảo','PB03','CV04','2021-06-10','Đang làm việc'),
-('NV003','Lê Minh Tuấn','PB04','CV05','2019-11-01','Đang làm việc'),
-('NV004','Phạm Hoàng Nam','PB05','CV07','2022-02-20','Đang làm việc'),
-('NV005','Trịnh Đình Đức','PB01','CV01','2018-01-01','Đang làm việc'),
-('NV006','Đặng Mai Phương','PB02','CV06','2022-08-15','Đang làm việc'),
-('NV007','Vũ Quốc Bảo','PB04','CV08','2021-09-05','Đang làm việc'),
-('NV008','Hoàng Kim Ngân','PB03','CV07','2023-04-12','Đang làm việc'),
-('NV009','Bùi Tuấn Kiệt','PB05','CV07','2023-01-10','Đang làm việc'),
-('NV010','Ngô Thị Thanh Trúc','PB06','CV07','2022-10-01','Đang làm việc');
+('NV_TEST_1790089492','Nguyễn Kiểm Thử Tự Động','0988089492','test@vinamilk.com.vn',NULL,'Nam','Đại học','PB02','CV06','2026-09-22','Đang làm việc'),
+('NV_TEST_1790089532','Nguyễn Kiểm Thử Tự Động','0988089532','test@vinamilk.com.vn',NULL,'Nam','Đại học','PB02','CV06','2026-09-22','Đang làm việc'),
+('NV001','Nguyễn Văn Hùng','0901000001','hung.nv@vinamilk.com.vn','1985-05-15','Nam','Thạc sĩ','PB02','CV03','2020-03-15','Đang làm việc'),
+('NV002','Trần Thị Thu Thảo','0901000002','thao.ttt@vinamilk.com.vn','1990-08-20','Nữ','Đại học','PB03','CV04','2021-06-10','Đang làm việc'),
+('NV003','Lê Minh Tuấn','0901000003','tuan.lm@vinamilk.com.vn','1988-11-12','Nam','Kỹ sư','PB04','CV05','2019-11-01','Đang làm việc'),
+('NV004','Phạm Hoàng Nam','0901000004','nam.ph@vinamilk.com.vn','1992-02-18','Nam','Đại học','PB05','CV07','2022-02-20','Đang làm việc'),
+('NV005','Trịnh Đình Đức','0901000005','duc.td@vinamilk.com.vn','1975-01-01','Nam','Tiến sĩ','PB01','CV01','2018-01-01','Đang làm việc'),
+('NV006','Đặng Mai Phương','0901000006','phuong.dm@vinamilk.com.vn','1994-09-25','Nữ','Đại học','PB02','CV06','2022-08-15','Đang làm việc'),
+('NV007','Vũ Quốc Bảo','0901000007','bao.vq@vinamilk.com.vn','1991-07-08','Nam','Kỹ sư','PB04','CV08','2021-09-05','Đang làm việc'),
+('NV008','Hoàng Kim Ngân','0901000008','ngan.hk@vinamilk.com.vn','1995-12-30','Nữ','Đại học','PB03','CV07','2023-04-12','Đang làm việc'),
+('NV009','Bùi Tuấn Kiệt','0901000009','kiet.bt@vinamilk.com.vn','1996-03-14','Nam','Cao đẳng','PB05','CV07','2023-01-10','Đang làm việc'),
+('NV010','Ngô Thị Thanh Trúc','0901000010','truc.ntt@vinamilk.com.vn','1993-10-10','Nữ','Thạc sĩ','PB06','CV07','2022-10-01','Đang làm việc');
 /*!40000 ALTER TABLE `NhanVien` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1967,6 +2028,48 @@ INSERT INTO `SanPham` VALUES
 UNLOCK TABLES;
 
 --
+-- Table structure for table `TaiKhoan`
+--
+
+DROP TABLE IF EXISTS `TaiKhoan`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `TaiKhoan` (
+  `maTaiKhoan` varchar(50) NOT NULL,
+  `maNV` varchar(20) NOT NULL COMMENT 'Mã nhân viên',
+  `matKhau` varchar(255) NOT NULL COMMENT 'Mật khẩu mặc định là hash(123456)',
+  `vaiTro` varchar(30) NOT NULL DEFAULT 'NhanVien' COMMENT 'QuanLyNhanSu, ChuyenVienNhanSu, NhanVien',
+  `trangThai` varchar(20) NOT NULL DEFAULT 'Hoạt động' COMMENT 'Hoạt động, Khóa',
+  `phaiDoiMatKhau` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1: bắt buộc đổi mật khẩu',
+  PRIMARY KEY (`maTaiKhoan`),
+  UNIQUE KEY `uk_tk_nv` (`maNV`),
+  CONSTRAINT `fk_tk_nv` FOREIGN KEY (`maNV`) REFERENCES `NhanVien` (`maNV`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tài khoản đăng nhập nhân viên';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `TaiKhoan`
+--
+
+LOCK TABLES `TaiKhoan` WRITE;
+/*!40000 ALTER TABLE `TaiKhoan` DISABLE KEYS */;
+INSERT INTO `TaiKhoan` VALUES
+('TK-NV_TEST_1790089492','NV_TEST_1790089492','$2y$12$Xq7GfErBjX0BtxOvJ3L6mOk3R6JZcbxh2nCWfoUuGqCTIb3DxmAf2','NhanVien','Hoạt động',1),
+('TK-NV_TEST_1790089532','NV_TEST_1790089532','$2y$12$QHV8BU7OJ.zVmxOVdgYFsOaArweqdn/riqymO8wtnv.ZQpoYJ2wH2','NhanVien','Hoạt động',1),
+('TK001','NV001','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','QuanLyNhanSu','Hoạt động',0),
+('TK002','NV002','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','ChuyenVienNhanSu','Hoạt động',0),
+('TK003','NV003','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','NhanVien','Hoạt động',1),
+('TK004','NV004','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','NhanVien','Hoạt động',1),
+('TK005','NV005','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','QuanLyNhanSu','Hoạt động',0),
+('TK006','NV006','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','NhanVien','Hoạt động',1),
+('TK007','NV007','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','NhanVien','Hoạt động',1),
+('TK008','NV008','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','ChuyenVienNhanSu','Hoạt động',1),
+('TK009','NV009','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','NhanVien','Hoạt động',1),
+('TK010','NV010','$2y$12$NqB8rE8Qnvy2pPq0uG9Q6u2Wq4KqjWbS8Q7j9K3l4G2a9k1O8u6s2','ChuyenVienNhanSu','Hoạt động',0);
+/*!40000 ALTER TABLE `TaiKhoan` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `TaiKhoanQuy`
 --
 
@@ -2099,23 +2202,20 @@ DROP TABLE IF EXISTS `TonKho`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `TonKho` (
   `maTonKho` varchar(50) NOT NULL COMMENT 'Mã lô tồn kho',
-  `tenTonKho` varchar(100) DEFAULT NULL COMMENT 'Nhãn mô tả lô',
+  `tenTonKho` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL COMMENT 'Nhãn mô tả lô',
   `maSP` varchar(20) DEFAULT NULL COMMENT 'Mã SP (nếu là lô thành phẩm)',
   `maNVL` varchar(20) DEFAULT NULL COMMENT 'Mã NVL (nếu là lô nguyên vật liệu)',
   `ngaySanXuat` date DEFAULT NULL COMMENT 'Ngày sản xuất lô',
   `hanSuDung` date DEFAULT NULL COMMENT 'Hạn sử dụng lô',
   `soLuongNhap` int(11) DEFAULT 0 COMMENT 'Số lượng ban đầu nhập',
   `soLuongTonHienTai` int(11) DEFAULT 0 COMMENT 'Số lượng tồn khả dụng hiện tại',
-  `trangThai` varchar(50) DEFAULT 'Còn hạn' COMMENT 'Trạng thái (Còn hạn, Sắp hết hạn, Hết hạn)',
-  `ghiChu` varchar(255) DEFAULT NULL,
-  `maChiTietPhieuNhapSP` int(11) DEFAULT NULL COMMENT 'FK -> ChiTietPhieuNhapSP',
+  `trangThai` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT 'Còn hạn' COMMENT 'Trạng thái (Còn hạn, Sắp hết hạn, Hết hạn)',
+  `ghiChu` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   PRIMARY KEY (`maTonKho`),
   KEY `fk_tk_sp` (`maSP`),
   KEY `fk_tk_nvl` (`maNVL`),
-  KEY `fk_tk_ctpnsp` (`maChiTietPhieuNhapSP`),
   CONSTRAINT `fk_tk_nvl` FOREIGN KEY (`maNVL`) REFERENCES `NguyenVatLieu` (`maNVL`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_tk_sp` FOREIGN KEY (`maSP`) REFERENCES `SanPham` (`maSanPham`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_tk_ctpnsp` FOREIGN KEY (`maChiTietPhieuNhapSP`) REFERENCES `ChiTietPhieuNhapSP` (`maChiTietPhieuNhapSP`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `fk_tk_sp` FOREIGN KEY (`maSP`) REFERENCES `SanPham` (`maSanPham`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý chi tiết tồn kho theo Lô và HSD';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2125,7 +2225,7 @@ CREATE TABLE `TonKho` (
 
 LOCK TABLES `TonKho` WRITE;
 /*!40000 ALTER TABLE `TonKho` DISABLE KEYS */;
-INSERT INTO `TonKho` (`maTonKho`, `tenTonKho`, `maSP`, `maNVL`, `ngaySanXuat`, `hanSuDung`, `soLuongNhap`, `soLuongTonHienTai`, `trangThai`, `ghiChu`) VALUES
+INSERT INTO `TonKho` VALUES
 ('LOT-NVL-20260901-01','Lô Sữa Tươi Nguyên Chất Thô Mộc Châu - Đợt 1',NULL,'NVL001','2026-09-06','2026-10-01',20000,15500,'Ưu tiên xuất FEFO','Bảo quản kho lạnh UHT 2-4 độ C'),
 ('LOT-NVL-20260902-06','Lô Men Probiotics LGG Chr. Hansen Đan Mạch',NULL,'NVL006','2026-09-01','2026-12-15',200,45,'Tồn kho thấp','Men vi sinh sống đông khô'),
 ('LOT-NVL-20260905-02','Lô Đường Tinh Luyện Biên Hòa Grade A',NULL,'NVL002','2026-08-17','2027-09-16',10000,8500,'Còn hạn','Kho khô ráo'),
@@ -2140,6 +2240,10 @@ INSERT INTO `TonKho` (`maTonKho`, `tenTonKho`, `maSP`, `maNVL`, `ngaySanXuat`, `
 ('LOT-SP-20260909-GF01','Lô Sữa Tươi Nguyên Chất Vinamilk Green Farm 180ml','SP005',NULL,'2026-09-13','2027-02-13',8000,7600,'Còn hạn','Dòng sữa tươi sinh thái cao cấp');
 /*!40000 ALTER TABLE `TonKho` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Dumping routines for database 'quanly_erp'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -2150,11 +2254,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-09-16 11:30:30
-
--- Sample Inventory Lots
-INSERT INTO `TonKho` (`maTonKho`, `tenTonKho`, `maSP`, `maNVL`, `ngaySanXuat`, `hanSuDung`, `soLuongNhap`, `soLuongTonHienTai`, `trangThai`) VALUES
-('TK-SP001-202609', 'Lô Sữa Tươi 180ml Th9/2026', 'SP001', NULL, '2026-09-01', '2027-03-01', 10, 10, 'Còn hạn'),
-('TK-NVL001-202609', 'Lô Sữa Bò Tươi Nhập Th9/2026', NULL, 'NVL001', '2026-09-01', '2026-09-15', 5000, 3500, 'Còn hạn');
-
-SET FOREIGN_KEY_CHECKS = 1;
+-- Dump completed on 2026-09-22 22:07:10

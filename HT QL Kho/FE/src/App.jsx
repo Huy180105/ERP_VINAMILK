@@ -38,9 +38,20 @@ import QualityControl from './pages/Production/QualityControl';
 import ProductionReports from './pages/Production/ProductionReports';
 
 import SalesSidebar from './components/SalesSidebar';
+import HRSidebar from './components/HRSidebar';
 
 // Subsystem Preview Pages
 import HRModule from './pages/Subsystems/HRModule';
+
+// HR Subsystem Pages
+import HRDashboard from './modules/HR/pages/Dashboard';
+import HREmployees from './modules/HR/pages/Employees';
+import HRDepartments from './modules/HR/pages/Departments';
+import HRContracts from './modules/HR/pages/Contracts';
+import HRTimesheets from './modules/HR/pages/Timesheets';
+import HRPayroll from './modules/HR/pages/Payroll';
+import HRReports from './modules/HR/pages/Reports';
+import HRAccounts from './modules/HR/pages/Accounts';
 
 // Sales Subsystem Pages
 import SalesDashboard from './modules/Sales/pages/Dashboard';
@@ -88,6 +99,21 @@ function SalesPage({ children }) {
       <ERPHeader module="sales" showRoleSwitcher />
       <div className="flex flex-1">
         <SalesSidebar />
+        <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// HR App Shell Wrapper Component
+function HRPage({ children }) {
+  return (
+    <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
+      <ERPHeader module="hr" showRoleSwitcher />
+      <div className="flex flex-1">
+        <HRSidebar />
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
           {children}
         </main>
@@ -159,8 +185,15 @@ export default function App() {
         <Route path="/sales/customers" element={<SalesPage><SalesCustomers /></SalesPage>} />
         <Route path="/sales/pricing" element={<SalesPage><SalesPricing /></SalesPage>} />
 
-        {/* Route 8: Other ERP Subsystems */}
-        <Route path="/hr" element={<WarehousePage><HRModule /></WarehousePage>} />
+        {/* Route 8: HR Subsystem (Phân Hệ Quản Lý Nhân Sự & Tiền Lương) */}
+        <Route path="/hr" element={<HRPage><HRDashboard /></HRPage>} />
+        <Route path="/hr/employees" element={<HRPage><HREmployees /></HRPage>} />
+        <Route path="/hr/departments" element={<HRPage><HRDepartments /></HRPage>} />
+        <Route path="/hr/contracts" element={<HRPage><HRContracts /></HRPage>} />
+        <Route path="/hr/timesheets" element={<HRPage><HRTimesheets /></HRPage>} />
+        <Route path="/hr/payroll" element={<HRPage><HRPayroll /></HRPage>} />
+        <Route path="/hr/reports" element={<HRPage><HRReports /></HRPage>} />
+        <Route path="/hr/accounts" element={<HRPage><HRAccounts /></HRPage>} />
 
         {/* Fallback for any unknown route -> Portal Home */}
         <Route path="*" element={<PortalHome />} />
