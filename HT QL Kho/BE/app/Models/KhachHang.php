@@ -22,4 +22,19 @@ class KhachHang extends Model
         'diaChi',
         'hanMucCongNo',
     ];
+
+    public function donHangs()
+    {
+        return $this->hasMany(DonHang::class, 'maKhachHang', 'maKhachHang');
+    }
+
+    public function congNos()
+    {
+        return $this->hasMany(CongNo::class, 'maKhachHang', 'maKhachHang');
+    }
+
+    public function giaoHangs()
+    {
+        return $this->hasMany(GiaoHang::class, 'maKhachHang', 'maKhachHang');
+    }
 }

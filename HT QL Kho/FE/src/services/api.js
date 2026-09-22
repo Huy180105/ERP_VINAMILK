@@ -85,16 +85,44 @@ export const OutboundAPI = {
 };
 
 export const SalesAPI = {
+  // Dashboard & Tồn kho
   getDashboard: () => api.get('/sales/dashboard'),
+  checkStock: () => api.get('/sales/check-stock'),
+
+  // Đơn hàng (SA-FR02)
   getOrders: (params) => api.get('/sales/orders', { params }),
+  getOrderDetail: (id) => api.get(`/sales/orders/${id}`),
   createOrder: (data) => api.post('/sales/orders', data),
   updateOrder: (id, data) => api.put(`/sales/orders/${id}`, data),
   deleteOrder: (id) => api.delete(`/sales/orders/${id}`),
   updateOrderStatus: (id, status) => api.put(`/sales/orders/${id}/status`, { trangThai: status }),
+
+  // Khách hàng / NPP (SA-FR01)
   getCustomers: (params) => api.get('/sales/customers', { params }),
+  getCustomerDetail: (id) => api.get(`/sales/customers/${id}`),
+  createCustomer: (data) => api.post('/sales/customers', data),
+  updateCustomer: (id, data) => api.put(`/sales/customers/${id}`, data),
+  deleteCustomer: (id) => api.delete(`/sales/customers/${id}`),
+
+  // Giao hàng (SA-FR04)
   getDeliveries: (params) => api.get('/sales/deliveries', { params }),
+  getDeliveryDetail: (id) => api.get(`/sales/deliveries/${id}`),
+  createDelivery: (data) => api.post('/sales/deliveries', data),
+  updateDeliveryStatus: (id, status) => api.put(`/sales/deliveries/${id}/status`, { trangThai: status }),
+
+  // Hóa đơn & Thanh toán (SA-FR03)
   getInvoices: (params) => api.get('/sales/invoices', { params }),
+  getInvoiceDetail: (id) => api.get(`/sales/invoices/${id}`),
+  createInvoice: (data) => api.post('/sales/invoices', data),
+  recordPayment: (data) => api.post('/sales/payments', data),
+
+  // Công nợ (SA-FR05)
   getReceivables: (params) => api.get('/sales/receivables', { params }),
+  getReceivableDetail: (id) => api.get(`/sales/receivables/${id}`),
+
+  // Bảng giá sản phẩm (SA-FR06)
+  getPricing: (params) => api.get('/sales/pricing', { params }),
+  updatePrice: (id, data) => api.put(`/sales/pricing/${id}`, data),
 };
 
 export const ReportAPI = {

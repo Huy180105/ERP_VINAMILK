@@ -24,10 +24,35 @@ const FINANCE_ROLES = [
   }
 ];
 
+const SALES_ROLES = [
+  {
+    id: 'NhanVienBanHang',
+    name: 'Nhân viên bán hàng',
+    description: 'Lập đơn hàng, tra cứu khách hàng & tồn kho',
+    badge: 'Kinh doanh'
+  },
+  {
+    id: 'QuanLyKinhDoanh',
+    name: 'Quản lý kinh doanh',
+    description: 'Duyệt đơn hàng, phê duyệt công nợ & báo cáo',
+    badge: 'Quản lý'
+  },
+  {
+    id: 'NhanVienGiaoHang',
+    name: 'Nhân viên giao hàng',
+    description: 'Nhận đơn giao, xác nhận giao & thanh toán',
+    badge: 'Giao vận'
+  }
+];
+
 export default function ERPHeader({ module = 'portal', showRoleSwitcher = false }) {
   const navigate = useNavigate();
+  const isSales = module === 'sales';
+  const roleStorageKey = isSales ? 'vinamilk_sales_role' : 'vinamilk_finance_role';
+  const rolesList = isSales ? SALES_ROLES : FINANCE_ROLES;
+
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
+    return localStorage.getItem(roleStorageKey) || (isSales ? 'NhanVienBanHang' : 'KeToanTruong');
   });
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -44,12 +69,13 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
 
   const handleRoleSelect = (roleId) => {
     setCurrentRole(roleId);
-    localStorage.setItem('vinamilk_finance_role', roleId);
-    window.dispatchEvent(new CustomEvent('finance_role_changed', { detail: roleId }));
+    localStorage.setItem(roleStorageKey, roleId);
+    const eventName = isSales ? 'sales_role_changed' : 'finance_role_changed';
+    window.dispatchEvent(new CustomEvent(eventName, { detail: roleId }));
     setIsRoleDropdownOpen(false);
   };
 
-  const activeRoleInfo = FINANCE_ROLES.find(r => r.id === currentRole) || FINANCE_ROLES[0];
+  const activeRoleInfo = rolesList.find(r => r.id === currentRole) || rolesList[0];
   const initial = activeRoleInfo.name.charAt(0);
 
   const getModuleName = () => {
@@ -57,6 +83,7 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
       case 'warehouse': return 'QUẢN LÝ KHO';
       case 'finance': return 'TÀI CHÍNH KẾ TOÁN';
       case 'production': return 'QUẢN LÝ SẢN XUẤT';
+      case 'sales': return 'QUẢN LÝ BÁN HÀNG';
       default: return 'CỔNG THÔNG TIN';
     }
   };
