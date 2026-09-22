@@ -42,3 +42,4 @@ class BangCong extends Model
         return $this->hasMany(BangLuong::class, 'maBangCong', 'maBangCong');
     }
 }
+

@@ -587,3 +587,4 @@ export default function HRDepartments() {
     </div>
   );
 }
+

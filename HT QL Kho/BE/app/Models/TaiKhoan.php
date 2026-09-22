@@ -37,3 +37,4 @@ class TaiKhoan extends Model
         return $this->belongsTo(NhanVien::class, 'maNV', 'maNV');
     }
 }
+

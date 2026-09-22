@@ -25,3 +25,4 @@ class LichSuNhanSu extends Model
         return $this->belongsTo(NhanVien::class, 'maNV', 'maNV');
     }
 }
+

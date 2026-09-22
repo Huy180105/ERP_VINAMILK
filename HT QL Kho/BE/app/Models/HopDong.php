@@ -41,3 +41,4 @@ class HopDong extends Model
         return $this->hasMany(BangLuong::class, 'maHopDong', 'maHopDong');
     }
 }
+

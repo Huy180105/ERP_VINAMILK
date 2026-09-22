@@ -454,3 +454,4 @@ export default function HRContracts() {
     </div>
   );
 }
+

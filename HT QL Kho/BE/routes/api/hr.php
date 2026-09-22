@@ -70,3 +70,4 @@ Route::prefix('hr')->group(function () {
     Route::put('/accounts/{id}/toggle-lock', [AccountController::class, 'toggleLock']);
     Route::put('/accounts/{id}/assign-role', [AccountController::class, 'assignRole']);
 });
+

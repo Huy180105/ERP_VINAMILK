@@ -25,3 +25,4 @@ class PhongBan extends Model
         return $this->hasMany(NhanVien::class, 'maPhongBan', 'maPhongBan');
     }
 }
+
