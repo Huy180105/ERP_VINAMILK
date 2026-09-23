@@ -81,14 +81,11 @@ export default function InboundProducts() {
       nextCode = codeRes.data.code;
       handovers = handoverRes.data?.data || [];
     } catch (e) {
-<<<<<<< HEAD
       console.error(e);
     }
     setPendingHandovers(handovers);
 
     if (!nextCode) {
-=======
->>>>>>> origin/duc
       nextCode = generateAutoCode(receipts, 'maPhieuNhapSP', 'PNSP', 3, true);
     }
 
@@ -489,19 +486,12 @@ export default function InboundProducts() {
                     onChange={(e) => handleSelectHandover(e.target.value)}
                     className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
-<<<<<<< HEAD
                     <option value="">-- Nhập thủ công (Không chọn) --</option>
                     {pendingHandovers.map(h => (
                       <option key={h.maPhieuYCXSP} value={h.maPhieuYCXSP}>
                         {h.maPhieuYCXSP} - {h.ghiChu || `Phiếu bàn giao ${h.maPhieuYCXSP}`}
                       </option>
                     ))}
-=======
-                    <option value="">-- Không chọn (Bàn giao trực tiếp) --</option>
-                    <option value="YCXSP20260901">YCXSP20260901 - Bàn giao Sữa tươi UHT Batch 01</option>
-                    <option value="YCXSP20260902">YCXSP20260902 - Bàn giao Sữa chua ăn Batch 02</option>
-                    <option value="YCXSP20260903">YCXSP20260903 - Bàn giao Sữa hạt hạnh nhân Batch 03</option>
->>>>>>> origin/duc
                   </select>
                 </div>
               </div>

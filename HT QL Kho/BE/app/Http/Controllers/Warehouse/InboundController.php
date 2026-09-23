@@ -211,12 +211,11 @@ class InboundController extends Controller
                 'maPhieuYCXSP'  => $validated['maPhieuYCXSP'] ?? null,
             ]);
 
-<<<<<<< HEAD
             if (!empty($validated['maPhieuYCXSP'])) {
                 PhieuYeuCauXuatSP::where('maPhieuYCXSP', $validated['maPhieuYCXSP'])
                     ->update(['trangThai' => 'Đã nhập kho']);
             }
-=======
+
             $today = Carbon::today();
             $dateStr = Carbon::now()->format('Ymd');
             $prefix = "LOT-SP-{$dateStr}-";
@@ -226,7 +225,6 @@ class InboundController extends Controller
                 ->value('maTonKho');
 
             $counter = ($lastLot ? (int) str_replace($prefix, '', $lastLot) : 0) + 1;
->>>>>>> origin/duc
 
             foreach ($validated['items'] as $item) {
                 $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
