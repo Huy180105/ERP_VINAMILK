@@ -165,9 +165,9 @@ class ProductionSeeder extends Seeder
         ]);
 
         DB::table('ChiTietPhieuYeuCauNVL')->insert([
-            ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL001', 'tenNVL' => 'Sữa Tươi Nguyên Chất 100% Thô (Mộc Châu)', 'soLuong' => 18000],
-            ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL002', 'tenNVL' => 'Đường Tinh Luyện Biên Hòa Grade A', 'soLuong' => 1500],
-            ['maPhieuYCNVL' => 'YCNVL20260908', 'maNVL' => 'NVL004', 'tenNVL' => 'Vỏ Hộp Giấy Tetra Pak Brik Aseptic 180ml', 'soLuong' => 10000],
+            ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL001', 'soLuong' => 18000],
+            ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL002', 'soLuong' => 1500],
+            ['maPhieuYCNVL' => 'YCNVL20260908', 'maNVL' => 'NVL004', 'soLuong' => 10000],
         ]);
 
         // 4. PhieuYeuCauBTP & ChiTietPhieuYeuCauBTP

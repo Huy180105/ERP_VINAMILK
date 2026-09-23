@@ -77,28 +77,43 @@ export default function InventoryLots() {
                 <th className="p-3">Mã Lô (Batch ID)</th>
                 <th className="p-3">Tên Lô / Mô Tả</th>
                 <th className="p-3">Mặt Hàng Tham Chiếu</th>
+                <th className="p-3">Kho Lưu Trữ</th>
                 <th className="p-3">Ngày Sản Xuất</th>
                 <th className="p-3">Hạn Sử Dụng</th>
+                <th className="p-3 text-center">Chất Lượng</th>
                 <th className="p-3 text-right">Tồn Khả Dụng</th>
                 <th className="p-3 text-center">FEFO Priority</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="7" className="p-4 text-center text-slate-400">Đang tải lô tồn kho...</td></tr>
+                <tr><td colSpan="9" className="p-4 text-center text-slate-400">Đang tải lô tồn kho...</td></tr>
               ) : lots.length === 0 ? (
-                <tr><td colSpan="7" className="p-4 text-center text-slate-400">Không có lô tồn kho nào.</td></tr>
+                <tr><td colSpan="9" className="p-4 text-center text-slate-400">Không có lô tồn kho nào.</td></tr>
               ) : (
                 lots.map((l) => {
                   const daysLeft = Math.ceil((new Date(l.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
-                  const itemName = l.sanPham?.tenSanPham || l.nguyenVatLieu?.tenNVL || '-';
+                  const itemName = l.san_pham?.tenSanPham || l.sanPham?.tenSanPham || l.nguyen_vat_lieu?.tenNVL || l.nguyenVatLieu?.tenNVL || '-';
+                  const qualityStatus = l.trangThaiChatLuong || 'Đạt';
                   return (
                     <tr key={l.maTonKho} className="hover:bg-slate-50 transition">
                       <td className="p-3 font-mono font-bold text-[#0B2341]">{l.maTonKho}</td>
                       <td className="p-3 font-semibold text-slate-800">{l.tenTonKho}</td>
                       <td className="p-3 text-slate-600 font-medium">{itemName}</td>
+                      <td className="p-3 text-slate-600 font-medium">{l.kho?.tenKho || l.maKho || 'Kho Tổng'}</td>
                       <td className="p-3 text-slate-500 font-mono">{l.ngaySanXuat}</td>
                       <td className="p-3 font-mono font-bold text-slate-900">{l.hanSuDung}</td>
+                      <td className="p-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          qualityStatus === 'Đạt'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : qualityStatus === 'Chờ kiểm tra'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {qualityStatus}
+                        </span>
+                      </td>
                       <td className="p-3 text-right font-semibold text-emerald-700">
                         {l.soLuongTonHienTai?.toLocaleString()}
                       </td>

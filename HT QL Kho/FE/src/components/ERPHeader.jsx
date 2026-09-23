@@ -73,7 +73,7 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
 
   let roleStorageKey = 'vinamilk_finance_role';
   let rolesList = FINANCE_ROLES;
-  let defaultRole = 'KeToanTruong';
+  let defaultRole = 'KeToanThanhToan';
   let eventName = 'finance_role_changed';
 
   if (isSales) {

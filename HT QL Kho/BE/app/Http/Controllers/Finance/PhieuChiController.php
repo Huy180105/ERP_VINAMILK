@@ -9,6 +9,7 @@ use App\Models\TaiKhoanQuy;
 use App\Models\PhieuNhapNVL;
 use App\Models\BangLuong;
 use App\Models\DoiTuongGiaoDich;
+use App\Models\NhatKyThuChi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -20,7 +21,7 @@ class PhieuChiController extends Controller
      */
     private function isApproverAuthorized(Request $request): bool
     {
-        $userRole = $request->header('X-User-Role') ?? $request->input('role', 'KeToanTruong');
+        $userRole = $request->header('X-User-Role') ?: $request->input('role');
         return in_array($userRole, ['KeToanTruong', 'Admin'], true);
     }
 
@@ -110,18 +111,17 @@ class PhieuChiController extends Controller
 
         $payrolls = BangLuong::with('nhanVien')
             ->whereNotIn('maBangLuong', $linkedPayrollIds)
-            ->when($request->filled('thangNam'), fn($q) => $q->where('thangNam', $request->input('thangNam')))
-            ->orderBy('thangNam', 'desc')
+            ->when($request->filled('thangNam'), fn($q) => $q->where('thang', $request->input('thangNam')))
+            ->orderBy('thang', 'desc')
             ->get();
 
         $data = $payrolls->map(fn($bl) => [
             'maBangLuong' => $bl->maBangLuong,
-            'thangNam' => $bl->thangNam,
+            'thangNam' => $bl->thang,
             'maNV' => $bl->maNV,
             'tenNV' => $bl->nhanVien?->hoTen ?? 'N/A',
-            'thucLanh' => $bl->thucLanh,
+            'thucLanh' => $bl->tongThucNhan,
             'trangThai' => $bl->trangThai,
-            'ngayLap' => $bl->ngayLap,
         ]);
 
         return response()->json(['success' => true, 'data' => $data]);
@@ -150,8 +150,19 @@ class PhieuChiController extends Controller
             'items.*.soTien' => 'required|numeric|min:0',
         ]);
 
+        $itemsTotal = collect($validated['items'])->sum(fn ($item) => (float) $item['soTien']);
+        if (abs($itemsTotal - (float) $validated['soTien']) > 0.01) {
+            return response()->json(['success' => false, 'message' => 'Tổng tiền các dòng chi tiết phải bằng số tiền phiếu chi.'], 422);
+        }
+        if (!empty($validated['maTaiKhoanQuy']) && !TaiKhoanQuy::where('maTaiKhoanQuy', $validated['maTaiKhoanQuy'])->where('trangThai', 1)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Tài khoản quỹ không tồn tại hoặc đã ngừng hoạt động.'], 422);
+        }
+
         // FI-BR02: Kiểm tra chống trùng lặp chứng từ nguồn
         if (!empty($validated['maPhieuNhapNVL'])) {
+            if (!PhieuNhapNVL::where('maPhieuNhapNVL', $validated['maPhieuNhapNVL'])->exists()) {
+                return response()->json(['success' => false, 'message' => 'Phiếu nhập NVL nguồn không tồn tại.'], 422);
+            }
             $duplicate = PhieuChi::where('maPhieuNhapNVL', $validated['maPhieuNhapNVL'])->where('trangThai', '!=', 'Huy')->first();
             if ($duplicate) {
                 return response()->json([
@@ -162,6 +173,9 @@ class PhieuChiController extends Controller
         }
 
         if (!empty($validated['maBangLuong'])) {
+            if (!BangLuong::where('maBangLuong', $validated['maBangLuong'])->exists()) {
+                return response()->json(['success' => false, 'message' => 'Bảng lương nguồn không tồn tại.'], 422);
+            }
             $duplicate = PhieuChi::where('maBangLuong', $validated['maBangLuong'])->where('trangThai', '!=', 'Huy')->first();
             if ($duplicate) {
                 return response()->json([
@@ -233,6 +247,40 @@ class PhieuChiController extends Controller
         }
     }
 
+    /** Sửa phiếu chi ở trạng thái Mới (FI-FR04). */
+    public function updatePayment(Request $request, $id)
+    {
+        $payment = PhieuChi::findOrFail($id);
+        if ($payment->trangThai !== 'Moi') {
+            return response()->json(['success' => false, 'message' => 'Chỉ được sửa phiếu chi ở trạng thái Mới.'], 400);
+        }
+        $validated = $request->validate([
+            'ngayChi' => 'required|date', 'maDoiTuong' => 'nullable|string|max:50',
+            'lyDoChi' => 'nullable|string|max:255', 'soTien' => 'required|numeric|min:0.01',
+            'phuongThucChi' => 'required|string|in:TM,CK',
+            'maTaiKhoanQuy' => 'nullable|string|max:50|exists:TaiKhoanQuy,maTaiKhoanQuy',
+            'items' => 'required|array|min:1', 'items.*.maChiTietChi' => 'required|string|max:50',
+            'items.*.maDanhMucChi' => 'nullable|string|max:50|exists:DanhMucChi,maDanhMucChi',
+            'items.*.dienGiai' => 'nullable|string|max:255', 'items.*.soTien' => 'required|numeric|min:0',
+        ]);
+        $itemsTotal = collect($validated['items'])->sum(fn ($item) => (float) $item['soTien']);
+        if (abs($itemsTotal - (float) $validated['soTien']) > 0.01) {
+            return response()->json(['success' => false, 'message' => 'Tổng tiền các dòng chi tiết phải bằng số tiền phiếu chi.'], 422);
+        }
+        if (!empty($validated['maTaiKhoanQuy']) && !TaiKhoanQuy::where('maTaiKhoanQuy', $validated['maTaiKhoanQuy'])->where('trangThai', 1)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Tài khoản quỹ không tồn tại hoặc đã ngừng hoạt động.'], 422);
+        }
+
+        DB::transaction(function () use ($payment, $validated) {
+            $payment->update(collect($validated)->except('items')->all());
+            ChiTietPhieuChi::where('maPhieuChi', $payment->maPhieuChi)->delete();
+            foreach ($validated['items'] as $item) {
+                ChiTietPhieuChi::create($item + ['maPhieuChi' => $payment->maPhieuChi]);
+            }
+        });
+        return response()->json(['success' => true, 'message' => 'Cập nhật phiếu chi thành công.', 'data' => $payment->fresh()->load('chiTiets')]);
+    }
+
     /**
      * Phê duyệt phiếu chi (Kế toán trưởng duyệt - FI-BR03, FI-BR04, FI-FR07)
      */
@@ -251,29 +299,31 @@ class PhieuChiController extends Controller
             return response()->json(['success' => false, 'message' => 'Phiếu chi này đã được phê duyệt trước đó'], 400);
         }
 
-        if ($payment->trangThai === 'Huy') {
-            return response()->json(['success' => false, 'message' => 'Không thể duyệt phiếu chi đã bị hủy'], 400);
+        if (!in_array($payment->trangThai, ['Moi', 'ChoDoiSoat'], true)) {
+            return response()->json(['success' => false, 'message' => 'Chỉ phiếu mới hoặc chờ đối soát mới được phê duyệt'], 400);
         }
 
         DB::beginTransaction();
         try {
+            $oldStatus = $payment->trangThai;
+            $balanceBefore = null;
+            $balanceAfter = null;
             // FI-BR04 & FI-FR07: Kiểm tra hạn mức và số dư tài khoản quỹ trước khi duyệt
             if ($payment->maTaiKhoanQuy) {
                 $account = TaiKhoanQuy::where('maTaiKhoanQuy', $payment->maTaiKhoanQuy)->lockForUpdate()->first();
                 if (!$account) {
-                    return response()->json(['success' => false, 'message' => 'Không tìm thấy tài khoản quỹ chỉ định'], 400);
+                    throw new \RuntimeException('Không tìm thấy tài khoản quỹ hoạt động được chỉ định.');
                 }
 
                 if ($account->soDuHienTai < $payment->soTien) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Hạn mức không đủ: Số dư tài khoản quỹ hiện tại (' . number_format($account->soDuHienTai) . ' VNĐ) không đủ để chi ' . number_format($payment->soTien) . ' VNĐ (FI-BR04 / FI-FR07).',
-                    ], 400);
+                    throw new \RuntimeException('Hạn mức không đủ: Số dư tài khoản quỹ hiện tại không đủ để thực hiện phiếu chi (FI-BR04).');
                 }
 
                 // Cập nhật số dư atomic (FI-BR03)
+                $balanceBefore = (float) $account->soDuHienTai;
                 $account->soDuHienTai -= $payment->soTien;
                 $account->save();
+                $balanceAfter = (float) $account->soDuHienTai;
             }
 
             $payment->update([
@@ -281,6 +331,7 @@ class PhieuChiController extends Controller
                 'nguoiDuyet' => $request->input('nguoiDuyet', 'NV001'),
                 'ngayDuyet' => Carbon::now(),
             ]);
+            NhatKyThuChi::ghi('PhieuChi', $payment->maPhieuChi, 'PheDuyet', $oldStatus, 'DaDuyet', $payment->maTaiKhoanQuy, $balanceBefore, $balanceAfter, $request->input('nguoiDuyet'), ['soTien' => (float) $payment->soTien]);
 
             DB::commit();
 
@@ -291,7 +342,7 @@ class PhieuChiController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Lỗi phê duyệt phiếu chi: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Lỗi phê duyệt phiếu chi: ' . $e->getMessage()], $e instanceof \RuntimeException ? 400 : 500);
         }
     }
 
@@ -315,11 +366,16 @@ class PhieuChiController extends Controller
 
         DB::beginTransaction();
         try {
+            $oldStatus = $payment->trangThai;
+            $balanceBefore = null;
+            $balanceAfter = null;
             if ($payment->trangThai === 'DaDuyet' && $payment->maTaiKhoanQuy) {
-                $account = TaiKhoanQuy::where('maTaiKhoanQuy', $payment->maTaiKhoanQuy)->first();
+                $account = TaiKhoanQuy::where('maTaiKhoanQuy', $payment->maTaiKhoanQuy)->lockForUpdate()->first();
                 if ($account) {
+                    $balanceBefore = (float) $account->soDuHienTai;
                     $account->soDuHienTai += $payment->soTien;
                     $account->save();
+                    $balanceAfter = (float) $account->soDuHienTai;
                 }
             }
 
@@ -327,6 +383,7 @@ class PhieuChiController extends Controller
                 'trangThai' => 'Huy',
                 'lyDoChi' => ($payment->lyDoChi ? $payment->lyDoChi . ' - ' : '') . '[ĐÃ HỦY: ' . $request->input('lyDoHuy', 'Hủy theo yêu cầu') . ']',
             ]);
+            NhatKyThuChi::ghi('PhieuChi', $payment->maPhieuChi, 'Huy', $oldStatus, 'Huy', $payment->maTaiKhoanQuy, $balanceBefore, $balanceAfter, $request->input('nguoiDuyet'), ['lyDoHuy' => $request->input('lyDoHuy')]);
 
             DB::commit();
 
@@ -371,14 +428,30 @@ class PhieuChiController extends Controller
     /**
      * Chuyển trạng thái phiếu chi sang Chờ đối soát ngân hàng (FI-FR06)
      */
-    public function sendToReconcile($id)
+    public function sendToReconcile(Request $request, $id)
     {
+        if (!$this->isApproverAuthorized($request)) {
+            return response()->json(['success' => false, 'message' => 'Chỉ Kế toán trưởng mới được chuyển phiếu sang đối soát.'], 403);
+        }
         $payment = PhieuChi::findOrFail($id);
+        if ($payment->trangThai !== 'Moi') {
+            return response()->json(['success' => false, 'message' => 'Chỉ phiếu mới được chuyển sang chờ đối soát.'], 400);
+        }
         $payment->update(['trangThai' => 'ChoDoiSoat']);
+        NhatKyThuChi::ghi('PhieuChi', $payment->maPhieuChi, 'ChuyenDoiSoat', 'Moi', 'ChoDoiSoat', $payment->maTaiKhoanQuy, null, null, $request->input('nguoiDuyet'));
         return response()->json([
             'success' => true,
             'message' => 'Phiếu chi đã được chuyển sang trạng thái "Chờ đối soát" (FI-FR06)',
             'data' => $payment,
         ]);
+    }
+
+    public function completeReconciliation(Request $request, $id)
+    {
+        $payment = PhieuChi::findOrFail($id);
+        if ($payment->trangThai !== 'ChoDoiSoat') {
+            return response()->json(['success' => false, 'message' => 'Phiếu chi không ở trạng thái chờ đối soát.'], 400);
+        }
+        return $this->approvePayment($request, $id);
     }
 }

@@ -7,7 +7,6 @@ use App\Models\BangLuong;
 use App\Models\BangCong;
 use App\Models\HopDong;
 use App\Models\NhanVien;
-use App\Models\LichSuNhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -206,15 +205,6 @@ class PayrollController extends Controller
         $tongThucNhan = max(0, round($luongThoiGian + $phuCap + $luongTangCa - $khauTru));
 
         $currentUser = $request->header('X-User-Name', 'Quản lý nhân sự');
-
-        // HR-NFR04: Lưu vết người thực hiện chỉnh sửa bảng lương
-        LichSuNhanSu::create([
-            'maNV' => $payroll->maNV,
-            'loaiThayDoi' => 'SuaBangLuong',
-            'noiDung' => "Điều chỉnh bảng lương [{$payroll->maBangLuong}] kỳ {$payroll->thang}: Phụ cấp: " . number_format($phuCap, 0, ',', '.') . "đ, Khấu trừ: " . number_format($khauTru, 0, ',', '.') . "đ, Thực nhận: " . number_format($tongThucNhan, 0, ',', '.') . "đ. Lý do: {$validated['lyDoSua']}.",
-            'nguoiThucHien' => $currentUser,
-            'ngayTao' => now(),
-        ]);
 
         $payroll->update([
             'phuCap' => $phuCap,

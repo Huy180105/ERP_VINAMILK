@@ -5,7 +5,6 @@ namespace App\Http\Controllers\HR;
 use App\Http\Controllers\Controller;
 use App\Models\NhanVien;
 use App\Models\TaiKhoan;
-use App\Models\LichSuNhanSu;
 use App\Models\HopDong;
 use App\Models\BangCong;
 use App\Models\BangLuong;
@@ -129,18 +128,6 @@ class EmployeeController extends Controller
                 'phaiDoiMatKhau' => 1, // HR-BR10: Bắt buộc đổi mật khẩu lần đầu
             ]);
 
-            // 3. HR-BR07: Lưu vết lịch sử tiếp nhận nhân sự
-            $pb = $employee->maPhongBan ? PhongBan::find($employee->maPhongBan)?->tenPhongBan : 'Chưa phân bổ';
-            $cv = $employee->maChucVu ? ChucVu::find($employee->maChucVu)?->tenChucVu : 'Chưa phân bổ';
-            
-            LichSuNhanSu::create([
-                'maNV' => $employee->maNV,
-                'loaiThayDoi' => 'TaoMoi',
-                'noiDung' => "Tiếp nhận nhân sự mới: {$employee->hoTen} ({$employee->maNV}). Phòng ban: {$pb}, Chức vụ: {$cv}. Tự động cấp tài khoản đăng nhập (SĐT: {$employee->soDienThoai}).",
-                'nguoiThucHien' => $request->header('X-User-Name', 'Quản lý nhân sự'),
-                'ngayTao' => now(),
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Thêm nhân viên mới và khởi tạo tài khoản thành công!',
@@ -170,47 +157,6 @@ class EmployeeController extends Controller
         ]);
 
         return DB::transaction(function () use ($employee, $validated, $request) {
-            $currentUser = $request->header('X-User-Name', 'Quản lý nhân sự');
-
-            // HR-BR07: Lưu vết nếu điều chuyển phòng ban
-            if (isset($validated['maPhongBan']) && $validated['maPhongBan'] !== $employee->maPhongBan) {
-                $oldPB = PhongBan::find($employee->maPhongBan)?->tenPhongBan ?? 'Chưa phân bổ';
-                $newPB = PhongBan::find($validated['maPhongBan'])?->tenPhongBan ?? 'Chưa phân bổ';
-
-                LichSuNhanSu::create([
-                    'maNV' => $employee->maNV,
-                    'loaiThayDoi' => 'DieuChuyenPhongBan',
-                    'noiDung' => "Điều chuyển phòng ban từ [{$oldPB}] sang [{$newPB}].",
-                    'nguoiThucHien' => $currentUser,
-                    'ngayTao' => now(),
-                ]);
-            }
-
-            // HR-BR07: Lưu vết nếu điều chuyển chức vụ
-            if (isset($validated['maChucVu']) && $validated['maChucVu'] !== $employee->maChucVu) {
-                $oldCV = ChucVu::find($employee->maChucVu)?->tenChucVu ?? 'Chưa phân bổ';
-                $newCV = ChucVu::find($validated['maChucVu'])?->tenChucVu ?? 'Chưa phân bổ';
-
-                LichSuNhanSu::create([
-                    'maNV' => $employee->maNV,
-                    'loaiThayDoi' => 'DieuChuyenChucVu',
-                    'noiDung' => "Thay đổi chức vụ từ [{$oldCV}] sang [{$newCV}].",
-                    'nguoiThucHien' => $currentUser,
-                    'ngayTao' => now(),
-                ]);
-            }
-
-            // HR-BR02: Ghi vết nếu chuyển sang 'Đã nghỉ việc'
-            if (isset($validated['trangThai']) && $validated['trangThai'] !== $employee->trangThai) {
-                LichSuNhanSu::create([
-                    'maNV' => $employee->maNV,
-                    'loaiThayDoi' => 'TrangThaiLamViec',
-                    'noiDung' => "Cập nhật trạng thái làm việc từ [{$employee->trangThai}] sang [{$validated['trangThai']}].",
-                    'nguoiThucHien' => $currentUser,
-                    'ngayTao' => now(),
-                ]);
-            }
-
             // Cập nhật thông tin (không đổi mã NV theo quy tắc)
             $employee->update($validated);
 
@@ -248,7 +194,6 @@ class EmployeeController extends Controller
 
         return DB::transaction(function () use ($employee) {
             TaiKhoan::where('maNV', $employee->maNV)->delete();
-            LichSuNhanSu::where('maNV', $employee->maNV)->delete();
             $employee->delete();
 
             return response()->json([

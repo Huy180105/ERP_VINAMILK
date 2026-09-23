@@ -5,7 +5,6 @@ namespace App\Http\Controllers\HR;
 use App\Http\Controllers\Controller;
 use App\Models\TaiKhoan;
 use App\Models\NhanVien;
-use App\Models\LichSuNhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -160,15 +159,6 @@ class AccountController extends Controller
             'phaiDoiMatKhau' => 0,
         ]);
 
-        // Lưu vết lịch sử
-        LichSuNhanSu::create([
-            'maNV' => $account->maNV,
-            'loaiThayDoi' => 'DoiMatKhau',
-            'noiDung' => 'Người dùng tự đổi mật khẩu tài khoản thành công.',
-            'nguoiThucHien' => $employee->hoTen,
-            'ngayTao' => now(),
-        ]);
-
         return response()->json([
             'success' => true,
             'message' => 'Đổi mật khẩu thành công! Giờ đây bạn có thể đăng nhập bình thường.',
@@ -184,14 +174,6 @@ class AccountController extends Controller
         $newStatus = ($account->trangThai === 'Hoạt động') ? 'Khóa' : 'Hoạt động';
         
         $account->update(['trangThai' => $newStatus]);
-
-        LichSuNhanSu::create([
-            'maNV' => $account->maNV,
-            'loaiThayDoi' => 'TrangThaiTaiKhoan',
-            'noiDung' => "Quản lý nhân sự đã chuyển trạng thái tài khoản thành: [{$newStatus}].",
-            'nguoiThucHien' => request()->header('X-User-Name', 'Quản lý nhân sự'),
-            'ngayTao' => now(),
-        ]);
 
         return response()->json([
             'success' => true,
@@ -213,14 +195,6 @@ class AccountController extends Controller
 
         $oldRole = $account->vaiTro;
         $account->update(['vaiTro' => $validated['vaiTro']]);
-
-        LichSuNhanSu::create([
-            'maNV' => $account->maNV,
-            'loaiThayDoi' => 'PhanQuyen',
-            'noiDung' => "Phân quyền lại vai trò tài khoản từ [{$oldRole}] sang [{$validated['vaiTro']}].",
-            'nguoiThucHien' => $request->header('X-User-Name', 'Quản lý nhân sự'),
-            'ngayTao' => now(),
-        ]);
 
         return response()->json([
             'success' => true,

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\HopDong;
 use App\Models\NhanVien;
 use App\Models\BangLuong;
-use App\Models\LichSuNhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -104,16 +103,6 @@ class ContractController extends Controller
                 'trangThai' => $trangThai,
             ]);
 
-            // HR-BR07: Lưu vết mức lương cơ bản ban đầu
-            $formattedSalary = number_format($contract->mucLuongCoBan, 0, ',', '.') . ' VNĐ';
-            LichSuNhanSu::create([
-                'maNV' => $contract->maNV,
-                'loaiThayDoi' => 'ThayDoiLuong',
-                'noiDung' => "Ký mới hợp đồng [{$contract->maHopDong}] ({$contract->loaiHopDong}), mức lương cơ bản: {$formattedSalary}.",
-                'nguoiThucHien' => $request->header('X-User-Name', 'Quản lý nhân sự'),
-                'ngayTao' => now(),
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Lập mới hợp đồng lao động thành công!',
@@ -154,20 +143,6 @@ class ContractController extends Controller
 
         return DB::transaction(function () use ($contract, $validated, $request) {
             $currentUser = $request->header('X-User-Name', 'Quản lý nhân sự');
-
-            // HR-BR07: Lưu vết nếu thay đổi mức lương cơ bản
-            if ((float)$validated['mucLuongCoBan'] !== (float)$contract->mucLuongCoBan) {
-                $oldSal = number_format($contract->mucLuongCoBan, 0, ',', '.') . ' VNĐ';
-                $newSal = number_format($validated['mucLuongCoBan'], 0, ',', '.') . ' VNĐ';
-
-                LichSuNhanSu::create([
-                    'maNV' => $contract->maNV,
-                    'loaiThayDoi' => 'ThayDoiLuong',
-                    'noiDung' => "Điều chỉnh mức lương cơ bản hợp đồng [{$contract->maHopDong}] từ {$oldSal} sang {$newSal}.",
-                    'nguoiThucHien' => $currentUser,
-                    'ngayTao' => now(),
-                ]);
-            }
 
             $contract->update($validated);
 

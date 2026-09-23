@@ -4,24 +4,30 @@ namespace App\Http\Controllers\Warehouse;
 
 use App\Http\Controllers\Controller;
 use App\Models\TonKho;
-use App\Models\KhoSanPham;
-use App\Models\KhoNguyenVatLieu;
+use App\Models\Kho;
+use App\Models\DeNghiBoSungSanPham;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class InventoryController extends Controller
 {
-    // Tra cứu tồn kho theo lô và lọc (CF-FR51, CF-FR52)
+    // Tra cứu tồn kho theo lô và lọc (CF-FR51, CF-FR52, DT02, DT03, DT04)
     public function getInventory(Request $request)
     {
-        $data = TonKho::with(['sanPham', 'nguyenVatLieu', 'khoSanPham', 'khoNguyenVatLieu'])
-            ->when($request->input('type') === 'product', fn($q) => $q->whereNotNull('maSP'))
+        $maSP = $request->input('maSanPham') ?? $request->input('maSP');
+
+        $data = TonKho::with(['sanPham', 'nguyenVatLieu', 'kho'])
+            ->when($request->input('type') === 'product', fn($q) => $q->whereNotNull('maSanPham'))
             ->when($request->input('type') === 'material', fn($q) => $q->whereNotNull('maNVL'))
-            ->when($request->filled('maSP'), fn($q) => $q->where('maSP', $request->input('maSP')))
+            ->when(!empty($maSP), fn($q) => $q->where('maSanPham', $maSP))
             ->when($request->filled('maNVL'), fn($q) => $q->where('maNVL', $request->input('maNVL')))
+            ->when($request->filled('maKho'), fn($q) => $q->where('maKho', $request->input('maKho')))
             ->when($request->filled('keyword'), function ($q) use ($request) {
                 $kw = $request->input('keyword');
-                $q->where(fn($sub) => $sub->where('maTonKho', 'LIKE', "%{$kw}%")->orWhere('tenTonKho', 'LIKE', "%{$kw}%"));
+                $q->where(fn($sub) => $sub->where('maTonKho', 'LIKE', "%{$kw}%")
+                                          ->orWhere('tenTonKho', 'LIKE', "%{$kw}%")
+                                          ->orWhere('maSanPham', 'LIKE', "%{$kw}%")
+                                          ->orWhere('maNVL', 'LIKE', "%{$kw}%"));
             })
             ->get();
 
@@ -34,15 +40,12 @@ class InventoryController extends Controller
     // Thuật toán Gợi ý FEFO (First Expired, First Out) khi xuất kho sản phẩm / NVL (CF-FR46)
     public function getFefoSuggestions(Request $request)
     {
-        $request->validate([
-            'maSP'  => 'nullable|string',
-            'maNVL' => 'nullable|string',
-        ]);
+        $maSP = $request->input('maSanPham') ?? $request->input('maSP');
 
-        $suggestions = TonKho::query()
+        $suggestions = TonKho::with(['sanPham', 'nguyenVatLieu', 'kho'])
             ->where('soLuongTonHienTai', '>', 0)
             ->where('hanSuDung', '>=', Carbon::today()->toDateString())
-            ->when($request->filled('maSP'), fn($q) => $q->where('maSP', $request->input('maSP')))
+            ->when(!empty($maSP), fn($q) => $q->where('maSanPham', $maSP))
             ->when($request->filled('maNVL'), fn($q) => $q->where('maNVL', $request->input('maNVL')))
             ->orderBy('hanSuDung', 'asc')
             ->get();
@@ -60,7 +63,7 @@ class InventoryController extends Controller
         $daysThreshold = (int) $request->input('days', 30);
         $thresholdDate = Carbon::today()->addDays($daysThreshold)->toDateString();
 
-        $alerts = TonKho::with(['sanPham', 'nguyenVatLieu'])
+        $alerts = TonKho::with(['sanPham', 'nguyenVatLieu', 'kho'])
             ->where('soLuongTonHienTai', '>', 0)
             ->where('hanSuDung', '<=', $thresholdDate)
             ->orderBy('hanSuDung', 'asc')
@@ -79,7 +82,7 @@ class InventoryController extends Controller
     {
         $minThreshold = (int) $request->input('min_qty', 500);
 
-        $alerts = TonKho::with(['sanPham', 'nguyenVatLieu'])
+        $alerts = TonKho::with(['sanPham', 'nguyenVatLieu', 'kho'])
             ->where('soLuongTonHienTai', '<=', $minThreshold)
             ->orderBy('soLuongTonHienTai', 'asc')
             ->get();
@@ -92,20 +95,119 @@ class InventoryController extends Controller
         ]);
     }
 
-    // Quản lý vị trí lưu trữ kho
+    // Quản lý vị trí lưu trữ kho sản phẩm (DT03, DT04)
     public function getProductLocations()
     {
+        $data = TonKho::with(['sanPham', 'kho'])
+            ->whereNotNull('maSanPham')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'maKhoSP'         => $item->maTonKho,
+                    'maTonKho'        => $item->maTonKho,
+                    'maKho'           => $item->maKho,
+                    'tenKho'          => $item->kho?->tenKho ?? 'Kho Tổng Vinamilk',
+                    'loaiKho'         => $item->kho?->loaiKho ?? 'Kho thành phẩm',
+                    'tinhTrangKhoSP'  => $item->trangThaiChatLuong ?? 'Đạt',
+                    'ghiChu'          => $item->ghiChu,
+                    'tonKho'          => $item,
+                ];
+            });
+
         return response()->json([
             'success' => true,
-            'data'    => KhoSanPham::with('tonKho')->get(),
+            'data'    => $data,
         ]);
     }
 
+    // Quản lý vị trí lưu trữ kho NVL (DT03, DT04)
     public function getMaterialLocations()
     {
+        $data = TonKho::with(['nguyenVatLieu', 'kho'])
+            ->whereNotNull('maNVL')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'maKhoNVL'        => $item->maTonKho,
+                    'maTonKho'        => $item->maTonKho,
+                    'maKho'           => $item->maKho,
+                    'tenKho'          => $item->kho?->tenKho ?? 'Kho NVL Mộc Châu',
+                    'loaiKho'         => $item->kho?->loaiKho ?? 'Kho NVL',
+                    'tinhTrangKhoNVL' => $item->trangThaiChatLuong ?? 'Đạt',
+                    'ghiChu'          => $item->ghiChu,
+                    'tonKho'          => $item,
+                ];
+            });
+
         return response()->json([
             'success' => true,
-            'data'    => KhoNguyenVatLieu::with('tonKho')->get(),
+            'data'    => $data,
+        ]);
+    }
+
+    // =========================================================================
+    // QUẢN LÝ ĐỀ NGHỊ BỔ SUNG SẢN PHẨM (BẢNG 36: DeNghiBoSungSanPham)
+    // =========================================================================
+
+    public function getDeNghiBoSung(Request $request)
+    {
+        $data = DeNghiBoSungSanPham::with(['sanPham', 'kho', 'nhanVien'])
+            ->when($request->filled('trangThai'), fn($q) => $q->where('trangThai', $request->trangThai))
+            ->orderBy('ngayDeNghi', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
+        ]);
+    }
+
+    public function createDeNghiBoSung(Request $request)
+    {
+        $validated = $request->validate([
+            'maDeNghi'    => 'nullable|string|unique:DeNghiBoSungSanPham,maDeNghi',
+            'maSanPham'   => 'required|string|exists:SanPham,maSanPham',
+            'maKho'       => 'required|string|exists:Kho,maKho',
+            'soLuong'     => 'required|integer|min:1',
+            'ngayCanHang' => 'nullable|date',
+            'maNV'        => 'nullable|string|exists:NhanVien,maNV',
+            'ghiChu'      => 'nullable|string|max:255',
+        ]);
+
+        $code = $validated['maDeNghi'] ?? ('DN' . date('Ymd') . rand(100, 999));
+
+        $item = DeNghiBoSungSanPham::create([
+            'maDeNghi'    => $code,
+            'maSanPham'   => $validated['maSanPham'],
+            'maKho'       => $validated['maKho'],
+            'soLuong'     => $validated['soLuong'],
+            'ngayDeNghi'  => Carbon::now()->toDateTimeString(),
+            'ngayCanHang' => $validated['ngayCanHang'] ?? Carbon::now()->addDays(7)->toDateString(),
+            'trangThai'   => 'ChoDuyet',
+            'maNV'        => $validated['maNV'] ?? 'NV001',
+            'ghiChu'      => $validated['ghiChu'] ?? 'Tồn kho cạn, đề nghị nhà máy sản xuất bổ sung',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Tạo đề nghị bổ sung thành phẩm ({$code}) thành công",
+            'data'    => $item->load(['sanPham', 'kho', 'nhanVien']),
+        ], 201);
+    }
+
+    public function updateDeNghiBoSungStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'trangThai' => 'required|string|max:30',
+        ]);
+
+        $item = DeNghiBoSungSanPham::findOrFail($id);
+        $item->update(['trangThai' => $validated['trangThai']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái phiếu đề nghị bổ sung thành công',
+            'data'    => $item->load(['sanPham', 'kho', 'nhanVien']),
         ]);
     }
 }

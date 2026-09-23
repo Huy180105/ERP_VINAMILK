@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\BangCong;
 use App\Models\BangLuong;
 use App\Models\NhanVien;
-use App\Models\LichSuNhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -189,15 +188,6 @@ class TimesheetController extends Controller
             'soGioTangCa' => $validated['soGioTangCa'] ?? 0,
             'soNgayNghiPhep' => $validated['soNgayNghiPhep'] ?? $timesheet->soNgayNghiPhep,
             'lyDoGiaiTrinh' => $validated['lyDoGiaiTrinh'],
-        ]);
-
-        // Lưu vết kiểm toán chỉnh sửa bảng công
-        LichSuNhanSu::create([
-            'maNV' => $timesheet->maNV,
-            'loaiThayDoi' => 'SuaBangCong',
-            'noiDung' => "Chỉnh sửa công tháng {$timesheet->thang}: Ngày công: {$timesheet->soNgayCong}, Tăng ca: {$timesheet->soGioTangCa}h. Lý do: {$validated['lyDoGiaiTrinh']}.",
-            'nguoiThucHien' => $request->header('X-User-Name', 'Quản lý nhân sự'),
-            'ngayTao' => now(),
         ]);
 
         return response()->json([

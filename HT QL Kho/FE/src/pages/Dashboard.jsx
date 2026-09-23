@@ -40,7 +40,7 @@ export default function Dashboard() {
 
   const totalLots = lots.length;
   const materialLots = lots.filter(l => l.maNVL).length;
-  const productLots = lots.filter(l => l.maSP).length;
+  const productLots = lots.filter(l => l.maSanPham || l.maSP).length;
 
   return (
     <div className="space-y-6">

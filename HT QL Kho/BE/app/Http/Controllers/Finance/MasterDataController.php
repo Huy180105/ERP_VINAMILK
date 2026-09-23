@@ -199,7 +199,7 @@ class MasterDataController extends Controller
             'KH' => KhachHang::where('maKhachHang', $validated['maThamChieu'])->exists(),
             'NCC' => NhaCungCap::where('maNCC', $validated['maThamChieu'])->exists(),
             'NV' => NhanVien::where('maNV', $validated['maThamChieu'])->exists(),
-            default => true,
+            'Khac' => true,
         };
 
         if (!$exists) {
@@ -230,6 +230,53 @@ class MasterDataController extends Controller
             'message' => 'Thêm ánh xạ đối tượng giao dịch thành công',
             'data' => $counterparty,
         ], 201);
+    }
+
+    /**
+     * Sửa ánh xạ đối tượng. Không cho đổi nguồn sau khi đã phát sinh chứng từ,
+     * để lịch sử thu chi luôn truy vết được về đúng KH/NCC/NV ban đầu.
+     */
+    public function updateCounterparty(Request $request, $id)
+    {
+        $counterparty = DoiTuongGiaoDich::findOrFail($id);
+        $validated = $request->validate([
+            'maThamChieu' => 'required|string|max:50',
+            'loaiDoiTuong' => 'required|string|in:KH,NCC,NV',
+            'trangThai' => 'nullable|boolean',
+        ]);
+
+        $sourceChanged = $counterparty->maThamChieu !== $validated['maThamChieu']
+            || $counterparty->loaiDoiTuong !== $validated['loaiDoiTuong'];
+        if ($sourceChanged && (
+            PhieuThu::where('maDoiTuong', $counterparty->maDoiTuong)->exists()
+            || PhieuChi::where('maDoiTuong', $counterparty->maDoiTuong)->exists()
+        )) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể đổi nguồn của đối tượng đã phát sinh chứng từ. Chỉ có thể thay đổi trạng thái.',
+            ], 400);
+        }
+
+        $exists = match ($validated['loaiDoiTuong']) {
+            'KH' => KhachHang::where('maKhachHang', $validated['maThamChieu'])->exists(),
+            'NCC' => NhaCungCap::where('maNCC', $validated['maThamChieu'])->exists(),
+            'NV' => NhanVien::where('maNV', $validated['maThamChieu'])->exists(),
+        };
+        if (!$exists) {
+            return response()->json(['success' => false, 'message' => 'Mã tham chiếu không tồn tại ở bảng nguồn.'], 400);
+        }
+
+        $duplicate = DoiTuongGiaoDich::where('loaiDoiTuong', $validated['loaiDoiTuong'])
+            ->where('maThamChieu', $validated['maThamChieu'])
+            ->where('maDoiTuong', '!=', $counterparty->maDoiTuong)
+            ->where('trangThai', 1)
+            ->exists();
+        if ($duplicate) {
+            return response()->json(['success' => false, 'message' => 'Đã tồn tại ánh xạ hoạt động cho đối tượng nguồn này.'], 400);
+        }
+
+        $counterparty->update($validated);
+        return response()->json(['success' => true, 'message' => 'Cập nhật ánh xạ đối tượng thành công', 'data' => $counterparty]);
     }
 
     public function toggleStatusCounterparty($id)

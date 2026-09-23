@@ -43,8 +43,8 @@ export default function SalesDeliveries() {
   const [formData, setFormData] = useState({
     maGiaoHang: makeDeliveryCode(),
     maDonHang: '',
-    maPhieuXuat: 'PXSP2026090501',
-    maNhanVien: 'NV004',
+    maPhieuXuatSP: 'PXSP2026090501',
+    maNV: 'NV004',
     diaChiGiao: '',
     ngayGiao: new Date().toISOString().slice(0, 10),
     trangThai: 'Đang giao',
@@ -102,8 +102,8 @@ export default function SalesDeliveries() {
     setFormData({
       maGiaoHang: makeDeliveryCode(),
       maDonHang: '',
-      maPhieuXuat: 'PXSP2026090501',
-      maNhanVien: 'NV004',
+      maPhieuXuatSP: 'PXSP2026090501',
+      maNV: 'NV004',
       diaChiGiao: '',
       ngayGiao: new Date().toISOString().slice(0, 10),
       trangThai: 'Đang giao',
@@ -113,10 +113,12 @@ export default function SalesDeliveries() {
 
   const handleOrderChange = (orderCode) => {
     const order = orders.find((o) => o.maDonHang === orderCode);
+    const pxCode = order?.phieu_xuat_s_p?.maPhieuXuatSP || order?.phieuXuatSP?.maPhieuXuatSP || order?.maPhieuXuatSP || formData.maPhieuXuatSP;
     setFormData({
       ...formData,
       maDonHang: orderCode,
-      diaChiGiao: order?.diaChiKH || order?.diaChi || 'Trụ sở khách hàng',
+      maPhieuXuatSP: pxCode,
+      diaChiGiao: order?.diaChiKH || order?.khach_hang?.diaChi || order?.diaChi || '131 Điện Biên Phủ, Phường 15, Bình Thạnh, TP.HCM',
     });
   };
 
@@ -273,11 +275,11 @@ export default function SalesDeliveries() {
                     <td className="px-5 py-3.5 text-slate-700">
                       <span className="flex items-center gap-1.5 font-medium">
                         <User className="w-3.5 h-3.5 text-slate-400" />
-                        {d.tenNhanVienGiao || d.maNhanVien || 'Tài xế Vinamilk'}
+                        {d.tenNhanVienGiao || d.maNV || d.maNhanVien || 'Tài xế Vinamilk'}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 font-mono text-[11px] text-slate-600">
-                      {d.maPhieuXuat || '—'}
+                      {d.maPhieuXuatSP || d.maPhieuXuat || '—'}
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <span
@@ -385,8 +387,8 @@ export default function SalesDeliveries() {
                   </label>
                   <input
                     type="text"
-                    value={formData.maPhieuXuat}
-                    onChange={(e) => setFormData({ ...formData, maPhieuXuat: e.target.value })}
+                    value={formData.maPhieuXuatSP}
+                    onChange={(e) => setFormData({ ...formData, maPhieuXuatSP: e.target.value })}
                     placeholder="PXSP..."
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-[#002795]"
                   />
@@ -396,8 +398,8 @@ export default function SalesDeliveries() {
                     Nhân Viên Giao Vận
                   </label>
                   <select
-                    value={formData.maNhanVien}
-                    onChange={(e) => setFormData({ ...formData, maNhanVien: e.target.value })}
+                    value={formData.maNV}
+                    onChange={(e) => setFormData({ ...formData, maNV: e.target.value })}
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-[#002795]"
                   >
                     <option value="NV004">Phạm Hoàng Nam (NV004)</option>

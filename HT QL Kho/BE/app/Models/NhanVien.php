@@ -65,9 +65,4 @@ class NhanVien extends Model
     {
         return $this->hasOne(TaiKhoan::class, 'maNV', 'maNV');
     }
-
-    public function lichSuThayDoi()
-    {
-        return $this->hasMany(LichSuNhanSu::class, 'maNV', 'maNV')->orderBy('ngayTao', 'desc');
-    }
 }

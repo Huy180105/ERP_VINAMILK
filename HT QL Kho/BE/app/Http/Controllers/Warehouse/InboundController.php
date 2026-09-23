@@ -8,6 +8,7 @@ use App\Models\ChiTietPhieuNhapNVL;
 use App\Models\PhieuNhapSP;
 use App\Models\ChiTietPhieuNhapSP;
 use App\Models\TonKho;
+use App\Models\SanPham;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -194,11 +195,42 @@ class InboundController extends Controller
                 'maPhieuYCXSP'  => $validated['maPhieuYCXSP'] ?? null,
             ]);
 
+            $today = Carbon::today();
+            $dateStr = Carbon::now()->format('Ymd');
+            $prefix = "LOT-SP-{$dateStr}-";
+
+            $lastLot = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")
+                ->orderBy('maTonKho', 'desc')
+                ->value('maTonKho');
+
+            $counter = ($lastLot ? (int) str_replace($prefix, '', $lastLot) : 0) + 1;
+
             foreach ($validated['items'] as $item) {
+                $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
+                $spId = $item['maSanPham'] ?? $item['maSP'];
+                $sp = SanPham::where('maSanPham', $spId)->first();
+                $spName = $sp?->tenSanPham ?? ("Sản phẩm " . $spId);
+
+                TonKho::create([
+                    'maTonKho'             => $maTonKho,
+                    'tenTonKho'            => "Lô {$spName} ({$item['ngaySanXuat']})",
+                    'maKho'                => $item['maKho'] ?? 'KHO-TONG',
+                    'maSanPham'            => $spId,
+                    'maNVL'                => null,
+                    'ngaySanXuat'          => $item['ngaySanXuat'],
+                    'hanSuDung'            => $item['hanSuDung'],
+                    'soLuongNhap'          => $item['soLuongNhap'],
+                    'soLuongTonHienTai'    => 0,
+                    'trangThai'            => 'Còn hạn',
+                    'trangThaiHSD'         => 'Còn hạn',
+                    'trangThaiChatLuong'   => 'Chờ kiểm tra',
+                    'ghiChu'               => "Tạo tự động từ phiếu nhập {$receipt->maPhieuNhapSP}",
+                ]);
+
                 ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
-                    'maSP'          => $item['maSP'],
-                    'soLuongNhap'   => $item['soLuongNhap'],
+                    'maTonKho'      => $maTonKho,
+                    'soLuong'       => $item['soLuongNhap'],
                     'ngaySanXuat'   => $item['ngaySanXuat'],
                     'hanSuDung'     => $item['hanSuDung'],
                     'ghiChu'        => $item['ghiChu'] ?? null,
@@ -210,7 +242,7 @@ class InboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tạo phiếu nhập sản phẩm thành công! Trạng thái: Chờ duyệt.',
-                'data'    => $receipt->load(['nhanVienTao', 'chiTiets.sanPham']),
+                'data'    => $receipt->load(['nhanVienTao', 'chiTiets.tonKho']),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -243,13 +275,48 @@ class InboundController extends Controller
                 'trangThai'    => 'Chờ duyệt',
             ]);
 
+            $oldDetails = ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->get();
             ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->delete();
+            foreach ($oldDetails as $od) {
+                TonKho::where('maTonKho', $od->maTonKho)->where('soLuongTonHienTai', 0)->delete();
+            }
+
+            $today = Carbon::today();
+            $dateStr = Carbon::now()->format('Ymd');
+            $prefix = "LOT-SP-{$dateStr}-";
+
+            $lastLot = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")
+                ->orderBy('maTonKho', 'desc')
+                ->value('maTonKho');
+
+            $counter = ($lastLot ? (int) str_replace($prefix, '', $lastLot) : 0) + 1;
 
             foreach ($validated['items'] as $item) {
+                $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
+                $spId = $item['maSanPham'] ?? $item['maSP'];
+                $sp = SanPham::where('maSanPham', $spId)->first();
+                $spName = $sp?->tenSanPham ?? ("Sản phẩm " . $spId);
+
+                TonKho::create([
+                    'maTonKho'             => $maTonKho,
+                    'tenTonKho'            => "Lô {$spName} ({$item['ngaySanXuat']})",
+                    'maKho'                => $item['maKho'] ?? 'KHO-TONG',
+                    'maSanPham'            => $spId,
+                    'maNVL'                => null,
+                    'ngaySanXuat'          => $item['ngaySanXuat'],
+                    'hanSuDung'            => $item['hanSuDung'],
+                    'soLuongNhap'          => $item['soLuongNhap'],
+                    'soLuongTonHienTai'    => 0,
+                    'trangThai'            => 'Còn hạn',
+                    'trangThaiHSD'         => 'Còn hạn',
+                    'trangThaiChatLuong'   => 'Chờ kiểm tra',
+                    'ghiChu'               => "Tạo tự động từ phiếu nhập {$receipt->maPhieuNhapSP}",
+                ]);
+
                 ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
-                    'maSP'          => $item['maSP'],
-                    'soLuongNhap'   => $item['soLuongNhap'],
+                    'maTonKho'      => $maTonKho,
+                    'soLuong'       => $item['soLuongNhap'],
                     'ngaySanXuat'   => $item['ngaySanXuat'],
                     'hanSuDung'     => $item['hanSuDung'],
                     'ghiChu'        => $item['ghiChu'] ?? null,
@@ -261,7 +328,7 @@ class InboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Cập nhật phiếu nhập sản phẩm thành công!',
-                'data'    => $receipt->load(['nhanVienTao', 'chiTiets.sanPham']),
+                'data'    => $receipt->load(['nhanVienTao', 'chiTiets.tonKho']),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -282,7 +349,11 @@ class InboundController extends Controller
 
         DB::beginTransaction();
         try {
+            $oldDetails = ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->get();
             ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->delete();
+            foreach ($oldDetails as $od) {
+                TonKho::where('maTonKho', $od->maTonKho)->where('soLuongTonHienTai', 0)->delete();
+            }
             $receipt->delete();
             DB::commit();
 
@@ -350,37 +421,17 @@ class InboundController extends Controller
         DB::beginTransaction();
         try {
             $today = Carbon::today();
-            $dateStr = Carbon::now()->format('Ymd');
-            $prefix = "LOT-SP-{$dateStr}-";
-
-            // Lấy mã số thứ tự lô cao nhất trong ngày
-            $lastLot = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")
-                ->orderBy('maTonKho', 'desc')
-                ->value('maTonKho');
-
-            $counter = ($lastLot ? (int) str_replace($prefix, '', $lastLot) : 0) + 1;
-
             foreach ($receipt->chiTiets as $detail) {
-                $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
-                $spName = $detail->sanPham?->tenSanPham ?? ("Sản phẩm " . $detail->maSP);
-
-                $expDate = Carbon::parse($detail->hanSuDung);
-                $daysToExpiry = $today->diffInDays($expDate, false);
-                $trangThaiTon = ($daysToExpiry <= 30) ? 'Ưu tiên xuất FEFO' : 'Còn hạn';
-
-                TonKho::create([
-                    'maTonKho'             => $maTonKho,
-                    'tenTonKho'            => "Lô {$spName} ({$detail->ngaySanXuat})",
-                    'maSP'                 => $detail->maSP,
-                    'maNVL'                => null,
-                    'ngaySanXuat'          => $detail->ngaySanXuat,
-                    'hanSuDung'            => $detail->hanSuDung,
-                    'soLuongNhap'          => $detail->soLuongNhap,
-                    'soLuongTonHienTai'    => $detail->soLuongNhap,
-                    'trangThai'            => $trangThaiTon,
-                    'ghiChu'               => "Tạo tự động từ phiếu nhập {$receipt->maPhieuNhapSP}",
-                    'maChiTietPhieuNhapSP' => $detail->maChiTietPhieuNhapSP,
-                ]);
+                $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
+                if ($tonKho) {
+                    $expDate = Carbon::parse($detail->hanSuDung);
+                    $daysToExpiry = $today->diffInDays($expDate, false);
+                    $trangThaiTon = ($daysToExpiry <= 30) ? 'Ưu tiên xuất FEFO' : 'Còn hạn';
+                    $tonKho->update([
+                        'soLuongTonHienTai' => $detail->soLuong,
+                        'trangThai'         => $trangThaiTon,
+                    ]);
+                }
             }
 
             $receipt->update(['trangThai' => 'Thành công']);
@@ -421,7 +472,8 @@ class InboundController extends Controller
             'ghiChu'              => 'required|string',
             'maPhieuYCXSP'        => 'nullable|string',
             'items'               => 'required|array|min:1',
-            'items.*.maSP'        => 'required|string|exists:SanPham,maSanPham',
+            'items.*.maSP'        => 'nullable|string|exists:SanPham,maSanPham',
+            'items.*.maSanPham'   => 'nullable|string|exists:SanPham,maSanPham',
             'items.*.soLuongNhap' => 'required|integer|min:1',
             'items.*.ngaySanXuat' => 'required|date',
             'items.*.hanSuDung'   => 'required|date',

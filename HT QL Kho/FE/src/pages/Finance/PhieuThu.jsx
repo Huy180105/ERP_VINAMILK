@@ -15,7 +15,8 @@ import {
   ShoppingBag,
   RefreshCw,
   ShieldAlert,
-  Clock
+  Clock,
+  Pencil
 } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
@@ -28,7 +29,7 @@ export default function PhieuThu() {
 
   // Vai trò người dùng (Kế toán trưởng / Kế toán thanh toán / Thủ quỹ)
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
+    return localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan';
   });
 
   // Dữ liệu danh mục tham chiếu
@@ -45,6 +46,7 @@ export default function PhieuThu() {
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [createTab, setCreateTab] = useState('sales'); // 'sales' | 'manual'
   const [selectedSale, setSelectedSale] = useState(null);
 
@@ -66,7 +68,7 @@ export default function PhieuThu() {
     fetchDropdowns();
 
     const handleRoleChanged = (e) => {
-      setCurrentRole(e.detail || localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong');
+      setCurrentRole(e.detail || localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan');
     };
     window.addEventListener('finance_role_changed', handleRoleChanged);
     return () => window.removeEventListener('finance_role_changed', handleRoleChanged);
@@ -91,9 +93,9 @@ export default function PhieuThu() {
         FinanceMasterDataAPI.getAccounts(),
         FinanceMasterDataAPI.getRevCategories(),
       ]);
-      if (dtRes.data.success) setCounterparties(dtRes.data.data || []);
-      if (accRes.data.success) setAccounts(accRes.data.data || []);
-      if (catRes.data.success) setCategories(catRes.data.data || []);
+      if (dtRes.data.success) setCounterparties((dtRes.data.data || []).filter(item => item.trangThai));
+      if (accRes.data.success) setAccounts((accRes.data.data || []).filter(item => item.trangThai));
+      if (catRes.data.success) setCategories((catRes.data.data || []).filter(item => item.trangThai));
     } catch (err) {
       console.error(err);
     }
@@ -116,6 +118,7 @@ export default function PhieuThu() {
   };
 
   const openCreateModal = () => {
+    setEditingId(null);
     const autoCode = generateAutoCode(receipts, 'maPhieuThu', 'PT', 3, true);
     setSelectedSale(null);
     setCreateTab('sales');
@@ -162,6 +165,23 @@ export default function PhieuThu() {
     }));
   };
 
+  const openEditModal = (receipt) => {
+    setEditingId(receipt.maPhieuThu);
+    setSelectedSale(null);
+    setCreateTab('manual');
+    setFormData({
+      maPhieuThu: receipt.maPhieuThu,
+      ngayThu: String(receipt.ngayThu).slice(0, 10),
+      maDoiTuong: receipt.maDoiTuong || '', lyDoThu: receipt.lyDoThu || '',
+      phuongThucThu: receipt.phuongThucThu || 'TM', maTaiKhoanQuy: receipt.maTaiKhoanQuy || '',
+      maThanhToan: receipt.maThanhToan || '', maCongNo: receipt.maCongNo || '', maHoaDon: receipt.maHoaDon || '',
+      items: (receipt.chiTiets || receipt.chi_tiets || []).map(item => ({
+        maChiTietThu: item.maChiTietThu, maDanhMucThu: item.maDanhMucThu || '', dienGiai: item.dienGiai || '', soTien: item.soTien,
+      })),
+    });
+    setModalOpen(true);
+  };
+
   const handleAddItem = () => {
     const timestamp = Date.now().toString().slice(-4);
     const newIdx = formData.items.length + 1;
@@ -201,7 +221,10 @@ export default function PhieuThu() {
     }
 
     try {
-      const res = await ReceiptAPI.createReceipt({ ...formData, soTien: total });
+      const payload = { ...formData, soTien: total };
+      const res = editingId
+        ? await ReceiptAPI.updateReceipt(editingId, payload)
+        : await ReceiptAPI.createReceipt(payload);
       if (res.data.success) {
         setModalOpen(false);
         fetchReceipts();
@@ -239,6 +262,19 @@ export default function PhieuThu() {
       }
     } catch (err) {
       alert('Lỗi chuyển trạng thái: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleCompleteReconciliation = async (id) => {
+    if (!window.confirm(`Xác nhận khớp lệnh đối soát cho phiếu thu ${id}? Số dư quỹ sẽ được ghi nhận.`)) return;
+    try {
+      const res = await ReceiptAPI.completeReconciliation(id);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchReceipts();
+      }
+    } catch (err) {
+      alert('Lỗi khớp lệnh: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -312,7 +348,7 @@ export default function PhieuThu() {
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center space-x-2">
             <ArrowDownLeft className="w-6 h-6 text-emerald-600" />
-            <span>Quản Lý Phiếu Thu Tiền (FI-FR02, FI-BR01)</span>
+            <span>Quản Lý Phiếu Thu Tiền (FI-FR03, FI-BR01)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Lập phiếu thu từ chứng từ Bán Hàng hoặc thủ công, kiểm duyệt tự động tăng số dư quỹ theo chuẩn mực kế toán.
@@ -428,7 +464,7 @@ export default function PhieuThu() {
                           {pt.ngayThu ? new Date(pt.ngayThu).toLocaleDateString('vi-VN') : ''}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-800">{pt.doiTuong?.tenDoiTuong ?? 'N/A'}</div>
+                          <div className="font-semibold text-slate-800">{(pt.doiTuong || pt.doi_tuong)?.tenDoiTuong ?? 'N/A'}</div>
                           <div className="text-[10px] text-slate-400 font-mono">{pt.maDoiTuong}</div>
                         </td>
                         <td className="py-3 px-4 text-slate-700 max-w-xs">
@@ -443,7 +479,7 @@ export default function PhieuThu() {
                           {Number(pt.soTien).toLocaleString()}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-slate-700">{pt.taiKhoanQuy?.tenTaiKhoanQuy ?? 'N/A'}</div>
+                          <div className="font-medium text-slate-700">{(pt.taiKhoanQuy || pt.tai_khoan_quy)?.tenTaiKhoanQuy ?? 'N/A'}</div>
                           <div className="text-[10px] text-slate-400">
                             {pt.phuongThucThu === 'CK' ? 'Chuyển khoản' : 'Tiền mặt'}
                           </div>
@@ -453,6 +489,9 @@ export default function PhieuThu() {
                           <div className="flex items-center justify-center space-x-1">
                             {pt.trangThai === 'Moi' && (
                               <>
+                                <button onClick={() => openEditModal(pt)} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50 rounded-lg transition cursor-pointer" title="Sửa phiếu thu">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
                                 <button
                                   onClick={() => handleApprove(pt.maPhieuThu)}
                                   className={`p-1.5 rounded-lg transition cursor-pointer ${
@@ -481,7 +520,7 @@ export default function PhieuThu() {
 
                             {pt.trangThai === 'ChoDoiSoat' && (
                               <button
-                                onClick={() => handleApprove(pt.maPhieuThu)}
+                                onClick={() => handleCompleteReconciliation(pt.maPhieuThu)}
                                 className="px-2 py-1 bg-[#0B2341] hover:bg-[#132F4C] text-white rounded-md text-[10px] font-bold transition flex items-center space-x-1 cursor-pointer"
                                 title="Khớp lệnh đối soát và duyệt vào quỹ"
                               >
@@ -510,7 +549,7 @@ export default function PhieuThu() {
                             <div className="bg-white rounded-md border border-slate-200 p-4 shadow-2xs space-y-3">
                               <h4 className="font-bold text-xs text-slate-700 flex items-center space-x-1.5">
                                 <FileText className="w-3.5 h-3.5 text-[#0052FF]" />
-                                <span>Chi Tiết Khoản Mục Thu ({pt.chiTiets?.length || 0} khoản)</span>
+                                <span>Chi Tiết Khoản Mục Thu ({(pt.chiTiets || pt.chi_tiets)?.length || 0} khoản)</span>
                               </h4>
                               <table className="w-full text-xs">
                                 <thead className="bg-slate-50 text-slate-500 font-semibold">
@@ -522,11 +561,11 @@ export default function PhieuThu() {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                  {pt.chiTiets?.map((ct) => (
+                                  {(pt.chiTiets || pt.chi_tiets)?.map((ct) => (
                                     <tr key={ct.maChiTietThu}>
                                       <td className="py-2 px-3 font-mono text-slate-600">{ct.maChiTietThu}</td>
                                       <td className="py-2 px-3 font-medium text-slate-800">
-                                        {ct.danhMucThu?.tenDanhMucThu ?? 'N/A'}
+                                        {(ct.danhMucThu || ct.danh_muc_thu)?.tenDanhMucThu ?? 'N/A'}
                                       </td>
                                       <td className="py-2 px-3 text-slate-600">{ct.dienGiai || '-'}</td>
                                       <td className="py-2 px-3 text-right font-mono font-bold text-slate-800">
@@ -537,9 +576,9 @@ export default function PhieuThu() {
                                 </tbody>
                               </table>
                               <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
-                                <span>Người lập: <strong>{pt.nhanVienLap?.hoTen ?? pt.nguoiLap}</strong></span>
+                                <span>Người lập: <strong>{(pt.nhanVienLap || pt.nhan_vien_lap)?.hoTen ?? pt.nguoiLap}</strong></span>
                                 {pt.nguoiDuyet && (
-                                  <span>Người duyệt: <strong>{pt.nhanVienDuyet?.hoTen ?? pt.nguoiDuyet}</strong></span>
+                                  <span>Người duyệt: <strong>{(pt.nhanVienDuyet || pt.nhan_vien_duyet)?.hoTen ?? pt.nguoiDuyet}</strong></span>
                                 )}
                               </div>
                             </div>
@@ -562,7 +601,7 @@ export default function PhieuThu() {
             <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-2">
                 <ArrowDownLeft className="w-5 h-5" />
-                <h3 className="font-bold text-sm">Lập Phiếu Thu Tiền (FI-FR02, FI-BR01)</h3>
+                <h3 className="font-bold text-sm">Lập Phiếu Thu Tiền (FI-FR03, FI-BR01)</h3>
               </div>
               <button
                 onClick={() => setModalOpen(false)}

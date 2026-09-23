@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\PhieuYeuCauNVL;
 use App\Models\ChiTietPhieuYeuCauNVL;
 use App\Models\NguyenVatLieu;
-use App\Models\KhoNguyenVatLieu;
 use App\Models\TonKho;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,11 +77,9 @@ class MaterialRequestController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $nvl = NguyenVatLieu::find($item['maNVL']);
                 ChiTietPhieuYeuCauNVL::create([
                     'maPhieuYCNVL' => $reqCode,
                     'maNVL' => $item['maNVL'],
-                    'tenNVL' => $nvl ? $nvl->tenNVL : 'NVL',
                     'soLuong' => $item['soLuong'],
                 ]);
             }
@@ -114,7 +111,7 @@ class MaterialRequestController extends Controller
             // Sum available stock from TonKho
             $stock = TonKho::where('maNVL', $m->maNVL)
                 ->where('trangThai', 'Còn hạn')
-                ->sum('soLuongTon');
+                ->sum('soLuongTonHienTai');
 
             return [
                 'maNVL' => $m->maNVL,

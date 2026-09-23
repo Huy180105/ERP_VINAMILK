@@ -21,9 +21,9 @@ class GiaoHang extends Model
         'diaChiGiao',
         'trangThai',
         'maDonHang',
-        'maPhieuXuat',
+        'maPhieuXuatSP',
         'maKhachHang',
-        'maNhanVien',
+        'maNV',
     ];
 
     public function donHang()
@@ -38,12 +38,17 @@ class GiaoHang extends Model
 
     public function nhanVien()
     {
-        return $this->belongsTo(NhanVien::class, 'maNhanVien', 'maNV');
+        return $this->belongsTo(NhanVien::class, 'maNV', 'maNV');
     }
 
     public function phieuXuat()
     {
-        return $this->belongsTo(PhieuXuatSP::class, 'maPhieuXuat', 'maPhieuXuatSP');
+        return $this->belongsTo(PhieuXuatSP::class, 'maPhieuXuatSP', 'maPhieuXuatSP');
+    }
+
+    public function phieuXuatSP()
+    {
+        return $this->belongsTo(PhieuXuatSP::class, 'maPhieuXuatSP', 'maPhieuXuatSP');
     }
 
     public function hoaDon()
@@ -51,4 +56,3 @@ class GiaoHang extends Model
         return $this->hasOne(HoaDon::class, 'maGiaoHang', 'maGiaoHang');
     }
 }
-

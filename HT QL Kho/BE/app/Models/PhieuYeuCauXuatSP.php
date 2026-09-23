@@ -9,13 +9,13 @@ class PhieuYeuCauXuatSP extends Model
 {
     use HasFactory;
 
-    protected  = 'PhieuYeuCauXuatSP';
-    protected  = 'maPhieuYCXSP';
-    public  = false;
-    protected  = 'string';
-    public  = false;
+    protected $table = 'PhieuYeuCauXuatSP';
+    protected $primaryKey = 'maPhieuYCXSP';
+    public $incrementing = false;
+    protected $keyType = 'string';
+    public $timestamps = false;
 
-    protected  = [
+    protected $fillable = [
         'maPhieuYCXSP',
         'maPhieuNghiemThu',
         'maNhanVien',
@@ -26,6 +26,16 @@ class PhieuYeuCauXuatSP extends Model
 
     public function nhanVien()
     {
-        return ->belongsTo(NhanVien::class, 'maNhanVien', 'maNV');
+        return $this->belongsTo(NhanVien::class, 'maNhanVien', 'maNV');
+    }
+
+    public function phieuNghiemThu()
+    {
+        return $this->belongsTo(PhieuNghiemThu::class, 'maPhieuNghiemThu', 'maPhieuNghiemThu');
+    }
+
+    public function chiTiets()
+    {
+        return $this->hasMany(ChiTietPhieuYeuCauXuatSP::class, 'maPhieuYCXSP', 'maPhieuYCXSP');
     }
 }

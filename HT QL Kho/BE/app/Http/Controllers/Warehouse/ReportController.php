@@ -27,7 +27,7 @@ class ReportController extends Controller
         $summary = TonKho::with(['sanPham', 'nguyenVatLieu'])
             ->get()
             ->map(function ($lot) use ($nhapNVL, $xuatNVL, $xuatSP) {
-                $isSP = !empty($lot->maSP);
+                $isSP = !empty($lot->maSanPham ?? $lot->maSP);
                 $tongNhap = (float) ($isSP ? $lot->soLuongNhap : ($nhapNVL[$lot->maTonKho] ?? $lot->soLuongNhap));
                 $tongXuat = (float) ($isSP ? ($xuatSP[$lot->maTonKho] ?? 0) : ($xuatNVL[$lot->maTonKho] ?? 0));
 
@@ -61,7 +61,7 @@ class ReportController extends Controller
 
         $movements = collect();
 
-        if ($lot->maSP) {
+        if ($lot->maSanPham || $lot->maSP) {
             // Lịch sử biến động của lô Sản Phẩm
             $xuatSP = ChiTietPhieuXuatSP::where('maTonKho', $maTonKho)
                 ->join('PhieuXuatSP', 'ChiTietPhieuXuatSP.maPhieuXuatSP', '=', 'PhieuXuatSP.maPhieuXuatSP')

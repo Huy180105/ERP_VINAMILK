@@ -9,15 +9,21 @@ class Kho extends Model
 {
     use HasFactory;
 
-    protected  = 'Kho';
-    protected  = 'maKho';
-    public  = false;
-    protected  = 'string';
-    public  = false;
+    protected $table = 'Kho';
+    protected $primaryKey = 'maKho';
+    public $incrementing = false;
+    protected $keyType = 'string';
+    public $timestamps = false;
 
-    protected  = [
+    protected $fillable = [
         'maKho',
         'tenKho',
+        'loaiKho',
         'diaChi',
     ];
+
+    public function tonKhos()
+    {
+        return $this->hasMany(TonKho::class, 'maKho', 'maKho');
+    }
 }

@@ -218,7 +218,7 @@ class ReportController extends Controller
         $accounts = $accountQuery->get();
 
         $ptQuery = PhieuThu::with(['doiTuong', 'taiKhoanQuy'])->whereIn('trangThai', ['ChoDoiSoat', 'DaDuyet']);
-        $pcQuery = PhieuChi::with(['doiTuong', 'taiKhoanQuy'])->whereIn('trangThai', ['Moi', 'DaDuyet']);
+        $pcQuery = PhieuChi::with(['doiTuong', 'taiKhoanQuy'])->whereIn('trangThai', ['ChoDoiSoat', 'DaDuyet']);
 
         if ($maTaiKhoanQuy) {
             $ptQuery->where('maTaiKhoanQuy', $maTaiKhoanQuy);
@@ -260,22 +260,25 @@ class ReportController extends Controller
         ]);
 
         $pendingReceipts = $receipts->where('trangThai', 'ChoDoiSoat')->values();
+        $pendingPayments = $payments->where('trangThai', 'ChoDoiSoat')->values();
         $approvedReceipts = $receipts->where('trangThai', 'DaDuyet')->values();
+        $approvedPayments = $payments->where('trangThai', 'DaDuyet')->values();
+        $pendingItems = $pendingReceipts->concat($pendingPayments)->sortByDesc('ngay')->values();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'accounts' => $accounts,
                 'pendingReconciliation' => [
-                    'count' => $pendingReceipts->count(),
-                    'totalAmount' => $pendingReceipts->sum('soTien'),
-                    'items' => $pendingReceipts,
+                    'count' => $pendingItems->count(),
+                    'totalAmount' => $pendingItems->sum('soTien'),
+                    'items' => $pendingItems,
                 ],
                 'approvedItems' => [
                     'receiptsCount' => $approvedReceipts->count(),
                     'receiptsTotal' => $approvedReceipts->sum('soTien'),
-                    'paymentsCount' => $payments->count(),
-                    'paymentsTotal' => $payments->sum('soTien'),
+                    'paymentsCount' => $approvedPayments->count(),
+                    'paymentsTotal' => $approvedPayments->sum('soTien'),
                 ],
                 'allVouchers' => $receipts->concat($payments)->sortByDesc('ngay')->values(),
             ]

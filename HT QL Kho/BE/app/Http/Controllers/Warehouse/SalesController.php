@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Warehouse;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use App\Models\PhieuXuatSP;
+use App\Models\ChiTietPhieuXuatSP;
 use App\Models\DonHang;
 use App\Models\ChiTietDonHang;
 use App\Models\KhachHang;
@@ -139,9 +141,9 @@ class SalesController extends Controller
         // Lấy tồn kho hiện tại từ TonKho
         $stockMap = DB::table('TonKho')
             ->where('trangThai', '!=', 'Hết hàng')
-            ->groupBy('maSP')
-            ->select('maSP', DB::raw('SUM(soLuongTonHienTai) as tonKho'))
-            ->pluck('tonKho', 'maSP');
+            ->groupBy('maSanPham')
+            ->select('maSanPham', DB::raw('SUM(soLuongTonHienTai) as tonKho'))
+            ->pluck('tonKho', 'maSanPham');
 
         $result = $products->map(function ($p) use ($stockMap) {
             $ton = (int) ($stockMap[$p->maSanPham] ?? 0);
@@ -280,7 +282,7 @@ class SalesController extends Controller
             ->get();
 
         $deliveries = DB::table('GiaoHang as gh')
-            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNhanVien')
+            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNV')
             ->where('gh.maDonHang', $id)
             ->select('gh.*', 'nv.hoTen as tenNhanVienGiao')
             ->get();
@@ -325,7 +327,7 @@ class SalesController extends Controller
         // Kiểm tra tồn kho thành phẩm (SA-BR01)
         foreach ($validated['items'] as $item) {
             $product = SanPham::where('maSanPham', $item['maSanPham'])->first();
-            $availableStock = (int) TonKho::where('maSP', $item['maSanPham'])
+            $availableStock = (int) TonKho::where('maSanPham', $item['maSanPham'])
                 ->where('trangThai', '!=', 'Hết hàng')
                 ->sum('soLuongTonHienTai');
 
@@ -409,7 +411,7 @@ class SalesController extends Controller
 
         foreach ($validated['items'] as $item) {
             $product = SanPham::where('maSanPham', $item['maSanPham'])->first();
-            $availableStock = (int) TonKho::where('maSP', $item['maSanPham'])
+            $availableStock = (int) TonKho::where('maSanPham', $item['maSanPham'])
                 ->where('trangThai', '!=', 'Hết hàng')
                 ->sum('soLuongTonHienTai');
 
@@ -535,7 +537,7 @@ class SalesController extends Controller
             $items = ChiTietDonHang::where('maDonHang', $id)->get();
             $stockErrors = [];
             foreach ($items as $item) {
-                $stock = (int) TonKho::where('maSP', $item->maSanPham)
+                $stock = (int) TonKho::where('maSanPham', $item->maSanPham)
                     ->where('trangThai', '!=', 'Hết hàng')
                     ->sum('soLuongTonHienTai');
                 if ($stock < $item->soLuong) {
@@ -548,6 +550,43 @@ class SalesController extends Controller
                     'message' => 'Đơn hàng chỉ được xác nhận khi số lượng tồn kho đủ đáp ứng.',
                     'errors' => $stockErrors,
                 ], 422);
+            }
+
+            // Tự động sinh phiếu xuất kho PhieuXuatSP (Flow 7 & DT05) nếu chưa có
+            $existingPX = PhieuXuatSP::where('maDonHang', $id)->first();
+            if (!$existingPX) {
+                $prefix = 'PX' . date('ym');
+                $randSuffix = str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                $newMaPX = $prefix . $randSuffix;
+                while (PhieuXuatSP::where('maPhieuXuatSP', $newMaPX)->exists()) {
+                    $randSuffix = str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                    $newMaPX = $prefix . $randSuffix;
+                }
+
+                PhieuXuatSP::create([
+                    'maPhieuXuatSP' => $newMaPX,
+                    'maKhachHang'   => $order->maKhachHang,
+                    'maNVTao'       => 'NV003',
+                    'ngayXuat'      => now(),
+                    'trangThai'     => 'Chờ xuất',
+                    'ghiChu'        => "Xuất kho tự động từ đơn hàng {$order->maDonHang}",
+                    'maDonHang'     => $order->maDonHang,
+                ]);
+
+                foreach ($items as $item) {
+                    $lot = TonKho::where('maSanPham', $item->maSanPham)
+                        ->where('soLuongTonHienTai', '>', 0)
+                        ->orderBy('hanSuDung', 'asc')
+                        ->first();
+                    if ($lot) {
+                        ChiTietPhieuXuatSP::create([
+                            'maPhieuXuatSP' => $newMaPX,
+                            'maTonKho'      => $lot->maTonKho,
+                            'soLuong'       => $item->soLuong,
+                            'ghiChu'        => "Xuất tự động cho {$item->maSanPham}",
+                        ]);
+                    }
+                }
             }
         }
 
@@ -711,8 +750,8 @@ class SalesController extends Controller
         $query = DB::table('GiaoHang as gh')
             ->leftJoin('DonHang as dh', 'dh.maDonHang', '=', 'gh.maDonHang')
             ->leftJoin('KhachHang as kh', 'kh.maKhachHang', '=', 'gh.maKhachHang')
-            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNhanVien')
-            ->leftJoin('PhieuXuatSP as px', 'px.maPhieuXuatSP', '=', 'gh.maPhieuXuat')
+            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNV')
+            ->leftJoin('PhieuXuatSP as px', 'px.maPhieuXuatSP', '=', 'gh.maPhieuXuatSP')
             ->select(
                 'gh.*',
                 'dh.tongTien',
@@ -758,9 +797,10 @@ class SalesController extends Controller
         $delivery = DB::table('GiaoHang as gh')
             ->leftJoin('DonHang as dh', 'dh.maDonHang', '=', 'gh.maDonHang')
             ->leftJoin('KhachHang as kh', 'kh.maKhachHang', '=', 'gh.maKhachHang')
-            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNhanVien')
+            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNV')
+            ->leftJoin('PhieuXuatSP as px', 'px.maPhieuXuatSP', '=', 'gh.maPhieuXuatSP')
             ->where('gh.maGiaoHang', $id)
-            ->select('gh.*', 'dh.thanhTien', 'dh.ngayMua', 'kh.tenKhachHang', 'kh.soDienThoai as soDienThoaiKH', 'nv.hoTen as tenNhanVienGiao')
+            ->select('gh.*', 'dh.thanhTien', 'dh.ngayMua', 'kh.tenKhachHang', 'kh.soDienThoai as soDienThoaiKH', 'nv.hoTen as tenNhanVienGiao', 'px.ngayXuat as ngayXuatKho')
             ->first();
 
         if (!$delivery) {
@@ -789,7 +829,9 @@ class SalesController extends Controller
         $validated = $request->validate([
             'maGiaoHang' => 'required|string|max:20|unique:GiaoHang,maGiaoHang',
             'maDonHang' => 'required|string|exists:DonHang,maDonHang',
+            'maPhieuXuatSP' => 'nullable|string',
             'maPhieuXuat' => 'nullable|string',
+            'maNV' => 'nullable|string',
             'maNhanVien' => 'nullable|string',
             'diaChiGiao' => 'required|string|max:255',
             'ngayGiao' => 'nullable|date',
@@ -797,6 +839,14 @@ class SalesController extends Controller
         ]);
 
         $order = DonHang::where('maDonHang', $validated['maDonHang'])->firstOrFail();
+
+        $maPX = $validated['maPhieuXuatSP'] ?? $request->input('maPhieuXuat');
+        if (!$maPX) {
+            $px = PhieuXuatSP::where('maDonHang', $order->maDonHang)->first();
+            if ($px) {
+                $maPX = $px->maPhieuXuatSP;
+            }
+        }
 
         DB::beginTransaction();
         try {
@@ -806,9 +856,9 @@ class SalesController extends Controller
                 'diaChiGiao' => $validated['diaChiGiao'],
                 'trangThai' => $validated['trangThai'] ?? 'Đang giao',
                 'maDonHang' => $order->maDonHang,
-                'maPhieuXuat' => $validated['maPhieuXuat'] ?? null,
+                'maPhieuXuatSP' => $maPX,
                 'maKhachHang' => $order->maKhachHang,
-                'maNhanVien' => $validated['maNhanVien'] ?? 'NV004',
+                'maNV' => $validated['maNV'] ?? $request->input('maNhanVien') ?? 'NV004',
             ]);
 
             // Cập nhật trạng thái đơn hàng sang Đang giao

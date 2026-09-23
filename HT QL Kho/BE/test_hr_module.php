@@ -12,7 +12,6 @@ use App\Models\BangCong;
 use App\Models\BangLuong;
 use App\Models\PhongBan;
 use App\Models\ChucVu;
-use App\Models\LichSuNhanSu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\HR\EmployeeController;

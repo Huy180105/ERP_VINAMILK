@@ -13,7 +13,7 @@ const api = axios.create({
 // Interceptor gắn X-User-Role từ localStorage
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    config.headers['X-User-Role'] = localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
+    config.headers['X-User-Role'] = localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan';
   }
   return config;
 });
@@ -53,9 +53,11 @@ export const ReceiptAPI = {
   getReceipts: (params) => api.get('/receipts', { params }),
   getReceipt: (id) => api.get(`/receipts/${id}`),
   createReceipt: (data) => api.post('/receipts', data),
+  updateReceipt: (id, data) => api.put(`/receipts/${id}`, data),
   approveReceipt: (id, data) => api.put(`/receipts/${id}/approve`, data),
   cancelReceipt: (id, data) => api.put(`/receipts/${id}/cancel`, data),
   sendToReconcile: (id) => api.put(`/receipts/${id}/reconcile`),
+  completeReconciliation: (id) => api.put(`/receipts/${id}/reconcile/complete`),
   deleteReceipt: (id) => api.delete(`/receipts/${id}`),
 };
 
@@ -65,9 +67,11 @@ export const PaymentAPI = {
   getPayments: (params) => api.get('/payments', { params }),
   getPayment: (id) => api.get(`/payments/${id}`),
   createPayment: (data) => api.post('/payments', data),
+  updatePayment: (id, data) => api.put(`/payments/${id}`, data),
   approvePayment: (id, data) => api.put(`/payments/${id}/approve`, data),
   cancelPayment: (id, data) => api.put(`/payments/${id}/cancel`, data),
   sendToReconcile: (id) => api.put(`/payments/${id}/reconcile`),
+  completeReconciliation: (id) => api.put(`/payments/${id}/reconcile/complete`),
   deletePayment: (id) => api.delete(`/payments/${id}`),
 };
 

@@ -47,7 +47,10 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@php test_all_modules.php"
+        ],
+        "test:erp": [
+            "@php test_all_modules.php"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

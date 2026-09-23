@@ -21,48 +21,24 @@ class WarehouseSeeder extends Seeder
         DB::table('PhieuNhapSP')->truncate();
         DB::table('ChiTietPhieuNhapNVL')->truncate();
         DB::table('PhieuNhapNVL')->truncate();
-        DB::table('KhoNguyenVatLieu')->truncate();
-        DB::table('KhoSanPham')->truncate();
+        DB::table('DeNghiBoSungSanPham')->truncate();
         DB::table('TonKho')->truncate();
         DB::table('NguyenVatLieu')->truncate();
         DB::table('LoaiNVL')->truncate();
         DB::table('SanPham')->truncate();
         DB::table('NhaCungCap')->truncate();
         DB::table('KhachHang')->truncate();
-        DB::table('NhanVien')->truncate();
-        DB::table('ChucVu')->truncate();
-        DB::table('PhongBan')->truncate();
         DB::table('Kho')->truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 0. Seed PhongBan, ChucVu, NhanVien, Kho
-        DB::table('PhongBan')->insert([
-            ['maPhongBan' => 'PB01', 'tenPhongBan' => 'Phòng Quản Lý Kho & Vận Tải'],
-            ['maPhongBan' => 'PB02', 'tenPhongBan' => 'Phòng Điều Độ Sản Xuất'],
-            ['maPhongBan' => 'PB03', 'tenPhongBan' => 'Phòng Quản Lý Chất Lượng (QA/QC)'],
-            ['maPhongBan' => 'PB04', 'tenPhongBan' => 'Phòng Mua Hàng & Cung Ứng'],
-        ]);
-
-        DB::table('ChucVu')->insert([
-            ['maChucVu' => 'CV01', 'tenChucVu' => 'Trưởng Phòng Kho'],
-            ['maChucVu' => 'CV02', 'tenChucVu' => 'Quản Lý Kho Hàng'],
-            ['maChucVu' => 'CV03', 'tenChucVu' => 'Nhân Viên Thủ Kho'],
-            ['maChucVu' => 'CV04', 'tenChucVu' => 'Nhân Viên Kế Toán Kho'],
-        ]);
-
-        DB::table('NhanVien')->insert([
-            ['maNV' => 'NV001', 'hoTen' => 'Nguyễn Văn Hùng', 'maPhongBan' => 'PB01', 'maChucVu' => 'CV02', 'ngayVaoLam' => '2022-01-15', 'trangThai' => 'Đang làm việc'],
-            ['maNV' => 'NV002', 'hoTen' => 'Trần Thị Thu Thảo', 'maPhongBan' => 'PB01', 'maChucVu' => 'CV03', 'ngayVaoLam' => '2023-03-10', 'trangThai' => 'Đang làm việc'],
-            ['maNV' => 'NV003', 'hoTen' => 'Lê Minh Tuấn', 'maPhongBan' => 'PB02', 'maChucVu' => 'CV03', 'ngayVaoLam' => '2021-06-20', 'trangThai' => 'Đang làm việc'],
-            ['maNV' => 'NV004', 'hoTen' => 'Phạm Hoàng Nam', 'maPhongBan' => 'PB04', 'maChucVu' => 'CV03', 'ngayVaoLam' => '2024-02-01', 'trangThai' => 'Đang làm việc'],
-        ]);
+        // 0. Seed Kho
 
         DB::table('Kho')->insert([
-            ['maKho' => 'KHO01', 'tenKho' => 'Kho Nguyên Liệu & Bao Bì Trung Tâm Củ Chi', 'diaChi' => 'Ấp Bến Cỏ, Xã Phú Hòa Đông, Củ Chi, TP.HCM'],
-            ['maKho' => 'KHO02', 'tenKho' => 'Kho Thành Phẩm Lạnh Nhà Máy Sữa Thống Nhất', 'diaChi' => 'Số 12 KCN Tân Tạo, Tân Tạo A, Bình Tân, TP.HCM'],
-            ['maKho' => 'KHO03', 'tenKho' => 'Kho Phân Phối Tổng Miền Nam (Bình Dương)', 'diaChi' => 'Đường NA3, KCN Mỹ Phước 2, Bến Cát, Bình Dương'],
-            ['maKho' => 'KHO04', 'tenKho' => 'Kho Lạnh Chuyên Dụng Sữa Chua & Men Sống Probi', 'diaChi' => 'Đường Độc Lập, KCN Sóng Thần 1, Dĩ An, Bình Dương'],
+            ['maKho' => 'KHO-TONG', 'tenKho' => 'Kho Tổng Mega Plant Vinamilk Bình Dương', 'loaiKho' => 'Kho thành phẩm', 'diaChi' => 'Lô CN-01, KCN Mỹ Phước 2, Bến Cát, Bình Dương'],
+            ['maKho' => 'KHO-LTM', 'tenKho' => 'Kho Lạnh Sữa Tươi Cao Nguyên Mộc Châu', 'loaiKho' => 'Kho NVL', 'diaChi' => 'Thị trấn Mộc Châu, Sơn La'],
+            ['maKho' => 'KHO-DNG', 'tenKho' => 'Kho Trung Chuyển Miền Trung - Đà Nẵng', 'loaiKho' => 'Kho thành phẩm', 'diaChi' => 'KCN Hòa Khánh, Liên Chiểu, Đà Nẵng'],
+            ['maKho' => 'KHO-CTH', 'tenKho' => 'Kho Phân Phối Trọng Điểm Tây Nam Bộ (Cần Thơ)', 'loaiKho' => 'Kho thành phẩm', 'diaChi' => 'KCN Trà Nóc 1, Bình Thủy, Cần Thơ'],
         ]);
 
         // 1. Seed LoaiNVL (6 Categories)
@@ -91,16 +67,16 @@ class WarehouseSeeder extends Seeder
 
         // 3. Seed SanPham (10 Finished Products)
         DB::table('SanPham')->insert([
-            ['maSanPham' => 'SP001', 'tenSanPham' => 'Sữa Tươi Tiệt Trùng 100% Vinamilk Ít Đường 180ml', 'donViTinh' => 'Thùng', 'donGia' => 385000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP002', 'tenSanPham' => 'Sữa Tươi Tiệt Trùng 100% Vinamilk Có Đường 110ml', 'donViTinh' => 'Thùng', 'donGia' => 260000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP003', 'tenSanPham' => 'Sữa Chua Ăn Vinamilk Có Đường 100g', 'donViTinh' => 'Lốc', 'donGia' => 28000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP004', 'tenSanPham' => 'Sữa Hạt Tách Béo Vinamilk Hạnh Nhân 180ml', 'donViTinh' => 'Thùng', 'donGia' => 450000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP005', 'tenSanPham' => 'Sữa Tươi Nguyên Chất Vinamilk Green Farm 180ml', 'donViTinh' => 'Thùng', 'donGia' => 420000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP006', 'tenSanPham' => 'Sữa Chua Uống Men Sống Probi 65ml', 'donViTinh' => 'Lốc', 'donGia' => 24500, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP007', 'tenSanPham' => 'Sữa Bột Dielac Alpha Gold Step 3 900g', 'donViTinh' => 'Hộp', 'donGia' => 310000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP008', 'tenSanPham' => 'Sữa Đặc Có Đường Phương Nam 1284g', 'donViTinh' => 'Lon', 'donGia' => 62000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP009', 'tenSanPham' => 'Sữa Tươi Tiệt Trùng Hương Dâu Vinamilk 180ml', 'donViTinh' => 'Thùng', 'donGia' => 385000, 'trangThai' => 'Đang kinh doanh'],
-            ['maSanPham' => 'SP010', 'tenSanPham' => 'Phô Mai Con Bò Cười Vinamilk 112g (8 Miếng)', 'donViTinh' => 'Hộp', 'donGia' => 35000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP001', 'tenSanPham' => 'Sữa Tươi Tiệt Trùng 100% Vinamilk Ít Đường 180ml', 'donViTinh' => 'Thùng', 'hanSuDung' => '2027-01-14', 'donGia' => 385000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP002', 'tenSanPham' => 'Sữa Tươi Tiệt Trùng 100% Vinamilk Có Đường 110ml', 'donViTinh' => 'Thùng', 'hanSuDung' => '2027-01-14', 'donGia' => 260000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP003', 'tenSanPham' => 'Sữa Chua Ăn Vinamilk Có Đường 100g', 'donViTinh' => 'Lốc', 'hanSuDung' => '2026-10-24', 'donGia' => 28000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP004', 'tenSanPham' => 'Sữa Hạt Tách Béo Vinamilk Hạnh Nhân 180ml', 'donViTinh' => 'Thùng', 'hanSuDung' => '2027-03-20', 'donGia' => 450000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP005', 'tenSanPham' => 'Sữa Tươi Nguyên Chất Vinamilk Green Farm 180ml', 'donViTinh' => 'Thùng', 'hanSuDung' => '2027-02-13', 'donGia' => 420000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP006', 'tenSanPham' => 'Sữa Chua Uống Men Sống Probi 65ml', 'donViTinh' => 'Lốc', 'hanSuDung' => '2026-10-21', 'donGia' => 24500, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP007', 'tenSanPham' => 'Sữa Bột Dielac Alpha Gold Step 3 900g', 'donViTinh' => 'Hộp', 'hanSuDung' => '2028-09-15', 'donGia' => 310000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP008', 'tenSanPham' => 'Sữa Đặc Có Đường Phương Nam 1284g', 'donViTinh' => 'Lon', 'hanSuDung' => '2027-12-31', 'donGia' => 62000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP009', 'tenSanPham' => 'Sữa Tươi Tiệt Trùng Hương Dâu Vinamilk 180ml', 'donViTinh' => 'Thùng', 'hanSuDung' => '2027-01-20', 'donGia' => 385000, 'trangThai' => 'Đang kinh doanh'],
+            ['maSanPham' => 'SP010', 'tenSanPham' => 'Phô Mai Con Bò Cười Vinamilk 112g (8 Miếng)', 'donViTinh' => 'Hộp', 'hanSuDung' => '2027-04-10', 'donGia' => 35000, 'trangThai' => 'Đang kinh doanh'],
         ]);
 
         // 4. Seed NhaCungCap (15 Suppliers)
@@ -141,167 +117,225 @@ class WarehouseSeeder extends Seeder
             ['maKhachHang' => 'KH015', 'tenKhachHang' => 'Công Ty Cổ Phần Phân Phối Tiêu Dùng Miền Bắc (Hà Nội)', 'soDienThoai' => '02437896688', 'diaChi' => 'Khu Công Nghiệp Đài Tư, Sài Đồng, Long Biên, Hà Nội', 'hanMucCongNo' => 850000000],
         ]);
 
-        // 6. Seed TonKho (12 Lots - FEFO priority, near expiry, low stock & normal)
+                // 6. Seed TonKho (12 Lots - FEFO priority, near expiry, low stock & normal)
         DB::table('TonKho')->insert([
             [
                 'maTonKho' => 'LOT-NVL-20260901-01',
+                'maKho' => 'KHO-LTM',
+                'maSanPham' => null,
                 'maNVL' => 'NVL001',
-                'maSP' => null,
                 'tenTonKho' => 'Lô Sữa Tươi Nguyên Chất Thô Mộc Châu - Đợt 1',
                 'soLuongNhap' => 20000,
                 'soLuongTonHienTai' => 15500,
                 'ngaySanXuat' => Carbon::now()->subDays(10)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(15)->toDateString(), // FEFO Alert
+                'trangThaiHSD' => 'Sắp hết hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Ưu tiên xuất FEFO',
                 'ghiChu' => 'Bảo quản kho lạnh UHT 2-4 độ C',
             ],
             [
                 'maTonKho' => 'LOT-NVL-20260905-02',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => null,
                 'maNVL' => 'NVL002',
-                'maSP' => null,
                 'tenTonKho' => 'Lô Đường Tinh Luyện Biên Hòa Grade A',
                 'soLuongNhap' => 10000,
                 'soLuongTonHienTai' => 8500,
                 'ngaySanXuat' => Carbon::now()->subDays(30)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(365)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Kho khô ráo',
             ],
             [
                 'maTonKho' => 'LOT-NVL-20260907-03',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => null,
                 'maNVL' => 'NVL003',
-                'maSP' => null,
                 'tenTonKho' => 'Lô Hương Liệu Dâu Tự Nhiên Firmenich',
                 'soLuongNhap' => 500,
                 'soLuongTonHienTai' => 80, // Low stock alert
                 'ngaySanXuat' => Carbon::now()->subDays(60)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(180)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Tồn kho thấp',
                 'ghiChu' => 'Cần nhập bổ sung khẩn cấp',
             ],
             [
                 'maTonKho' => 'LOT-NVL-20260908-04',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => null,
                 'maNVL' => 'NVL004',
-                'maSP' => null,
                 'tenTonKho' => 'Lô Vỏ Hộp Giấy Tetra Pak Brik Aseptic 180ml',
                 'soLuongNhap' => 500000,
                 'soLuongTonHienTai' => 420000,
                 'ngaySanXuat' => Carbon::now()->subDays(15)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(720)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Kho bao bì tiệt trùng',
             ],
             [
                 'maTonKho' => 'LOT-SP-20260902-FEFO1',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => 'SP001',
                 'maNVL' => null,
-                'maSP' => 'SP001',
                 'tenTonKho' => 'Lô Thành Phẩm Sữa Tươi 100% Ít Đường 180ml (Batch FEFO-1)',
                 'soLuongNhap' => 10,
-                'soLuongTonHienTai' => 10, // Tồn kho mẫu để kiểm thử bán hàng
+                'soLuongTonHienTai' => 10,
                 'ngaySanXuat' => Carbon::now()->subDays(45)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(10)->toDateString(),
+                'trangThaiHSD' => 'Sắp hết hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Ưu tiên xuất FEFO',
                 'ghiChu' => 'Xuất ngay cho siêu thị Co.opmart',
             ],
             [
                 'maTonKho' => 'LOT-SP-20260908-FEFO2',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => 'SP001',
                 'maNVL' => null,
-                'maSP' => 'SP001',
                 'tenTonKho' => 'Lô Thành Phẩm Sữa Tươi 100% Ít Đường 180ml (Batch FEFO-2)',
-                'soLuongNhap' => 0,
-                'soLuongTonHienTai' => 0,
+                'soLuongNhap' => 15000,
+                'soLuongTonHienTai' => 14200,
                 'ngaySanXuat' => Carbon::now()->subDays(5)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(120)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Kho tổng thành phẩm UHT',
             ],
             [
                 'maTonKho' => 'LOT-SP-20260904-SC01',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => 'SP003',
                 'maNVL' => null,
-                'maSP' => 'SP003',
                 'tenTonKho' => 'Lô Thành Phẩm Sữa Chua Ăn Vinamilk Có Đường 100g',
                 'soLuongNhap' => 3000,
-                'soLuongTonHienTai' => 850, // Near expiry alert: Expiry in 8 days
+                'soLuongTonHienTai' => 850,
                 'ngaySanXuat' => Carbon::now()->subDays(22)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(8)->toDateString(),
+                'trangThaiHSD' => 'Sắp hết hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Ưu tiên xuất FEFO',
                 'ghiChu' => 'Kho lạnh 4-8 độ C',
             ],
             [
                 'maTonKho' => 'LOT-SP-20260909-GF01',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => 'SP005',
                 'maNVL' => null,
-                'maSP' => 'SP005',
                 'tenTonKho' => 'Lô Sữa Tươi Nguyên Chất Vinamilk Green Farm 180ml',
                 'soLuongNhap' => 8000,
                 'soLuongTonHienTai' => 7600,
                 'ngaySanXuat' => Carbon::now()->subDays(3)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(150)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Dòng sữa tươi sinh thái cao cấp',
             ],
             [
                 'maTonKho' => 'LOT-SP-20260903-PB01',
+                'maKho' => 'KHO-DNG',
+                'maSanPham' => 'SP006',
                 'maNVL' => null,
-                'maSP' => 'SP006',
                 'tenTonKho' => 'Lô Sữa Chua Uống Men Sống Probi 65ml',
                 'soLuongNhap' => 12000,
                 'soLuongTonHienTai' => 11000,
                 'ngaySanXuat' => Carbon::now()->subDays(8)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(35)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Bảo quản mát 6-8 độ C',
             ],
             [
                 'maTonKho' => 'LOT-SP-20260906-DA01',
+                'maKho' => 'KHO-CTH',
+                'maSanPham' => 'SP007',
                 'maNVL' => null,
-                'maSP' => 'SP007',
                 'tenTonKho' => 'Lô Sữa Bột Dielac Alpha Gold Step 3 900g',
                 'soLuongNhap' => 2000,
                 'soLuongTonHienTai' => 1850,
                 'ngaySanXuat' => Carbon::now()->subDays(20)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(730)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Sữa bột công thức lon thiếc',
             ],
             [
                 'maTonKho' => 'LOT-NVL-20260910-05',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => null,
                 'maNVL' => 'NVL005',
-                'maSP' => null,
                 'tenTonKho' => 'Lô Bột Sữa Gầy Skim Milk Powder NZMP Fonterra',
                 'soLuongNhap' => 5000,
                 'soLuongTonHienTai' => 4500,
                 'ngaySanXuat' => Carbon::now()->subDays(40)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(365)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Còn hạn',
                 'ghiChu' => 'Nhập khẩu chính ngạch New Zealand',
             ],
             [
                 'maTonKho' => 'LOT-NVL-20260902-06',
+                'maKho' => 'KHO-TONG',
+                'maSanPham' => null,
                 'maNVL' => 'NVL006',
-                'maSP' => null,
                 'tenTonKho' => 'Lô Men Probiotics LGG Chr. Hansen Đan Mạch',
                 'soLuongNhap' => 200,
-                'soLuongTonHienTai' => 45, // Low stock alert
+                'soLuongTonHienTai' => 45,
                 'ngaySanXuat' => Carbon::now()->subDays(15)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(90)->toDateString(),
+                'trangThaiHSD' => 'Còn hạn',
+                'trangThaiChatLuong' => 'Đạt',
                 'trangThai' => 'Tồn kho thấp',
                 'ghiChu' => 'Men vi sinh sống đông khô',
             ]
         ]);
 
-        // 7. Seed KhoNguyenVatLieu & KhoSanPham
-        DB::table('KhoNguyenVatLieu')->insert([
-            ['maKhoNVL' => 'KNVL01', 'maTonKho' => 'LOT-NVL-20260901-01', 'tinhTrangKhoNVL' => 'Bình thường', 'ghiChu' => 'Kho UHT Sữa Thô'],
-            ['maKhoNVL' => 'KNVL02', 'maTonKho' => 'LOT-NVL-20260905-02', 'tinhTrangKhoNVL' => 'Bình thường', 'ghiChu' => 'Kho Khô Đường Tinh Luyện'],
-            ['maKhoNVL' => 'KNVL03', 'maTonKho' => 'LOT-NVL-20260907-03', 'tinhTrangKhoNVL' => 'Tồn kho thấp', 'ghiChu' => 'Kho Phụ Gia Hương Liệu'],
-            ['maKhoNVL' => 'KNVL04', 'maTonKho' => 'LOT-NVL-20260908-04', 'tinhTrangKhoNVL' => 'Bình thường', 'ghiChu' => 'Kho Bao Bì Vỏ Hộp'],
-        ]);
-
-        DB::table('KhoSanPham')->insert([
-            ['maKhoSP' => 'KSP01', 'maTonKho' => 'LOT-SP-20260902-FEFO1', 'tinhTrangKhoSP' => 'Bình thường', 'ghiChu' => 'Khu vực ưu tiên xuất FEFO'],
-            ['maKhoSP' => 'KSP02', 'maTonKho' => 'LOT-SP-20260904-SC01', 'tinhTrangKhoSP' => 'Bình thường', 'ghiChu' => 'Kho Lạnh Sữa Chua 4-8 độ C'],
-            ['maKhoSP' => 'KSP03', 'maTonKho' => 'LOT-SP-20260909-GF01', 'tinhTrangKhoSP' => 'Bình thường', 'ghiChu' => 'Kho Tổng Thành Phẩm Green Farm'],
-            ['maKhoSP' => 'KSP04', 'maTonKho' => 'LOT-SP-20260906-DA01', 'tinhTrangKhoSP' => 'Bình thường', 'ghiChu' => 'Kho Sữa Bột Dielac'],
+                // 7. Seed DeNghiBoSungSanPham (Bảng 36 Kho)
+        DB::table('DeNghiBoSungSanPham')->insert([
+            [
+                'maDeNghi' => 'DN20260901',
+                'maSanPham' => 'SP001',
+                'maKho' => 'KHO-TONG',
+                'soLuong' => 5000,
+                'ngayDeNghi' => Carbon::now()->subDays(5)->toDateTimeString(),
+                'ngayCanHang' => Carbon::now()->addDays(5)->toDateString(),
+                'trangThai' => 'DaDuyet',
+                'maNV' => 'NV001',
+                'ghiChu' => 'Tồn kho UHT 180ml giảm dưới mức an toàn 2,000 thùng',
+            ],
+            [
+                'maDeNghi' => 'DN20260902',
+                'maSanPham' => 'SP003',
+                'maKho' => 'KHO-TONG',
+                'soLuong' => 3000,
+                'ngayDeNghi' => Carbon::now()->subDays(3)->toDateTimeString(),
+                'ngayCanHang' => Carbon::now()->addDays(7)->toDateString(),
+                'trangThai' => 'HoanThanh',
+                'maNV' => 'NV001',
+                'ghiChu' => 'Bổ sung phục vụ đơn hàng đối tác siêu thị WinMart',
+            ],
+            [
+                'maDeNghi' => 'DN20260903',
+                'maSanPham' => 'SP006',
+                'maKho' => 'KHO-DNG',
+                'soLuong' => 4000,
+                'ngayDeNghi' => Carbon::now()->subDays(1)->toDateTimeString(),
+                'ngayCanHang' => Carbon::now()->addDays(10)->toDateString(),
+                'trangThai' => 'ChoDuyet',
+                'maNV' => 'NV002',
+                'ghiChu' => 'Dự trữ đợt khuyến mãi trung thu Probi',
+            ],
         ]);
 
         // 8. Seed PhieuNhapNVL & ChiTietPhieuNhapNVL
@@ -401,28 +435,25 @@ class WarehouseSeeder extends Seeder
 
         DB::table('ChiTietPhieuNhapSP')->insert([
             [
-                'maChiTietPhieuNhapSP' => 1,
                 'maPhieuNhapSP' => 'PNSP2026090201',
-                'maSP' => 'SP001',
-                'soLuongNhap' => 5000,
+                'maTonKho' => 'LOT-SP-20260902-FEFO1',
+                'soLuong' => 5000,
                 'ngaySanXuat' => Carbon::now()->subDays(45)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(200)->toDateString(),
                 'ghiChu' => 'QC đạt chuẩn Monde Selection',
             ],
             [
-                'maChiTietPhieuNhapSP' => 2,
                 'maPhieuNhapSP' => 'PNSP2026090402',
-                'maSP' => 'SP003',
-                'soLuongNhap' => 3000,
+                'maTonKho' => 'LOT-SP-20260904-SC01',
+                'soLuong' => 3000,
                 'ngaySanXuat' => Carbon::now()->subDays(22)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(190)->toDateString(),
                 'ghiChu' => 'Bảo quản kho mát ngay',
             ],
             [
-                'maChiTietPhieuNhapSP' => 3,
                 'maPhieuNhapSP' => 'PNSP2026090803',
-                'maSP' => 'SP001',
-                'soLuongNhap' => 15000,
+                'maTonKho' => 'LOT-SP-20260908-FEFO2',
+                'soLuong' => 15000,
                 'ngaySanXuat' => Carbon::now()->subDays(5)->toDateString(),
                 'hanSuDung' => Carbon::now()->addDays(365)->toDateString(),
                 'ghiChu' => 'Nhập kho tổng',
@@ -439,6 +470,7 @@ class WarehouseSeeder extends Seeder
                 'ngayXuat' => Carbon::now()->subDays(4)->toDateString(),
                 'trangThai' => 'Đã hoàn thành',
                 'ghiChu' => 'Xuất 4,500 lít sữa tươi thô cấp phát cho dây chuyền tiệt trùng UHT',
+                'maPhieuYeuCauNVL' => 'YCNVL20260901',
             ],
             [
                 'maPhieuXuatNVL' => 'PXNVL2026090602',
@@ -448,6 +480,7 @@ class WarehouseSeeder extends Seeder
                 'ngayXuat' => Carbon::now()->subDays(2)->toDateString(),
                 'trangThai' => 'Đã hoàn thành',
                 'ghiChu' => 'Xuất 1,500 kg đường Biên Hòa phục vụ nấu mẻ sữa chua ăn',
+                'maPhieuYeuCauNVL' => 'YCNVL20260908',
             ],
         ]);
 
@@ -475,6 +508,7 @@ class WarehouseSeeder extends Seeder
                 'ngayXuat' => Carbon::now()->subDays(3)->toDateString(),
                 'trangThai' => 'Đã hoàn thành',
                 'ghiChu' => 'Xuất 3,800 thùng Sữa tươi 180ml ưu tiên thuật toán FEFO lô HSD gần nhất',
+                'maDonHang' => 'DH20260901',
             ],
             [
                 'maPhieuXuatSP' => 'PXSP2026090702',
@@ -483,6 +517,7 @@ class WarehouseSeeder extends Seeder
                 'ngayXuat' => Carbon::now()->subDays(1)->toDateString(),
                 'trangThai' => 'Đã hoàn thành',
                 'ghiChu' => 'Xuất 2,150 lốc Sữa chua ăn Vinamilk cho siêu thị WinMart',
+                'maDonHang' => 'DH20260905',
             ],
             [
                 'maPhieuXuatSP' => 'PXSP2026091003',
@@ -491,6 +526,7 @@ class WarehouseSeeder extends Seeder
                 'ngayXuat' => Carbon::now()->toDateString(),
                 'trangThai' => 'Chờ duyệt',
                 'ghiChu' => 'Xuất 800 thùng Sữa tươi tiệt trùng FEFO đợt mới',
+                'maDonHang' => 'DH20260908',
             ],
         ]);
 

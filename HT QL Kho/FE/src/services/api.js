@@ -56,6 +56,9 @@ export const InventoryAPI = {
   getLowStockAlerts: (min_qty) => api.get('/inventory/alerts/low-stock', { params: { min_qty } }),
   getProductLocations: () => api.get('/inventory/locations/products'),
   getMaterialLocations: () => api.get('/inventory/locations/materials'),
+  getReplenishments: (params) => api.get('/inventory/replenishments', { params }),
+  createReplenishment: (data) => api.post('/inventory/replenishments', data),
+  updateReplenishmentStatus: (id, data) => api.patch(`/inventory/replenishments/${id}/status`, data),
 };
 
 export const InboundAPI = {

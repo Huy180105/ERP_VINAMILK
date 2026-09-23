@@ -18,12 +18,15 @@ class TonKho extends Model
     protected $fillable = [
         'maTonKho',
         'tenTonKho',
-        'maSP',
+        'maKho',
+        'maSanPham',
         'maNVL',
         'ngaySanXuat',
         'hanSuDung',
         'soLuongNhap',
         'soLuongTonHienTai',
+        'trangThaiHSD',
+        'trangThaiChatLuong',
         'trangThai',
         'ghiChu',
         'maChiTietPhieuNhapSP',
@@ -31,7 +34,7 @@ class TonKho extends Model
 
     public function sanPham()
     {
-        return $this->belongsTo(SanPham::class, 'maSP', 'maSanPham');
+        return $this->belongsTo(SanPham::class, 'maSanPham', 'maSanPham');
     }
 
     public function nguyenVatLieu()
@@ -39,13 +42,8 @@ class TonKho extends Model
         return $this->belongsTo(NguyenVatLieu::class, 'maNVL', 'maNVL');
     }
 
-    public function khoSanPham()
+    public function kho()
     {
-        return $this->hasOne(KhoSanPham::class, 'maTonKho', 'maTonKho');
-    }
-
-    public function khoNguyenVatLieu()
-    {
-        return $this->hasOne(KhoNguyenVatLieu::class, 'maTonKho', 'maTonKho');
+        return $this->belongsTo(Kho::class, 'maKho', 'maKho');
     }
 }

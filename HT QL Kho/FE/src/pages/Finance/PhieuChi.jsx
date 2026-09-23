@@ -16,7 +16,8 @@ import {
   RefreshCw,
   ShieldAlert,
   Users,
-  Clock
+  Clock,
+  Pencil
 } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
@@ -29,7 +30,7 @@ export default function PhieuChi() {
 
   // Role state
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
+    return localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan';
   });
 
   // Master data for dropdowns
@@ -48,6 +49,7 @@ export default function PhieuChi() {
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [createTab, setCreateTab] = useState('purchase'); // 'purchase' | 'payroll' | 'manual'
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [selectedPayroll, setSelectedPayroll] = useState(null);
@@ -69,7 +71,7 @@ export default function PhieuChi() {
     fetchDropdowns();
 
     const handleRoleChanged = (e) => {
-      setCurrentRole(e.detail || localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong');
+      setCurrentRole(e.detail || localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan');
     };
     window.addEventListener('finance_role_changed', handleRoleChanged);
     return () => window.removeEventListener('finance_role_changed', handleRoleChanged);
@@ -94,9 +96,9 @@ export default function PhieuChi() {
         FinanceMasterDataAPI.getAccounts(),
         FinanceMasterDataAPI.getExpCategories(),
       ]);
-      if (dtRes.data.success) setCounterparties(dtRes.data.data || []);
-      if (accRes.data.success) setAccounts(accRes.data.data || []);
-      if (catRes.data.success) setCategories(catRes.data.data || []);
+      if (dtRes.data.success) setCounterparties((dtRes.data.data || []).filter(item => item.trangThai));
+      if (accRes.data.success) setAccounts((accRes.data.data || []).filter(item => item.trangThai));
+      if (catRes.data.success) setCategories((catRes.data.data || []).filter(item => item.trangThai));
     } catch (err) {
       console.error(err);
     }
@@ -131,6 +133,7 @@ export default function PhieuChi() {
   };
 
   const openCreateModal = () => {
+    setEditingId(null);
     const autoCode = generateAutoCode(payments, 'maPhieuChi', 'PC', 3, true);
     setSelectedPurchase(null);
     setSelectedPayroll(null);
@@ -176,6 +179,24 @@ export default function PhieuChi() {
         }
       ]
     }));
+  };
+
+  const openEditModal = (payment) => {
+    setEditingId(payment.maPhieuChi);
+    setSelectedPurchase(null);
+    setSelectedPayroll(null);
+    setCreateTab('manual');
+    setFormData({
+      maPhieuChi: payment.maPhieuChi,
+      ngayChi: String(payment.ngayChi).slice(0, 10),
+      maDoiTuong: payment.maDoiTuong || '', lyDoChi: payment.lyDoChi || '',
+      phuongThucChi: payment.phuongThucChi || 'CK', maTaiKhoanQuy: payment.maTaiKhoanQuy || '',
+      maPhieuNhapNVL: payment.maPhieuNhapNVL || '', maBangLuong: payment.maBangLuong || '',
+      items: (payment.chiTiets || payment.chi_tiets || []).map(item => ({
+        maChiTietChi: item.maChiTietChi, maDanhMucChi: item.maDanhMucChi || '', dienGiai: item.dienGiai || '', soTien: item.soTien,
+      })),
+    });
+    setModalOpen(true);
   };
 
   const handleSelectPayroll = (bl) => {
@@ -247,7 +268,10 @@ export default function PhieuChi() {
     }
 
     try {
-      const res = await PaymentAPI.createPayment({ ...formData, soTien: total });
+      const payload = { ...formData, soTien: total };
+      const res = editingId
+        ? await PaymentAPI.updatePayment(editingId, payload)
+        : await PaymentAPI.createPayment(payload);
       if (res.data.success) {
         setModalOpen(false);
         fetchPayments();
@@ -303,6 +327,33 @@ export default function PhieuChi() {
     }
   };
 
+  const handleSendToReconcile = async (id) => {
+    if (!window.confirm(`Chuyển phiếu chi ${id} sang trạng thái Chờ đối soát ngân hàng (FI-FR06)?`)) return;
+    try {
+      const res = await PaymentAPI.sendToReconcile(id);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchPayments();
+      }
+    } catch (err) {
+      alert('Lỗi chuyển trạng thái: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleCompleteReconciliation = async (payment) => {
+    if (!window.confirm(`Xác nhận khớp lệnh đối soát cho phiếu chi ${payment.maPhieuChi}? Số dư quỹ sẽ được ghi nhận.`)) return;
+    try {
+      const res = await PaymentAPI.completeReconciliation(payment.maPhieuChi);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchPayments();
+        fetchDropdowns();
+      }
+    } catch (err) {
+      alert('Lỗi khớp lệnh: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm(`Xác nhận xóa phiếu chi ${id}? Chỉ xóa được phiếu ở trạng thái Mới.`)) return;
     try {
@@ -353,7 +404,7 @@ export default function PhieuChi() {
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center space-x-2">
             <ArrowUpRight className="w-6 h-6 text-rose-600" />
-            <span>Quản Lý Phiếu Chi Tiền (FI-FR03, FI-BR02)</span>
+            <span>Quản Lý Phiếu Chi Tiền (FI-FR04, FI-BR02)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Lập phiếu chi từ Phiếu Nhập NVL (Kho) hoặc Bảng Lương (Nhân sự), kiểm duyệt hạn mức số dư quỹ theo chuẩn VAS.
@@ -469,7 +520,7 @@ export default function PhieuChi() {
                           {pc.ngayChi ? new Date(pc.ngayChi).toLocaleDateString('vi-VN') : ''}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-800">{pc.doiTuong?.tenDoiTuong ?? 'N/A'}</div>
+                          <div className="font-semibold text-slate-800">{(pc.doiTuong || pc.doi_tuong)?.tenDoiTuong ?? 'N/A'}</div>
                           <div className="text-[10px] text-slate-400 font-mono">{pc.maDoiTuong}</div>
                         </td>
                         <td className="py-3 px-4 text-slate-700 max-w-xs">
@@ -489,7 +540,7 @@ export default function PhieuChi() {
                           {Number(pc.soTien).toLocaleString()}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-slate-700">{pc.taiKhoanQuy?.tenTaiKhoanQuy ?? 'N/A'}</div>
+                          <div className="font-medium text-slate-700">{(pc.taiKhoanQuy || pc.tai_khoan_quy)?.tenTaiKhoanQuy ?? 'N/A'}</div>
                           <div className="text-[10px] text-slate-400">
                             {pc.phuongThucChi === 'CK' ? 'Chuyển khoản' : 'Tiền mặt'}
                           </div>
@@ -499,6 +550,9 @@ export default function PhieuChi() {
                           <div className="flex items-center justify-center space-x-1">
                             {pc.trangThai === 'Moi' && (
                               <>
+                                <button onClick={() => openEditModal(pc)} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50 rounded-lg transition cursor-pointer" title="Sửa phiếu chi">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
                                 <button
                                   onClick={() => handleApprove(pc)}
                                   className={`p-1.5 rounded-lg transition cursor-pointer ${
@@ -509,6 +563,13 @@ export default function PhieuChi() {
                                   <CheckCircle2 className="w-4 h-4" />
                                 </button>
                                 <button
+                                  onClick={() => handleSendToReconcile(pc.maPhieuChi)}
+                                  className="p-1.5 text-[#0052FF] hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                  title="Chuyển sang Chờ đối soát ngân hàng"
+                                >
+                                  <Scale className="w-4 h-4" />
+                                </button>
+                                <button
                                   onClick={() => handleDelete(pc.maPhieuChi)}
                                   className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                                   title="Xóa phiếu chi"
@@ -516,6 +577,17 @@ export default function PhieuChi() {
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </>
+                            )}
+
+                            {pc.trangThai === 'ChoDoiSoat' && (
+                              <button
+                                onClick={() => handleCompleteReconciliation(pc)}
+                                className="px-2 py-1 bg-[#0B2341] hover:bg-[#132F4C] text-white rounded-md text-[10px] font-bold transition flex items-center space-x-1 cursor-pointer"
+                                title="Khớp lệnh đối soát và ghi sổ quỹ"
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Khớp Lệnh</span>
+                              </button>
                             )}
 
                             {pc.trangThai === 'DaDuyet' && currentRole === 'KeToanTruong' && (
@@ -538,7 +610,7 @@ export default function PhieuChi() {
                             <div className="bg-white rounded-md border border-slate-200 p-4 shadow-2xs space-y-3">
                               <h4 className="font-bold text-xs text-slate-700 flex items-center space-x-1.5">
                                 <FileText className="w-3.5 h-3.5 text-[#0052FF]" />
-                                <span>Chi Tiết Khoản Mục Chi ({pc.chiTiets?.length || 0} khoản)</span>
+                                <span>Chi Tiết Khoản Mục Chi ({(pc.chiTiets || pc.chi_tiets)?.length || 0} khoản)</span>
                               </h4>
                               <table className="w-full text-xs">
                                 <thead className="bg-slate-50 text-slate-500 font-semibold">
@@ -550,11 +622,11 @@ export default function PhieuChi() {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                  {pc.chiTiets?.map((ct) => (
+                                  {(pc.chiTiets || pc.chi_tiets)?.map((ct) => (
                                     <tr key={ct.maChiTietChi}>
                                       <td className="py-2 px-3 font-mono text-slate-600">{ct.maChiTietChi}</td>
                                       <td className="py-2 px-3 font-medium text-slate-800">
-                                        {ct.danhMucChi?.tenDanhMucChi ?? 'N/A'}
+                                        {(ct.danhMucChi || ct.danh_muc_chi)?.tenDanhMucChi ?? 'N/A'}
                                       </td>
                                       <td className="py-2 px-3 text-slate-600">{ct.dienGiai || '-'}</td>
                                       <td className="py-2 px-3 text-right font-mono font-bold text-slate-800">
@@ -565,9 +637,9 @@ export default function PhieuChi() {
                                 </tbody>
                               </table>
                               <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
-                                <span>Người lập: <strong>{pc.nhanVienLap?.hoTen ?? pc.nguoiLap}</strong></span>
+                                <span>Người lập: <strong>{(pc.nhanVienLap || pc.nhan_vien_lap)?.hoTen ?? pc.nguoiLap}</strong></span>
                                 {pc.nguoiDuyet && (
-                                  <span>Người duyệt: <strong>{pc.nhanVienDuyet?.hoTen ?? pc.nguoiDuyet}</strong></span>
+                                  <span>Người duyệt: <strong>{(pc.nhanVienDuyet || pc.nhan_vien_duyet)?.hoTen ?? pc.nguoiDuyet}</strong></span>
                                 )}
                               </div>
                             </div>
@@ -590,7 +662,7 @@ export default function PhieuChi() {
             <div className="bg-gradient-to-r from-rose-700 to-red-800 text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-2">
                 <ArrowUpRight className="w-5 h-5" />
-                <h3 className="font-bold text-sm">Lập Phiếu Chi Tiền (FI-FR03, FI-BR02)</h3>
+                <h3 className="font-bold text-sm">Lập Phiếu Chi Tiền (FI-FR04, FI-BR02)</h3>
               </div>
               <button
                 onClick={() => setModalOpen(false)}

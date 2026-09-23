@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FinanceReportAPI, FinanceMasterDataAPI, ReceiptAPI } from '../../services/financeApi';
+import { FinanceReportAPI, FinanceMasterDataAPI, ReceiptAPI, PaymentAPI } from '../../services/financeApi';
 import { 
   FileText, 
   BookOpen, 
@@ -150,9 +150,11 @@ export default function FinanceBaoCao() {
     }
   };
 
-  const handleReconcileApprove = async (id) => {
+  const handleReconcileApprove = async (item) => {
     try {
-      const res = await ReceiptAPI.approveReceipt(id);
+      const res = item.loaiPhieu === 'Chi'
+        ? await PaymentAPI.completeReconciliation(item.maPhieu)
+        : await ReceiptAPI.completeReconciliation(item.maPhieu);
       if (res.data.success) {
         alert('Khớp lệnh đối soát và ghi nhận sổ quỹ thành công!');
         fetchReconciliationReport();
@@ -554,7 +556,7 @@ export default function FinanceBaoCao() {
                         <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{item.ghiChu}</td>
                         <td className="py-3 px-4 text-center">
                           <button
-                            onClick={() => handleReconcileApprove(item.maPhieu)}
+                            onClick={() => handleReconcileApprove(item)}
                             className="px-3 py-1.5 bg-[#0B2341] hover:bg-[#132F4C] text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 mx-auto cursor-pointer shadow-2xs"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
