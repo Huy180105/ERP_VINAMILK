@@ -24,9 +24,7 @@ export default function DanhMucThu() {
     setLoading(true);
     try {
       const res = await FinanceMasterDataAPI.getRevCategories({ keyword });
-      if (res.data.success) {
-        setCategories(res.data.data || []);
-      }
+      if (res.data.success) setCategories(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -34,25 +32,18 @@ export default function DanhMucThu() {
     }
   };
 
-  const openCreateModal = () => {
-    const autoCode = generateAutoCode(categories, 'maDanhMucThu', 'DMT', 2, false);
-    setEditingItem(null);
-    setFormData({
-      maDanhMucThu: autoCode,
-      tenDanhMucThu: '',
-      moTa: '',
-      trangThai: 1,
-    });
-    setModalOpen(true);
-  };
-
-  const openEditModal = (item) => {
+  const openModal = (item = null) => {
     setEditingItem(item);
-    setFormData({
+    setFormData(item ? {
       maDanhMucThu: item.maDanhMucThu,
       tenDanhMucThu: item.tenDanhMucThu,
       moTa: item.moTa || '',
       trangThai: item.trangThai ? 1 : 0,
+    } : {
+      maDanhMucThu: generateAutoCode(categories, 'maDanhMucThu', 'DMT', 2, false),
+      tenDanhMucThu: '',
+      moTa: '',
+      trangThai: 1,
     });
     setModalOpen(true);
   };
@@ -73,13 +64,12 @@ export default function DanhMucThu() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(`Xác nhận xóa danh mục thu ${id}?`)) {
-      try {
-        await FinanceMasterDataAPI.deleteRevCategory(id);
-        fetchData();
-      } catch (err) {
-        alert('Lỗi: ' + (err.response?.data?.message || err.message));
-      }
+    if (!window.confirm(`Xác nhận xóa danh mục thu ${id}?`)) return;
+    try {
+      await FinanceMasterDataAPI.deleteRevCategory(id);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -93,11 +83,11 @@ export default function DanhMucThu() {
             <span>Danh Mục Khoản Mục Thu</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Quản lý các khoản mục thu tiền (Bán hàng, thanh lý, lãi ngân hàng...)
+            Quản lý các khoản mục thu tiền (Bán hàng, thanh lý, hoàn ứng, lãi tiền gửi...)
           </p>
         </div>
         <button
-          onClick={openCreateModal}
+          onClick={() => openModal()}
           className="bg-[#0B2341] hover:bg-[#132F4C] text-white font-bold text-xs px-4 py-2.5 rounded-md shadow-sm transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -113,7 +103,7 @@ export default function DanhMucThu() {
             placeholder="Tìm theo mã hoặc tên khoản thu..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
         </div>
@@ -145,7 +135,7 @@ export default function DanhMucThu() {
                     <td className="p-3.5 font-semibold text-slate-800">{c.tenDanhMucThu}</td>
                     <td className="p-3.5 text-slate-600">{c.moTa || '—'}</td>
                     <td className="p-3.5 text-center">
-                      <span className={`inline-flex items-center space-x-1 text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
+                      <span className={`inline-flex items-center text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
                         c.trangThai ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {c.trangThai ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
@@ -154,14 +144,16 @@ export default function DanhMucThu() {
                     </td>
                     <td className="p-3.5 text-center space-x-2">
                       <button
-                        onClick={() => openEditModal(c)}
-                        className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50/60 rounded-lg transition"
+                        onClick={() => openModal(c)}
+                        className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50 rounded-lg transition"
+                        title="Chỉnh sửa"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(c.maDanhMucThu)}
                         className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Xóa"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -176,7 +168,7 @@ export default function DanhMucThu() {
 
       {/* Modal Add / Edit */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 -xs flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800 border-b pb-3">
               {editingItem ? 'Cập Nhật Khoản Mục Thu' : 'Thêm Mới Khoản Mục Thu'}
@@ -191,7 +183,7 @@ export default function DanhMucThu() {
                   disabled={!!editingItem}
                   onChange={(e) => setFormData({ ...formData, maDanhMucThu: e.target.value })}
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold disabled:opacity-60"
                 />
               </div>
 
@@ -224,7 +216,7 @@ export default function DanhMucThu() {
                   id="trangThaiDMT"
                   checked={!!formData.trangThai}
                   onChange={(e) => setFormData({ ...formData, trangThai: e.target.checked ? 1 : 0 })}
-                  className="rounded border-slate-300 text-[#0052FF] focus:ring-purple-500"
+                  className="rounded border-slate-300 text-[#0052FF]"
                 />
                 <label htmlFor="trangThaiDMT" className="text-xs text-slate-700 font-semibold cursor-pointer">
                   Kích hoạt khoản mục này

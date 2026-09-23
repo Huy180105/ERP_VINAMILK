@@ -1,22 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { FinanceReportAPI, FinanceMasterDataAPI, ReceiptAPI } from '../../services/financeApi';
+import { FinanceReportAPI, FinanceMasterDataAPI, ReceiptAPI, PaymentAPI } from '../../services/financeApi';
 import { 
   FileText, 
   BookOpen, 
   Users, 
   Calendar, 
-  Download, 
   TrendingUp, 
   TrendingDown, 
   Scale, 
-  Filter,
-  CheckCircle2,
-  Clock,
-  Landmark,
-  ArrowDownLeft,
-  ArrowUpRight,
-  RefreshCw,
-  AlertCircle
+  CheckCircle2, 
+  Landmark, 
+  RefreshCw 
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -90,9 +84,7 @@ export default function FinanceBaoCao() {
   const fetchAccounts = async () => {
     try {
       const res = await FinanceMasterDataAPI.getAccounts();
-      if (res.data.success) {
-        setAccounts(res.data.data || []);
-      }
+      if (res.data.success) setAccounts(res.data.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -102,9 +94,7 @@ export default function FinanceBaoCao() {
     setLoading(true);
     try {
       const res = await FinanceReportAPI.getSummaryReport({ tuNgay, denNgay });
-      if (res.data.success) {
-        setSummaryData(res.data.data);
-      }
+      if (res.data.success) setSummaryData(res.data.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -120,9 +110,7 @@ export default function FinanceBaoCao() {
         tuNgay, 
         denNgay 
       });
-      if (res.data.success) {
-        setCashBookData(res.data.data);
-      }
+      if (res.data.success) setCashBookData(res.data.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -138,9 +126,7 @@ export default function FinanceBaoCao() {
         denNgay, 
         loaiDoiTuong 
       });
-      if (res.data.success) {
-        setCounterpartyData(res.data.data || []);
-      }
+      if (res.data.success) setCounterpartyData(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -156,9 +142,7 @@ export default function FinanceBaoCao() {
         tuNgay,
         denNgay
       });
-      if (res.data.success) {
-        setReconciliationData(res.data.data);
-      }
+      if (res.data.success) setReconciliationData(res.data.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -166,9 +150,11 @@ export default function FinanceBaoCao() {
     }
   };
 
-  const handleReconcileApprove = async (id) => {
+  const handleReconcileApprove = async (item) => {
     try {
-      const res = await ReceiptAPI.approveReceipt(id);
+      const res = item.loaiPhieu === 'Chi'
+        ? await PaymentAPI.completeReconciliation(item.maPhieu)
+        : await ReceiptAPI.completeReconciliation(item.maPhieu);
       if (res.data.success) {
         alert('Khớp lệnh đối soát và ghi nhận sổ quỹ thành công!');
         fetchReconciliationReport();
@@ -214,53 +200,28 @@ export default function FinanceBaoCao() {
 
       {/* Tabs Switcher */}
       <div className="flex border-b border-slate-200 bg-white rounded-lg p-1.5 shadow-sm">
-        <button
-          onClick={() => setActiveTab('summary')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-md text-xs font-bold transition cursor-pointer ${
-            activeTab === 'summary'
-              ? 'bg-[#0B2341] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#0052FF] hover:bg-blue-50/60'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4" />
-          <span>1. Báo Cáo Tổng Hợp Thu Chi</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('cashbook')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-md text-xs font-bold transition cursor-pointer ${
-            activeTab === 'cashbook'
-              ? 'bg-[#0B2341] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#0052FF] hover:bg-blue-50/60'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          <span>2. Sổ Quỹ Chi Tiết (TM & NH)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('counterparty')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-md text-xs font-bold transition cursor-pointer ${
-            activeTab === 'counterparty'
-              ? 'bg-[#0B2341] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#0052FF] hover:bg-blue-50/60'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>3. Báo Cáo Theo Đối Tượng</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('reconciliation')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-md text-xs font-bold transition cursor-pointer ${
-            activeTab === 'reconciliation'
-              ? 'bg-[#0B2341] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#0052FF] hover:bg-blue-50/60'
-          }`}
-        >
-          <Scale className="w-4 h-4" />
-          <span>4. Đối Soát Ngân Hàng & Sổ Phụ (FI-FR06)</span>
-        </button>
+        {[
+          { id: 'summary', label: '1. Báo Cáo Tổng Hợp Thu Chi', icon: TrendingUp },
+          { id: 'cashbook', label: '2. Sổ Quỹ Chi Tiết (TM & NH)', icon: BookOpen },
+          { id: 'counterparty', label: '3. Báo Cáo Theo Đối Tượng', icon: Users },
+          { id: 'reconciliation', label: '4. Đối Soát Ngân Hàng & Sổ Phụ (FI-FR06)', icon: Scale },
+        ].map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-md text-xs font-bold transition cursor-pointer ${
+                activeTab === tab.id
+                  ? 'bg-[#0B2341] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-[#0052FF] hover:bg-blue-50'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab 1: Tổng Hợp Thu Chi */}
@@ -296,7 +257,7 @@ export default function FinanceBaoCao() {
             <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 font-semibold">Chênh Lệch Thu - Chi</span>
-                <div className="p-2 bg-blue-50/60 text-[#0052FF] rounded-md">
+                <div className="p-2 bg-blue-50 text-[#0052FF] rounded-md">
                   <Scale className="w-5 h-5" />
                 </div>
               </div>
@@ -353,7 +314,7 @@ export default function FinanceBaoCao() {
               <select
                 value={selectedAccount}
                 onChange={(e) => setSelectedAccount(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 <option value="">-- Tất cả tài khoản quỹ --</option>
                 {accounts.map((acc) => (
@@ -499,7 +460,7 @@ export default function FinanceBaoCao() {
             <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 font-semibold">Chứng Từ Chờ Đối Soát (Sổ Phụ)</span>
-                <div className="p-2 bg-blue-50/60 text-[#0052FF] rounded-md">
+                <div className="p-2 bg-blue-50 text-[#0052FF] rounded-md">
                   <Scale className="w-5 h-5" />
                 </div>
               </div>
@@ -579,7 +540,7 @@ export default function FinanceBaoCao() {
                     </tr>
                   ) : (
                     reconciliationData.pendingReconciliation?.items.map((item) => (
-                      <tr key={item.maPhieu} className="hover:bg-blue-50/60/40 transition">
+                      <tr key={item.maPhieu} className="hover:bg-blue-50/40 transition">
                         <td className="py-3 px-4 font-mono font-bold text-[#0B2341]">{item.maPhieu}</td>
                         <td className="py-3 px-4">
                           <span className="bg-blue-100 text-[#0B2341] font-bold px-2 py-0.5 rounded text-[10px]">
@@ -595,7 +556,7 @@ export default function FinanceBaoCao() {
                         <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{item.ghiChu}</td>
                         <td className="py-3 px-4 text-center">
                           <button
-                            onClick={() => handleReconcileApprove(item.maPhieu)}
+                            onClick={() => handleReconcileApprove(item)}
                             className="px-3 py-1.5 bg-[#0B2341] hover:bg-[#132F4C] text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 mx-auto cursor-pointer shadow-2xs"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />

@@ -16,7 +16,6 @@ class ChiTietPhieuYeuCauNVL extends Model
     protected $fillable = [
         'maPhieuYCNVL',
         'maNVL',
-        'tenNVL',
         'soLuong',
     ];
 

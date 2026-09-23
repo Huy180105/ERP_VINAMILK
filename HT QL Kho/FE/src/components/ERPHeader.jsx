@@ -24,10 +24,72 @@ const FINANCE_ROLES = [
   }
 ];
 
+const SALES_ROLES = [
+  {
+    id: 'NhanVienBanHang',
+    name: 'Nhân viên bán hàng',
+    description: 'Lập đơn hàng, tra cứu khách hàng & tồn kho',
+    badge: 'Kinh doanh'
+  },
+  {
+    id: 'QuanLyKinhDoanh',
+    name: 'Quản lý kinh doanh',
+    description: 'Duyệt đơn hàng, phê duyệt công nợ & báo cáo',
+    badge: 'Quản lý'
+  },
+  {
+    id: 'NhanVienGiaoHang',
+    name: 'Nhân viên giao hàng',
+    description: 'Nhận đơn giao, xác nhận giao & thanh toán',
+    badge: 'Giao vận'
+  }
+];
+
+const HR_ROLES = [
+  {
+    id: 'QuanLyNhanSu',
+    name: 'Quản lý nhân sự',
+    description: 'Toàn quyền hồ sơ, hợp đồng, bảng lương & tài khoản',
+    badge: 'HR Manager'
+  },
+  {
+    id: 'ChuyenVienNhanSu',
+    name: 'Chuyên viên nhân sự',
+    description: 'Quản lý hồ sơ, chấm công, hợp đồng & lập bảng lương',
+    badge: 'HR Specialist'
+  },
+  {
+    id: 'NhanVien',
+    name: 'Nhân viên',
+    description: 'Tra cứu công cá nhân, xem lương & đổi mật khẩu',
+    badge: 'Employee'
+  }
+];
+
 export default function ERPHeader({ module = 'portal', showRoleSwitcher = false }) {
   const navigate = useNavigate();
+  const isSales = module === 'sales';
+  const isHR = module === 'hr';
+
+  let roleStorageKey = 'vinamilk_finance_role';
+  let rolesList = FINANCE_ROLES;
+  let defaultRole = 'KeToanThanhToan';
+  let eventName = 'finance_role_changed';
+
+  if (isSales) {
+    roleStorageKey = 'vinamilk_sales_role';
+    rolesList = SALES_ROLES;
+    defaultRole = 'NhanVienBanHang';
+    eventName = 'sales_role_changed';
+  } else if (isHR) {
+    roleStorageKey = 'vinamilk_hr_role';
+    rolesList = HR_ROLES;
+    defaultRole = 'QuanLyNhanSu';
+    eventName = 'hr_role_changed';
+  }
+
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
+    return localStorage.getItem(roleStorageKey) || defaultRole;
   });
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -44,12 +106,12 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
 
   const handleRoleSelect = (roleId) => {
     setCurrentRole(roleId);
-    localStorage.setItem('vinamilk_finance_role', roleId);
-    window.dispatchEvent(new CustomEvent('finance_role_changed', { detail: roleId }));
+    localStorage.setItem(roleStorageKey, roleId);
+    window.dispatchEvent(new CustomEvent(eventName, { detail: roleId }));
     setIsRoleDropdownOpen(false);
   };
 
-  const activeRoleInfo = FINANCE_ROLES.find(r => r.id === currentRole) || FINANCE_ROLES[0];
+  const activeRoleInfo = rolesList.find(r => r.id === currentRole) || rolesList[0];
   const initial = activeRoleInfo.name.charAt(0);
 
   const getModuleName = () => {
@@ -57,6 +119,8 @@ export default function ERPHeader({ module = 'portal', showRoleSwitcher = false 
       case 'warehouse': return 'QUẢN LÝ KHO';
       case 'finance': return 'TÀI CHÍNH KẾ TOÁN';
       case 'production': return 'QUẢN LÝ SẢN XUẤT';
+      case 'sales': return 'QUẢN LÝ BÁN HÀNG';
+      case 'hr': return 'QUẢN LÝ NHÂN SỰ';
       default: return 'CỔNG THÔNG TIN';
     }
   };

@@ -21,37 +21,37 @@ class BangLuong extends Model
         'maBangCong',
         'maHopDong',
         'thang',
-        'thangNam',
+        'luongCoBan',
+        'phuCap',
+        'luongTangCa',
+        'khauTru',
         'tongThucNhan',
-        'thucLanh',
         'trangThai',
+        'nguoiSua',
+        'lyDoSua',
     ];
 
-    public function getThangNamAttribute()
-    {
-        return $this->attributes['thangNam'] ?? ($this->attributes['thang'] ?? null);
-    }
-
-    public function setThangNamAttribute($val)
-    {
-        $this->attributes['thangNam'] = $val;
-        $this->attributes['thang'] = $val;
-    }
-
-    public function getThucLanhAttribute()
-    {
-        return $this->attributes['thucLanh'] ?? ($this->attributes['tongThucNhan'] ?? 0);
-    }
-
-    public function setThucLanhAttribute($val)
-    {
-        $this->attributes['thucLanh'] = $val;
-        $this->attributes['tongThucNhan'] = $val;
-    }
+    protected $casts = [
+        'luongCoBan' => 'float',
+        'phuCap' => 'float',
+        'luongTangCa' => 'float',
+        'khauTru' => 'float',
+        'tongThucNhan' => 'float',
+    ];
 
     public function nhanVien()
     {
         return $this->belongsTo(NhanVien::class, 'maNV', 'maNV');
+    }
+
+    public function bangCong()
+    {
+        return $this->belongsTo(BangCong::class, 'maBangCong', 'maBangCong');
+    }
+
+    public function hopDong()
+    {
+        return $this->belongsTo(HopDong::class, 'maHopDong', 'maHopDong');
     }
 
     public function phieuChis()

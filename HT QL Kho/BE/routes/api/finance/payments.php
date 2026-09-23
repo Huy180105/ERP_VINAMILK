@@ -10,9 +10,11 @@ Route::prefix('finance/payments')->group(function () {
 
     Route::get('/', [PhieuChiController::class, 'getPayments']);
     Route::get('/{id}', [PhieuChiController::class, 'getPayment']);
-    Route::post('/', [PhieuChiController::class, 'createPayment']);
-    Route::put('/{id}/approve', [PhieuChiController::class, 'approvePayment']);
-    Route::put('/{id}/cancel', [PhieuChiController::class, 'cancelPayment']);
-    Route::put('/{id}/reconcile', [PhieuChiController::class, 'sendToReconcile']);
-    Route::delete('/{id}', [PhieuChiController::class, 'deletePayment']);
+    Route::post('/', [PhieuChiController::class, 'createPayment'])->middleware('finance.role:KeToanThanhToan,KeToanTruong,Admin');
+    Route::put('/{id}', [PhieuChiController::class, 'updatePayment'])->middleware('finance.role:KeToanThanhToan,KeToanTruong,Admin');
+    Route::put('/{id}/approve', [PhieuChiController::class, 'approvePayment'])->middleware('finance.role:KeToanTruong,Admin');
+    Route::put('/{id}/cancel', [PhieuChiController::class, 'cancelPayment'])->middleware('finance.role:KeToanTruong,Admin');
+    Route::put('/{id}/reconcile', [PhieuChiController::class, 'sendToReconcile'])->middleware('finance.role:KeToanTruong,Admin');
+    Route::put('/{id}/reconcile/complete', [PhieuChiController::class, 'completeReconciliation'])->middleware('finance.role:KeToanTruong,Admin');
+    Route::delete('/{id}', [PhieuChiController::class, 'deletePayment'])->middleware('finance.role:KeToanThanhToan,KeToanTruong,Admin');
 });

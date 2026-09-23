@@ -1,25 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { OutboundAPI } from '../../services/api';
-import { ArrowUpRight, Plus, CheckCircle2, Boxes } from 'lucide-react';
+import { OutboundAPI, InventoryAPI } from '../../services/api';
+import { ArrowUpRight, Plus, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function OutboundRawMaterials() {
   const [dispatches, setDispatches] = useState([]);
+  const [availableLots, setAvailableLots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const initialForm = {
     maPhieuXuatNVL: '',
     maXuong: 'XSX01',
     ngayXuat: new Date().toISOString().split('T')[0],
     ghiChu: '',
-    maTonKho: 'TK-20260115-NV01',
-    soLuong: 300,
-  });
+    maTonKho: '',
+    soLuong: 100,
+  };
+  const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
     fetchDispatches();
+    InventoryAPI.getInventory({ type: 'material' })
+      .then(res => setAvailableLots((res.data.data || []).filter(l => l.soLuongTonHienTai > 0)))
+      .catch(console.error);
   }, []);
 
   const fetchDispatches = async () => {
@@ -37,8 +42,9 @@ export default function OutboundRawMaterials() {
   const handleOpenModal = () => {
     const autoCode = generateAutoCode(dispatches, 'maPhieuXuatNVL', 'PXNVL', 3, true);
     setFormData({
-      ...formData,
+      ...initialForm,
       maPhieuXuatNVL: autoCode,
+      maTonKho: availableLots[0]?.maTonKho || '',
       ngayXuat: new Date().toISOString().split('T')[0],
     });
     setShowModal(true);
@@ -47,20 +53,13 @@ export default function OutboundRawMaterials() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
+      await OutboundAPI.createRawMaterialDispatch({
         maPhieuXuatNVL: formData.maPhieuXuatNVL,
         maXuong: formData.maXuong,
         ngayXuat: formData.ngayXuat,
         ghiChu: formData.ghiChu,
-        items: [
-          {
-            maTonKho: formData.maTonKho,
-            soLuong: Number(formData.soLuong),
-          }
-        ]
-      };
-
-      await OutboundAPI.createRawMaterialDispatch(payload);
+        items: [{ maTonKho: formData.maTonKho, soLuong: Number(formData.soLuong) }]
+      });
       setShowModal(false);
       fetchDispatches();
     } catch (err) {
@@ -154,29 +153,39 @@ export default function OutboundRawMaterials() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Lập Phiếu Xuất NVL Cho Sản Xuất</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Xuất (Tự động) *</label>
-                <input
-                  type="text"
-                  required
-                  readOnly
-                  value={formData.maPhieuXuatNVL}
-                  className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed"
-                />
+                <input type="text" required readOnly value={formData.maPhieuXuatNVL} className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed" />
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Mã Lô Tồn Kho Xuất *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.maTonKho}
-                  onChange={(e) => setFormData({ ...formData, maTonKho: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono"
-                />
+                <label className="block font-semibold text-slate-700 mb-1">Chọn Lô NVL Cần Xuất *</label>
+                {availableLots.length > 0 ? (
+                  <select
+                    value={formData.maTonKho}
+                    onChange={(e) => setFormData({ ...formData, maTonKho: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono"
+                    required
+                  >
+                    {availableLots.map(l => (
+                      <option key={l.maTonKho} value={l.maTonKho}>
+                        {l.maTonKho} - {l.tenTonKho} (Tồn: {l.soLuongTonHienTai?.toLocaleString()})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nhập mã lô (VD: TK-NVL-001)"
+                    value={formData.maTonKho}
+                    onChange={(e) => setFormData({ ...formData, maTonKho: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono"
+                  />
+                )}
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Số Lượng Xuất *</label>
@@ -190,19 +199,8 @@ export default function OutboundRawMaterials() {
                 />
               </div>
               <div className="flex justify-end space-x-2 pt-3 border-t">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
-                >
-                  Lưu Phiếu Xuất
-                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium cursor-pointer">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium cursor-pointer">Lưu Phiếu Xuất</button>
               </div>
             </form>
           </div>

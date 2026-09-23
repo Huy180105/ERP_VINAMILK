@@ -34,4 +34,14 @@ class PhieuXuatSP extends Model
     {
         return $this->belongsTo(KhachHang::class, 'maKhachHang', 'maKhachHang');
     }
+
+    public function nhanVienTao()
+    {
+        return $this->belongsTo(NhanVien::class, 'maNVTao', 'maNV');
+    }
+
+    public function donHang()
+    {
+        return $this->belongsTo(DonHang::class, 'maDonHang', 'maDonHang');
+    }
 }

@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
-import { Package, Search, Award, CheckCircle2 } from 'lucide-react';
+import { Package, Award } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchKey, setSearchKey] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -15,7 +14,7 @@ export default function Products() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await MasterDataAPI.getProducts({ keyword: searchKey });
+      const res = await MasterDataAPI.getProducts();
       setProducts(res.data.data || []);
     } catch (err) {
       console.error(err);

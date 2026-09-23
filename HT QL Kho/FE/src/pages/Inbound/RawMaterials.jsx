@@ -1,30 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { InboundAPI, MasterDataAPI } from '../../services/api';
-import { ArrowDownLeft, Plus, CheckCircle2, FileText, Clock } from 'lucide-react';
+import { ArrowDownLeft, Plus, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function InboundRawMaterials() {
   const [receipts, setReceipts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  
-  // New receipt form
-  const [formData, setFormData] = useState({
+
+  const today = new Date().toISOString().split('T')[0];
+  const defaultExp = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const initialForm = {
     maPhieuNhapNVL: '',
-    maNCC: 'NCC001',
-    ngayNhap: new Date().toISOString().split('T')[0],
+    maNCC: '',
+    ngayNhap: today,
     ghiChu: '',
     maTonKho: '',
-    maNVL: 'NVL001',
+    maNVL: '',
     soLuong: 1000,
     donGia: 25000,
-    ngaySanXuat: new Date().toISOString().split('T')[0],
-    hanSuDung: new Date(Date.now() + 180*24*60*60*1000).toISOString().split('T')[0],
-  });
+    ngaySanXuat: today,
+    hanSuDung: defaultExp,
+  };
+  const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
     fetchReceipts();
+    MasterDataAPI.getSuppliers().then(res => setSuppliers(res.data.data || [])).catch(console.error);
+    MasterDataAPI.getMaterials().then(res => setMaterials(res.data.data || [])).catch(console.error);
   }, []);
 
   const fetchReceipts = async () => {
@@ -43,12 +50,11 @@ export default function InboundRawMaterials() {
     const autoCode = generateAutoCode(receipts, 'maPhieuNhapNVL', 'PNNVL', 3, true);
     const autoLot = generateAutoCode(receipts.flatMap(r => r.chi_tiets || []), 'maTonKho', 'TK-NVL-', 3, true);
     setFormData({
-      ...formData,
+      ...initialForm,
       maPhieuNhapNVL: autoCode,
       maTonKho: autoLot,
-      ngayNhap: new Date().toISOString().split('T')[0],
-      ngaySanXuat: new Date().toISOString().split('T')[0],
-      hanSuDung: new Date(Date.now() + 180*24*60*60*1000).toISOString().split('T')[0],
+      maNCC: suppliers[0]?.maNCC || 'NCC001',
+      maNVL: materials[0]?.maNVL || 'NVL001',
     });
     setShowModal(true);
   };
@@ -56,24 +62,20 @@ export default function InboundRawMaterials() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
+      await InboundAPI.createRawMaterialReceipt({
         maPhieuNhapNVL: formData.maPhieuNhapNVL,
         maNCC: formData.maNCC,
         ngayNhap: formData.ngayNhap,
         ghiChu: formData.ghiChu,
-        items: [
-          {
-            maTonKho: formData.maTonKho,
-            maNVL: formData.maNVL,
-            soLuong: Number(formData.soLuong),
-            donGia: Number(formData.donGia),
-            ngaySanXuat: formData.ngaySanXuat,
-            hanSuDung: formData.hanSuDung,
-          }
-        ]
-      };
-
-      await InboundAPI.createRawMaterialReceipt(payload);
+        items: [{
+          maTonKho: formData.maTonKho,
+          maNVL: formData.maNVL,
+          soLuong: Number(formData.soLuong),
+          donGia: Number(formData.donGia),
+          ngaySanXuat: formData.ngaySanXuat,
+          hanSuDung: formData.hanSuDung,
+        }]
+      });
       setShowModal(false);
       fetchReceipts();
     } catch (err) {
@@ -167,42 +169,32 @@ export default function InboundRawMaterials() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 -sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Lập Phiếu Nhập Nguyên Vật Liệu Mới</h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Mã Phiếu Nhập (Tự động) *</label>
-                  <input
-                    type="text"
-                    required
-                    readOnly
-                    value={formData.maPhieuNhapNVL}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed"
-                  />
+                  <input type="text" required readOnly value={formData.maPhieuNhapNVL} className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 font-mono font-bold text-blue-900 cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Ngày Nhập *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.ngayNhap}
-                    onChange={(e) => setFormData({ ...formData, ngayNhap: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2"
-                  />
+                  <input type="date" required value={formData.ngayNhap} onChange={(e) => setFormData({ ...formData, ngayNhap: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2" />
                 </div>
               </div>
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Nhà Cung Cấp / Trang Trại *</label>
-                <select
-                  value={formData.maNCC}
-                  onChange={(e) => setFormData({ ...formData, maNCC: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium"
-                >
-                  <option value="NCC001">NCC001 - Nông Trại Sữa Vinamilk Mộc Châu</option>
-                  <option value="NCC002">NCC002 - Tập Đoàn Hóa Chất Á Châu</option>
+                <select value={formData.maNCC} onChange={(e) => setFormData({ ...formData, maNCC: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium">
+                  {suppliers.length > 0 ? suppliers.map(s => (
+                    <option key={s.maNCC} value={s.maNCC}>{s.maNCC} - {s.tenNCC}</option>
+                  )) : (
+                    <>
+                      <option value="NCC001">NCC001 - Nông Trại Sữa Vinamilk Mộc Châu</option>
+                      <option value="NCC002">NCC002 - Tập Đoàn Hóa Chất Á Châu</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -211,23 +203,19 @@ export default function InboundRawMaterials() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Mã Lô Tồn Kho *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.maTonKho}
-                      onChange={(e) => setFormData({ ...formData, maTonKho: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono"
-                    />
+                    <input type="text" required value={formData.maTonKho} onChange={(e) => setFormData({ ...formData, maTonKho: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono" />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nguyên Vật Liệu *</label>
-                    <select
-                      value={formData.maNVL}
-                      onChange={(e) => setFormData({ ...formData, maNVL: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2"
-                    >
-                      <option value="NVL001">NVL001 - Sữa Bò Tươi Nguyên Chất</option>
-                      <option value="NVL002">NVL002 - Đường Tinh Luyện</option>
+                    <select value={formData.maNVL} onChange={(e) => setFormData({ ...formData, maNVL: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2">
+                      {materials.length > 0 ? materials.map(m => (
+                        <option key={m.maNVL} value={m.maNVL}>{m.maNVL} - {m.tenNVL}</option>
+                      )) : (
+                        <>
+                          <option value="NVL001">NVL001 - Sữa Bò Tươi Nguyên Chất</option>
+                          <option value="NVL002">NVL002 - Đường Tinh Luyện</option>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -235,64 +223,29 @@ export default function InboundRawMaterials() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Số Lượng Nhập *</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={formData.soLuong}
-                      onChange={(e) => setFormData({ ...formData, soLuong: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold"
-                    />
+                    <input type="number" required min="1" value={formData.soLuong} onChange={(e) => setFormData({ ...formData, soLuong: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold" />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Đơn Giá (đ)</label>
-                    <input
-                      type="number"
-                      value={formData.donGia}
-                      onChange={(e) => setFormData({ ...formData, donGia: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2"
-                    />
+                    <input type="number" value={formData.donGia} onChange={(e) => setFormData({ ...formData, donGia: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Ngày Sản Xuất *</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.ngaySanXuat}
-                      onChange={(e) => setFormData({ ...formData, ngaySanXuat: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2"
-                    />
+                    <input type="date" required value={formData.ngaySanXuat} onChange={(e) => setFormData({ ...formData, ngaySanXuat: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2" />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Hạn Sử Dụng (HSD) *</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.hanSuDung}
-                      onChange={(e) => setFormData({ ...formData, hanSuDung: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2"
-                    />
+                    <input type="date" required value={formData.hanSuDung} onChange={(e) => setFormData({ ...formData, hanSuDung: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2" />
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end space-x-2 pt-3 border-t">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium"
-                >
-                  Tạo Phiếu Nhập
-                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium cursor-pointer">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium cursor-pointer">Tạo Phiếu Nhập</button>
               </div>
             </form>
           </div>

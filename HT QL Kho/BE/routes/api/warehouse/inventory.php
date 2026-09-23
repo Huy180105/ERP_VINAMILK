@@ -5,7 +5,7 @@ use App\Http\Controllers\Warehouse\InventoryController;
 
 /*
 |--------------------------------------------------------------------------
-| Module 2: Quản Lý Tồn Kho & Vị Trí (Inventory & Lots APIs)
+| Module 2: Quản Lý Tồn Kho, Vị Trí & Đề Nghị Bổ Sung (Inventory & Lots APIs)
 |--------------------------------------------------------------------------
 */
 
@@ -25,4 +25,9 @@ Route::prefix('warehouse/inventory')->group(function () {
     // Vị trí khu vực kho
     Route::get('/locations/products', [InventoryController::class, 'getProductLocations']);
     Route::get('/locations/materials', [InventoryController::class, 'getMaterialLocations']);
+
+    // Đề nghị bổ sung sản phẩm (Bảng 36 Kho)
+    Route::get('/replenishments', [InventoryController::class, 'getDeNghiBoSung']);
+    Route::post('/replenishments', [InventoryController::class, 'createDeNghiBoSung']);
+    Route::put('/replenishments/{id}/status', [InventoryController::class, 'updateDeNghiBoSungStatus']);
 });

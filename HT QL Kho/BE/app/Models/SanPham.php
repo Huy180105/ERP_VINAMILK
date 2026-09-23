@@ -19,6 +19,7 @@ class SanPham extends Model
         'maSanPham',
         'tenSanPham',
         'donViTinh',
+        'hanSuDung',
         'donGia',
         'trangThai',
         'ghiChu',
@@ -26,6 +27,6 @@ class SanPham extends Model
 
     public function tonKhos()
     {
-        return $this->hasMany(TonKho::class, 'maSP', 'maSanPham');
+        return $this->hasMany(TonKho::class, 'maSanPham', 'maSanPham');
     }
 }

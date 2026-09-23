@@ -19,62 +19,62 @@ class OutboundController extends Controller
 
     public function getRawMaterialDispatches(Request $request)
     {
-        $query = PhieuXuatNVL::with(['nhanVienTao', 'nhanVienNhan', 'chiTiets.tonKho']);
-
-        if ($request->has('trangThai')) {
-            $query->where('trangThai', $request->input('trangThai'));
-        }
+        $dispatches = PhieuXuatNVL::with(['nhanVienTao', 'nhanVienNhan', 'chiTiets.tonKho'])
+            ->when($request->filled('trangThai'), fn($q) => $q->where('trangThai', $request->input('trangThai')))
+            ->orderBy('ngayXuat', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->orderBy('ngayXuat', 'desc')->get(),
+            'data'    => $dispatches,
         ]);
     }
 
     public function createRawMaterialDispatch(Request $request)
     {
         $validated = $request->validate([
-            'maPhieuXuatNVL' => 'required|string|unique:PhieuXuatNVL,maPhieuXuatNVL',
-            'maXuong' => 'nullable|string',
-            'maNVTao' => 'nullable|string|exists:NhanVien,maNV',
-            'maNVNhan' => 'nullable|string|exists:NhanVien,maNV',
-            'ngayXuat' => 'required|date',
+            'maPhieuXuatNVL'   => 'required|string|unique:PhieuXuatNVL,maPhieuXuatNVL',
+            'maXuong'          => 'nullable|string',
+            'maNVTao'          => 'nullable|string|exists:NhanVien,maNV',
+            'maNVNhan'         => 'nullable|string|exists:NhanVien,maNV',
+            'ngayXuat'         => 'required|date',
             'maPhieuYeuCauNVL' => 'nullable|string',
-            'ghiChu' => 'nullable|string',
-            'items' => 'required|array|min:1',
+            'ghiChu'           => 'nullable|string',
+            'items'            => 'required|array|min:1',
             'items.*.maTonKho' => 'required|string|exists:TonKho,maTonKho',
-            'items.*.soLuong' => 'required|integer|min:1',
+            'items.*.soLuong'  => 'required|integer|min:1',
         ]);
+
+        // Kiểm tra tồn kho khả dụng trước khi tạo phiếu
+        foreach ($validated['items'] as $item) {
+            $tonKho = TonKho::where('maTonKho', $item['maTonKho'])->first();
+            if (!$tonKho || $tonKho->soLuongTonHienTai < $item['soLuong']) {
+                $curr = $tonKho?->soLuongTonHienTai ?? 0;
+                return response()->json([
+                    'success' => false,
+                    'message' => "Không đủ tồn kho khả dụng cho mã lô {$item['maTonKho']} (Tồn hiện tại: {$curr})",
+                ], 400);
+            }
+        }
 
         DB::beginTransaction();
         try {
-            // Kiểm tra tồn kho khả dụng trước khi cho phép xuất
-            foreach ($validated['items'] as $item) {
-                $tonKho = TonKho::where('maTonKho', $item['maTonKho'])->first();
-                if (!$tonKho || $tonKho->soLuongTonHienTai < $item['soLuong']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Không đủ tồn kho khả dụng cho mã lô {$item['maTonKho']} (Tồn hiện tại: {$tonKho->soLuongTonHienTai})",
-                    ], 400);
-                }
-            }
-
             $dispatch = PhieuXuatNVL::create([
-                'maPhieuXuatNVL' => $validated['maPhieuXuatNVL'],
-                'maXuong' => $validated['maXuong'] ?? null,
-                'maNVTao' => $validated['maNVTao'] ?? null,
-                'maNVNhan' => $validated['maNVNhan'] ?? null,
-                'ngayXuat' => $validated['ngayXuat'],
-                'trangThai' => 'Chờ duyệt',
+                'maPhieuXuatNVL'   => $validated['maPhieuXuatNVL'],
+                'maXuong'          => $validated['maXuong'] ?? null,
+                'maNVTao'          => $validated['maNVTao'] ?? null,
+                'maNVNhan'         => $validated['maNVNhan'] ?? null,
+                'ngayXuat'         => $validated['ngayXuat'],
+                'trangThai'        => 'Chờ duyệt',
                 'maPhieuYeuCauNVL' => $validated['maPhieuYeuCauNVL'] ?? null,
-                'ghiChu' => $validated['ghiChu'] ?? null,
+                'ghiChu'           => $validated['ghiChu'] ?? null,
             ]);
 
             foreach ($validated['items'] as $item) {
                 ChiTietPhieuXuatNVL::create([
                     'maPhieuXuatNVL' => $dispatch->maPhieuXuatNVL,
-                    'maTonKho' => $item['maTonKho'],
-                    'soLuong' => $item['soLuong'],
+                    'maTonKho'       => $item['maTonKho'],
+                    'soLuong'        => $item['soLuong'],
                 ]);
             }
 
@@ -83,7 +83,7 @@ class OutboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Lập phiếu xuất kho NVL thành công (Trạng thái: Chờ duyệt)',
-                'data' => $dispatch->load('chiTiets'),
+                'data'    => $dispatch->load('chiTiets'),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -102,16 +102,9 @@ class OutboundController extends Controller
 
         DB::beginTransaction();
         try {
-            foreach ($dispatch->chiTiets as $detail) {
-                $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
-                if ($tonKho) {
-                    if ($tonKho->soLuongTonHienTai < $detail->soLuong) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => "Lô {$detail->maTonKho} không đủ tồn kho để trừ"], 400);
-                    }
-                    $tonKho->soLuongTonHienTai -= $detail->soLuong;
-                    $tonKho->save();
-                }
+            if ($err = $this->deductInventoryLots($dispatch->chiTiets)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => $err], 400);
             }
 
             $dispatch->update(['trangThai' => 'Hoàn thành']);
@@ -120,7 +113,7 @@ class OutboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Xác nhận hoàn thành xuất kho NVL! Tồn kho đã được trừ.',
-                'data' => $dispatch,
+                'data'    => $dispatch,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -134,15 +127,14 @@ class OutboundController extends Controller
 
     public function getProductDispatches(Request $request)
     {
-        $query = PhieuXuatSP::with(['khachHang', 'chiTiets.tonKho']);
-
-        if ($request->has('trangThai')) {
-            $query->where('trangThai', $request->input('trangThai'));
-        }
+        $dispatches = PhieuXuatSP::with(['khachHang', 'chiTiets.tonKho'])
+            ->when($request->filled('trangThai'), fn($q) => $q->where('trangThai', $request->input('trangThai')))
+            ->orderBy('ngayXuat', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->orderBy('ngayXuat', 'desc')->get(),
+            'data'    => $dispatches,
         ]);
     }
 
@@ -150,18 +142,15 @@ class OutboundController extends Controller
     {
         $dispatch = PhieuXuatSP::with('chiTiets')->findOrFail($id);
 
+        if ($dispatch->trangThai === 'Hoàn thành') {
+            return response()->json(['success' => false, 'message' => 'Phiếu xuất đã được hoàn thành trước đó'], 400);
+        }
+
         DB::beginTransaction();
         try {
-            foreach ($dispatch->chiTiets as $detail) {
-                $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
-                if ($tonKho) {
-                    if ($tonKho->soLuongTonHienTai < $detail->soLuong) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => "Lô sản phẩm {$detail->maTonKho} không đủ tồn kho"], 400);
-                    }
-                    $tonKho->soLuongTonHienTai -= $detail->soLuong;
-                    $tonKho->save();
-                }
+            if ($err = $this->deductInventoryLots($dispatch->chiTiets)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => $err], 400);
             }
 
             $dispatch->update(['trangThai' => 'Hoàn thành']);
@@ -170,11 +159,26 @@ class OutboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Xuất kho sản phẩm cho khách hàng thành công! Tồn kho đã giảm theo lô.',
-                'data' => $dispatch,
+                'data'    => $dispatch,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Lỗi xuất kho thành phẩm: ' . $e->getMessage()], 500);
         }
+    }
+
+    // Trợ giúp trừ tồn kho theo lô dùng chung
+    private function deductInventoryLots($chiTiets): ?string
+    {
+        foreach ($chiTiets as $detail) {
+            $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
+            if ($tonKho) {
+                if ($tonKho->soLuongTonHienTai < $detail->soLuong) {
+                    return "Lô {$detail->maTonKho} không đủ tồn kho để trừ";
+                }
+                $tonKho->decrement('soLuongTonHienTai', $detail->soLuong);
+            }
+        }
+        return null;
     }
 }

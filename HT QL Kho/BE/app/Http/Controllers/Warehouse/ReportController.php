@@ -19,37 +19,38 @@ class ReportController extends Controller
         $fromDate = $request->input('fromDate', '2026-01-01');
         $toDate = $request->input('toDate', date('Y-m-d'));
 
+        // Pre-aggregate tổng nhập & xuất theo từng mã lô (tránh triệt để N+1 query)
+        $nhapNVL = ChiTietPhieuNhapNVL::groupBy('maTonKho')->pluck(DB::raw('SUM(soLuong)'), 'maTonKho');
+        $xuatNVL = ChiTietPhieuXuatNVL::groupBy('maTonKho')->pluck(DB::raw('SUM(soLuong)'), 'maTonKho');
+        $xuatSP  = ChiTietPhieuXuatSP::groupBy('maTonKho')->pluck(DB::raw('SUM(soLuong)'), 'maTonKho');
+
         $summary = TonKho::with(['sanPham', 'nguyenVatLieu'])
             ->get()
-            ->map(function ($lot) {
-                $tongNhapNVL = ChiTietPhieuNhapNVL::where('maTonKho', $lot->maTonKho)->sum('soLuong');
-                $tongXuatNVL = ChiTietPhieuXuatNVL::where('maTonKho', $lot->maTonKho)->sum('soLuong');
-                $tongNhapSP = ChiTietPhieuNhapSP::where('maTonKho', $lot->maTonKho)->sum('soLuong');
-                $tongXuatSP = ChiTietPhieuXuatSP::where('maTonKho', $lot->maTonKho)->sum('soLuong');
-
-                $tongNhap = $tongNhapNVL + $tongNhapSP;
-                $tongXuat = $tongXuatNVL + $tongXuatSP;
+            ->map(function ($lot) use ($nhapNVL, $xuatNVL, $xuatSP) {
+                $isSP = !empty($lot->maSanPham ?? $lot->maSP);
+                $tongNhap = (float) ($isSP ? $lot->soLuongNhap : ($nhapNVL[$lot->maTonKho] ?? $lot->soLuongNhap));
+                $tongXuat = (float) ($isSP ? ($xuatSP[$lot->maTonKho] ?? 0) : ($xuatNVL[$lot->maTonKho] ?? 0));
 
                 return [
-                    'maTonKho' => $lot->maTonKho,
-                    'tenTonKho' => $lot->tenTonKho,
-                    'loai' => $lot->maSP ? 'Sản phẩm' : 'Nguyên vật liệu',
-                    'tenMatHang' => $lot->sanPham ? $lot->sanPham->tenSanPham : ($lot->nguyenVatLieu ? $lot->nguyenVatLieu->tenNVL : 'N/A'),
-                    'ngaySanXuat' => $lot->ngaySanXuat,
-                    'hanSuDung' => $lot->hanSuDung,
-                    'soLuongNhapBanDau' => $lot->soLuongNhap,
-                    'tongNhap' => $tongNhap,
-                    'tongXuat' => $tongXuat,
-                    'tonKhoHienTai' => $lot->soLuongTonHienTai,
-                    'trangThai' => $lot->trangThai,
+                    'maTonKho'          => $lot->maTonKho,
+                    'tenTonKho'         => $lot->tenTonKho,
+                    'loai'              => $isSP ? 'Sản phẩm' : 'Nguyên vật liệu',
+                    'tenMatHang'        => $lot->sanPham?->tenSanPham ?? $lot->nguyenVatLieu?->tenNVL ?? 'N/A',
+                    'ngaySanXuat'       => $lot->ngaySanXuat,
+                    'hanSuDung'         => $lot->hanSuDung,
+                    'soLuongNhapBanDau' => (float) $lot->soLuongNhap,
+                    'tongNhap'          => $tongNhap,
+                    'tongXuat'          => $tongXuat,
+                    'tonKhoHienTai'     => (float) $lot->soLuongTonHienTai,
+                    'trangThai'         => $lot->trangThai,
                 ];
             });
 
         return response()->json([
-            'success' => true,
+            'success'  => true,
             'fromDate' => $fromDate,
-            'toDate' => $toDate,
-            'data' => $summary,
+            'toDate'   => $toDate,
+            'data'     => $summary,
         ]);
     }
 
@@ -58,22 +59,35 @@ class ReportController extends Controller
     {
         $lot = TonKho::with(['sanPham', 'nguyenVatLieu'])->where('maTonKho', $maTonKho)->firstOrFail();
 
-        $nhapNVL = ChiTietPhieuNhapNVL::where('maTonKho', $maTonKho)
-            ->join('PhieuNhapNVL', 'ChiTietPhieuNhapNVL.maPhieuNhapNVL', '=', 'PhieuNhapNVL.maPhieuNhapNVL')
-            ->select('PhieuNhapNVL.ngayNhap as ngay', 'PhieuNhapNVL.maPhieuNhapNVL as maPhieu', DB::raw("'Nhập NVL từ NCC' as loaiGiaoDich"), 'ChiTietPhieuNhapNVL.soLuong')
-            ->get();
+        $movements = collect();
 
-        $xuatNVL = ChiTietPhieuXuatNVL::where('maTonKho', $maTonKho)
-            ->join('PhieuXuatNVL', 'ChiTietPhieuXuatNVL.maPhieuXuatNVL', '=', 'PhieuXuatNVL.maPhieuXuatNVL')
-            ->select('PhieuXuatNVL.ngayXuat as ngay', 'PhieuXuatNVL.maPhieuXuatNVL as maPhieu', DB::raw("'Xuất NVL cho Xưởng' as loaiGiaoDich"), 'ChiTietPhieuXuatNVL.soLuong')
-            ->get();
+        if ($lot->maSanPham || $lot->maSP) {
+            // Lịch sử biến động của lô Sản Phẩm
+            $xuatSP = ChiTietPhieuXuatSP::where('maTonKho', $maTonKho)
+                ->join('PhieuXuatSP', 'ChiTietPhieuXuatSP.maPhieuXuatSP', '=', 'PhieuXuatSP.maPhieuXuatSP')
+                ->select('PhieuXuatSP.ngayXuat as ngay', 'PhieuXuatSP.maPhieuXuatSP as maPhieu', DB::raw("'Xuất SP cho Đại lý' as loaiGiaoDich"), 'ChiTietPhieuXuatSP.soLuong')
+                ->get();
 
-        $movements = $nhapNVL->concat($xuatNVL)->sortBy('ngay')->values();
+            $movements = $movements->concat($xuatSP);
+        } else {
+            // Lịch sử biến động của lô Nguyên Vật Liệu
+            $nhapNVL = ChiTietPhieuNhapNVL::where('maTonKho', $maTonKho)
+                ->join('PhieuNhapNVL', 'ChiTietPhieuNhapNVL.maPhieuNhapNVL', '=', 'PhieuNhapNVL.maPhieuNhapNVL')
+                ->select('PhieuNhapNVL.ngayNhap as ngay', 'PhieuNhapNVL.maPhieuNhapNVL as maPhieu', DB::raw("'Nhập NVL từ NCC' as loaiGiaoDich"), 'ChiTietPhieuNhapNVL.soLuong')
+                ->get();
+
+            $xuatNVL = ChiTietPhieuXuatNVL::where('maTonKho', $maTonKho)
+                ->join('PhieuXuatNVL', 'ChiTietPhieuXuatNVL.maPhieuXuatNVL', '=', 'PhieuXuatNVL.maPhieuXuatNVL')
+                ->select('PhieuXuatNVL.ngayXuat as ngay', 'PhieuXuatNVL.maPhieuXuatNVL as maPhieu', DB::raw("'Xuất NVL cho Xưởng' as loaiGiaoDich"), 'ChiTietPhieuXuatNVL.soLuong')
+                ->get();
+
+            $movements = $movements->concat($nhapNVL)->concat($xuatNVL);
+        }
 
         return response()->json([
-            'success' => true,
-            'lot' => $lot,
-            'movements' => $movements,
+            'success'   => true,
+            'lot'       => $lot,
+            'movements' => $movements->sortBy('ngay')->values(),
         ]);
     }
 }

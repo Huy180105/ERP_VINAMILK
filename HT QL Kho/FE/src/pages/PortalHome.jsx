@@ -74,14 +74,14 @@ export default function PortalHome() {
       id: 'hr',
       title: 'Phân Hệ Quản Lý Nhân Sự (HRM)',
       subtitle: 'Hồ sơ 10.000+ Nhân sự',
-      desc: 'Hồ sơ nhân viên toàn hệ thống dùng chung cho 5 phân hệ, Cơ cấu tổ chức Phòng ban & Chức vụ, Hợp đồng lao động, Bảng chấm công định kỳ và Bảng tính lương chuyển sang Thu Chi.',
+      desc: 'Quản lý hồ sơ nhân viên toàn hệ thống, Cơ cấu tổ chức Phòng ban & Chức vụ, Hợp đồng lao động, Bảng chấm công định kỳ, Bảng tính lương tự động và Tài khoản phân quyền đăng nhập.',
       icon: Users,
-      badge: 'TÍCH HỢP THAM CHIẾU',
-      badgeColor: 'bg-blue-100 text-[#002795]',
+      badge: 'ĐANG HOẠT ĐỘNG',
+      badgeColor: 'bg-emerald-500 text-white',
       path: '/hr',
-      active: false,
-      stats: '6 Bảng CSDL · Nhân sự gốc',
-      highlights: ['Hồ sơ nhân viên toàn quốc', 'Phòng ban & Chức vụ', 'Bảng lương tự động sang Thu Chi']
+      active: true,
+      stats: '7 Bảng CSDL · 24 Chức Năng Đầy Đủ',
+      highlights: ['Hồ sơ nhân viên toàn quốc', 'Phòng ban & Hợp đồng', 'Bảng lương & Chấm công tự động']
     },
     {
       id: 'sales',
@@ -89,11 +89,11 @@ export default function PortalHome() {
       subtitle: 'Mạng lưới 250.000 điểm bán',
       desc: 'Quản lý Đơn hàng từ mạng lưới đại lý và siêu thị, Điều phối Xuất bán thành phẩm liên thông Kho hàng, Lập Hóa đơn bán lẻ & Hóa đơn GTGT, Quản lý công nợ khách hàng.',
       icon: ShoppingCart,
-      badge: 'TÍCH HỢP THAM CHIẾU',
-      badgeColor: 'bg-blue-100 text-[#002795]',
+      badge: 'ĐANG HOẠT ĐỘNG',
+      badgeColor: 'bg-emerald-500 text-white',
       path: '/sales',
-      active: false,
-      stats: '8 Bảng CSDL · Kênh phân phối',
+      active: true,
+      stats: '8 Bảng CSDL · 21 Endpoints API',
       highlights: ['Đơn đặt hàng đại lý', 'Giao hàng liên thông Kho', 'Hóa đơn & Đối soát công nợ']
     }
   ];

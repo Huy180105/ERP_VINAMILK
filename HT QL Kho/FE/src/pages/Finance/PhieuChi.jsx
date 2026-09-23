@@ -3,26 +3,21 @@ import { PaymentAPI, FinanceMasterDataAPI } from '../../services/financeApi';
 import { 
   ArrowUpRight, 
   Plus, 
-  Search, 
   CheckCircle2, 
   Trash2, 
   FileText, 
   Calendar, 
   ChevronDown, 
   ChevronRight,
-  CreditCard,
-  Wallet,
   X,
-  AlertCircle,
-  Clock,
   Ban,
   Scale,
   ShoppingBag,
-  Send,
   RefreshCw,
   ShieldAlert,
   Users,
-  Building2
+  Clock,
+  Pencil
 } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
@@ -35,7 +30,7 @@ export default function PhieuChi() {
 
   // Role state
   const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
+    return localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan';
   });
 
   // Master data for dropdowns
@@ -54,6 +49,7 @@ export default function PhieuChi() {
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [createTab, setCreateTab] = useState('purchase'); // 'purchase' | 'payroll' | 'manual'
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [selectedPayroll, setSelectedPayroll] = useState(null);
@@ -67,9 +63,7 @@ export default function PhieuChi() {
     maTaiKhoanQuy: '',
     maPhieuNhapNVL: '',
     maBangLuong: '',
-    items: [
-      { maChiTietChi: 'CT1', maDanhMucChi: '', dienGiai: '', soTien: 0 }
-    ],
+    items: [{ maChiTietChi: 'CT1', maDanhMucChi: '', dienGiai: '', soTien: 0 }],
   });
 
   useEffect(() => {
@@ -77,7 +71,7 @@ export default function PhieuChi() {
     fetchDropdowns();
 
     const handleRoleChanged = (e) => {
-      setCurrentRole(e.detail || localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong');
+      setCurrentRole(e.detail || localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan');
     };
     window.addEventListener('finance_role_changed', handleRoleChanged);
     return () => window.removeEventListener('finance_role_changed', handleRoleChanged);
@@ -87,9 +81,7 @@ export default function PhieuChi() {
     setLoading(true);
     try {
       const res = await PaymentAPI.getPayments({ trangThai, tuNgay, denNgay });
-      if (res.data.success) {
-        setPayments(res.data.data || []);
-      }
+      if (res.data.success) setPayments(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -104,9 +96,9 @@ export default function PhieuChi() {
         FinanceMasterDataAPI.getAccounts(),
         FinanceMasterDataAPI.getExpCategories(),
       ]);
-      if (dtRes.data.success) setCounterparties(dtRes.data.data || []);
-      if (accRes.data.success) setAccounts(accRes.data.data || []);
-      if (catRes.data.success) setCategories(catRes.data.data || []);
+      if (dtRes.data.success) setCounterparties((dtRes.data.data || []).filter(item => item.trangThai));
+      if (accRes.data.success) setAccounts((accRes.data.data || []).filter(item => item.trangThai));
+      if (catRes.data.success) setCategories((catRes.data.data || []).filter(item => item.trangThai));
     } catch (err) {
       console.error(err);
     }
@@ -116,9 +108,7 @@ export default function PhieuChi() {
     setLoadingPurchases(true);
     try {
       const res = await PaymentAPI.getPendingPurchases();
-      if (res.data.success) {
-        setPendingPurchases(res.data.data || []);
-      }
+      if (res.data.success) setPendingPurchases(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -130,9 +120,7 @@ export default function PhieuChi() {
     setLoadingPayrolls(true);
     try {
       const res = await PaymentAPI.getPendingPayrolls();
-      if (res.data.success) {
-        setPendingPayrolls(res.data.data || []);
-      }
+      if (res.data.success) setPendingPayrolls(res.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -141,10 +129,11 @@ export default function PhieuChi() {
   };
 
   const toggleRow = (id) => {
-    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const openCreateModal = () => {
+    setEditingId(null);
     const autoCode = generateAutoCode(payments, 'maPhieuChi', 'PC', 3, true);
     setSelectedPurchase(null);
     setSelectedPayroll(null);
@@ -171,7 +160,6 @@ export default function PhieuChi() {
     setSelectedPurchase(pn);
     setSelectedPayroll(null);
     const timestamp = Date.now().toString().slice(-6);
-
     const matchedDt = counterparties.find(c => c.loaiDoiTuong === 'NCC' && c.maThamChieu === pn.maNCC);
 
     setFormData(prev => ({
@@ -181,7 +169,7 @@ export default function PhieuChi() {
       maDoiTuong: matchedDt ? matchedDt.maDoiTuong : prev.maDoiTuong,
       soTien: pn.tongTien,
       phuongThucChi: 'CK',
-      lyDoChi: `Thanh toán tiền mua nguyên vật liệu phiếu nhập kho ${pn.maPhieuNhapNVL} (NCC: ${pn.tenNCC})`,
+      lyDoChi: `Thanh toán tiền mua NVL phiếu nhập kho ${pn.maPhieuNhapNVL} (NCC: ${pn.tenNCC})`,
       items: [
         {
           maChiTietChi: `CTPC-${timestamp}-1`,
@@ -193,11 +181,28 @@ export default function PhieuChi() {
     }));
   };
 
+  const openEditModal = (payment) => {
+    setEditingId(payment.maPhieuChi);
+    setSelectedPurchase(null);
+    setSelectedPayroll(null);
+    setCreateTab('manual');
+    setFormData({
+      maPhieuChi: payment.maPhieuChi,
+      ngayChi: String(payment.ngayChi).slice(0, 10),
+      maDoiTuong: payment.maDoiTuong || '', lyDoChi: payment.lyDoChi || '',
+      phuongThucChi: payment.phuongThucChi || 'CK', maTaiKhoanQuy: payment.maTaiKhoanQuy || '',
+      maPhieuNhapNVL: payment.maPhieuNhapNVL || '', maBangLuong: payment.maBangLuong || '',
+      items: (payment.chiTiets || payment.chi_tiets || []).map(item => ({
+        maChiTietChi: item.maChiTietChi, maDanhMucChi: item.maDanhMucChi || '', dienGiai: item.dienGiai || '', soTien: item.soTien,
+      })),
+    });
+    setModalOpen(true);
+  };
+
   const handleSelectPayroll = (bl) => {
     setSelectedPayroll(bl);
     setSelectedPurchase(null);
     const timestamp = Date.now().toString().slice(-6);
-
     const matchedDt = counterparties.find(c => c.loaiDoiTuong === 'NV' && c.maThamChieu === bl.maNV);
 
     setFormData(prev => ({
@@ -222,13 +227,13 @@ export default function PhieuChi() {
   const handleAddItem = () => {
     const timestamp = Date.now().toString().slice(-4);
     const newIdx = formData.items.length + 1;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       items: [
-        ...formData.items,
+        ...prev.items,
         { maChiTietChi: `CTPC-${timestamp}-${newIdx}`, maDanhMucChi: categories[0]?.maDanhMucChi || '', dienGiai: '', soTien: 0 }
       ]
-    });
+    }));
   };
 
   const handleRemoveItem = (index) => {
@@ -236,21 +241,20 @@ export default function PhieuChi() {
       alert('Phiếu chi phải có ít nhất 1 dòng chi tiết');
       return;
     }
-    const updated = formData.items.filter((_, idx) => idx !== index);
-    setFormData({ ...formData, items: updated });
+    setFormData(prev => ({ ...prev, items: prev.items.filter((_, idx) => idx !== index) }));
   };
 
   const handleItemChange = (index, field, value) => {
     const updated = [...formData.items];
     updated[index][field] = value;
-    setFormData({ ...formData, items: updated });
+    setFormData(prev => ({ ...prev, items: updated }));
   };
 
   const calculateTotal = () => {
     return formData.items.reduce((sum, item) => sum + (parseFloat(item.soTien) || 0), 0);
   };
 
-  // Check account balance vs amount (FI-BR04, FI-FR07)
+  // Kiểm tra hạn mức quỹ (FI-BR04, FI-FR07)
   const selectedAccountObj = accounts.find(a => a.maTaiKhoanQuy === formData.maTaiKhoanQuy);
   const currentAccBalance = selectedAccountObj ? parseFloat(selectedAccountObj.soDuHienTai) : 0;
   const isOverBudget = calculateTotal() > currentAccBalance;
@@ -263,13 +267,11 @@ export default function PhieuChi() {
       return;
     }
 
-    const payload = {
-      ...formData,
-      soTien: total,
-    };
-
     try {
-      const res = await PaymentAPI.createPayment(payload);
+      const payload = { ...formData, soTien: total };
+      const res = editingId
+        ? await PaymentAPI.updatePayment(editingId, payload)
+        : await PaymentAPI.createPayment(payload);
       if (res.data.success) {
         setModalOpen(false);
         fetchPayments();
@@ -281,28 +283,26 @@ export default function PhieuChi() {
 
   const handleApprove = async (payment) => {
     if (currentRole !== 'KeToanTruong') {
-      alert('Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền phê duyệt phiếu chi tiền (Quy tắc 2.5.4.3 d). Hãy chuyển vai trò ở góc phải phía trên.');
+      alert('Từ chối quyền: Chỉ Kế toán trưởng mới có thẩm quyền phê duyệt phiếu chi tiền (Quy tắc 2.5.4.3 d).');
       return;
     }
 
-    // Kiểm tra số dư tài khoản
     const acc = accounts.find(a => a.maTaiKhoanQuy === payment.maTaiKhoanQuy);
     if (acc && acc.soDuHienTai < payment.soTien) {
-      alert(`Hạn mức không đủ: Số dư quỹ hiện tại (${Number(acc.soDuHienTai).toLocaleString()} VNĐ) không đủ để chi số tiền ${Number(payment.soTien).toLocaleString()} VNĐ (Quy tắc FI-BR04 / FI-FR07).`);
+      alert(`Hạn mức không đủ: Số dư quỹ hiện tại (${Number(acc.soDuHienTai).toLocaleString()} VNĐ) không đủ để chi ${Number(payment.soTien).toLocaleString()} VNĐ (FI-BR04 / FI-FR07).`);
       return;
     }
 
-    if (window.confirm(`Xác nhận phê duyệt phiếu chi ${payment.maPhieuChi}? Số dư tài khoản quỹ sẽ tự động bị trừ ${Number(payment.soTien).toLocaleString()} VNĐ.`)) {
-      try {
-        const res = await PaymentAPI.approvePayment(payment.maPhieuChi);
-        if (res.data.success) {
-          alert(res.data.message);
-          fetchPayments();
-          fetchDropdowns();
-        }
-      } catch (err) {
-        alert('Lỗi phê duyệt: ' + (err.response?.data?.message || err.message));
+    if (!window.confirm(`Xác nhận phê duyệt phiếu chi ${payment.maPhieuChi}? Số dư tài khoản quỹ sẽ tự động trừ ${Number(payment.soTien).toLocaleString()} VNĐ.`)) return;
+    try {
+      const res = await PaymentAPI.approvePayment(payment.maPhieuChi);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchPayments();
+        fetchDropdowns();
       }
+    } catch (err) {
+      alert('Lỗi phê duyệt: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -312,31 +312,55 @@ export default function PhieuChi() {
       return;
     }
 
-    const lyDoHuy = window.prompt(`Nhập lý do hủy phiếu chi ${id} (Số dư quỹ sẽ được hoàn trả lại nếu đã duyệt):`, 'Hủy theo yêu cầu kế toán');
-    if (lyDoHuy !== null) {
-      try {
-        const res = await PaymentAPI.cancelPayment(id, { lyDoHuy });
-        if (res.data.success) {
-          alert(res.data.message);
-          fetchPayments();
-          fetchDropdowns();
-        }
-      } catch (err) {
-        alert('Lỗi hủy phiếu chi: ' + (err.response?.data?.message || err.message));
+    const lyDoHuy = window.prompt(`Nhập lý do hủy phiếu chi ${id} (Số dư quỹ sẽ được hoàn lại nếu đã duyệt):`, 'Hủy theo yêu cầu kế toán');
+    if (lyDoHuy === null) return;
+
+    try {
+      const res = await PaymentAPI.cancelPayment(id, { lyDoHuy });
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchPayments();
+        fetchDropdowns();
       }
+    } catch (err) {
+      alert('Lỗi hủy phiếu chi: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleSendToReconcile = async (id) => {
+    if (!window.confirm(`Chuyển phiếu chi ${id} sang trạng thái Chờ đối soát ngân hàng (FI-FR06)?`)) return;
+    try {
+      const res = await PaymentAPI.sendToReconcile(id);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchPayments();
+      }
+    } catch (err) {
+      alert('Lỗi chuyển trạng thái: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleCompleteReconciliation = async (payment) => {
+    if (!window.confirm(`Xác nhận khớp lệnh đối soát cho phiếu chi ${payment.maPhieuChi}? Số dư quỹ sẽ được ghi nhận.`)) return;
+    try {
+      const res = await PaymentAPI.completeReconciliation(payment.maPhieuChi);
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchPayments();
+        fetchDropdowns();
+      }
+    } catch (err) {
+      alert('Lỗi khớp lệnh: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(`Xác nhận xóa phiếu chi ${id}? Chỉ xóa được phiếu ở trạng thái Mới.`)) {
-      try {
-        const res = await PaymentAPI.deletePayment(id);
-        if (res.data.success) {
-          fetchPayments();
-        }
-      } catch (err) {
-        alert('Lỗi xóa phiếu chi: ' + (err.response?.data?.message || err.message));
-      }
+    if (!window.confirm(`Xác nhận xóa phiếu chi ${id}? Chỉ xóa được phiếu ở trạng thái Mới.`)) return;
+    try {
+      const res = await PaymentAPI.deletePayment(id);
+      if (res.data.success) fetchPayments();
+    } catch (err) {
+      alert('Lỗi xóa phiếu chi: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -347,6 +371,13 @@ export default function PhieuChi() {
           <span className="bg-emerald-50 text-emerald-700 font-bold px-2.5 py-1 rounded-full text-[10px] border border-emerald-200 flex items-center space-x-1 w-fit">
             <CheckCircle2 className="w-3 h-3" />
             <span>Đã Duyệt (Trừ Quỹ)</span>
+          </span>
+        );
+      case 'ChoDoiSoat':
+        return (
+          <span className="bg-blue-50 text-[#0B2341] font-bold px-2.5 py-1 rounded-full text-[10px] border border-blue-200 flex items-center space-x-1 w-fit">
+            <Scale className="w-3 h-3" />
+            <span>Chờ Đối Soát (FI-FR06)</span>
           </span>
         );
       case 'Huy':
@@ -372,11 +403,11 @@ export default function PhieuChi() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center space-x-2">
-            <ArrowUpRight className="w-6 h-6 text-red-600" />
-            <span>Quản Lý Phiếu Chi Tiền (FI-FR03, FI-BR02, FI-BR04)</span>
+            <ArrowUpRight className="w-6 h-6 text-rose-600" />
+            <span>Quản Lý Phiếu Chi Tiền (FI-FR04, FI-BR02)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Lập phiếu chi từ Phiếu Nhập NVL (Kho), Bảng Lương (Nhân sự) hoặc thủ công, kiểm soát hạn mức ngân quỹ chặt chẽ.
+            Lập phiếu chi từ Phiếu Nhập NVL (Kho) hoặc Bảng Lương (Nhân sự), kiểm duyệt hạn mức số dư quỹ theo chuẩn VAS.
           </p>
         </div>
 
@@ -384,12 +415,12 @@ export default function PhieuChi() {
           {currentRole !== 'KeToanTruong' && (
             <div className="hidden sm:flex items-center space-x-1.5 bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-md text-xs">
               <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Vai trò hiện tại không có quyền duyệt</span>
+              <span>Chỉ Kế toán trưởng có quyền duyệt</span>
             </div>
           )}
           <button
             onClick={openCreateModal}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2.5 rounded-md shadow-sm transition flex items-center space-x-2 cursor-pointer"
+            className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-md shadow-sm transition flex items-center space-x-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Lập Phiếu Chi Mới</span>
@@ -403,11 +434,12 @@ export default function PhieuChi() {
           <select
             value={trangThai}
             onChange={(e) => setTrangThai(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Moi">Mới lập</option>
             <option value="DaDuyet">Đã duyệt</option>
+            <option value="ChoDoiSoat">Chờ đối soát</option>
             <option value="Huy">Đã hủy</option>
           </select>
 
@@ -432,14 +464,14 @@ export default function PhieuChi() {
 
         <button
           onClick={fetchPayments}
-          className="p-2 text-slate-500 hover:text-[#0052FF] rounded-md hover:bg-blue-50/60 transition cursor-pointer"
+          className="p-2 text-slate-500 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
           title="Tải lại danh sách"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#0052FF]' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-rose-600' : ''}`} />
         </button>
       </div>
 
-      {/* Table */}
+      {/* Payments Table */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -483,61 +515,59 @@ export default function PhieuChi() {
                             {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-red-700">
-                          {pc.maPhieuChi}
-                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-rose-700">{pc.maPhieuChi}</td>
                         <td className="py-3 px-4 text-slate-600">
                           {pc.ngayChi ? new Date(pc.ngayChi).toLocaleDateString('vi-VN') : ''}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-800">
-                            {pc.doiTuong ? pc.doiTuong.tenDoiTuong : 'N/A'}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono">
-                            {pc.maDoiTuong}
-                          </div>
+                          <div className="font-semibold text-slate-800">{(pc.doiTuong || pc.doi_tuong)?.tenDoiTuong ?? 'N/A'}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{pc.maDoiTuong}</div>
                         </td>
                         <td className="py-3 px-4 text-slate-700 max-w-xs">
                           <div>{pc.lyDoChi || 'Không có ghi chú'}</div>
                           {pc.maPhieuNhapNVL && (
-                            <span className="inline-block mt-1 bg-amber-50 text-amber-700 border border-amber-200 font-mono text-[9px] px-1.5 py-0.5 rounded">
+                            <span className="inline-block mt-1 bg-red-50 text-red-700 border border-red-200 font-mono text-[9px] px-1.5 py-0.5 rounded mr-1">
                               Kho: {pc.maPhieuNhapNVL}
                             </span>
                           )}
                           {pc.maBangLuong && (
-                            <span className="inline-block mt-1 bg-blue-50/60 text-[#0B2341] border border-blue-200 font-mono text-[9px] px-1.5 py-0.5 rounded ml-1">
-                              HRM: {pc.maBangLuong}
+                            <span className="inline-block mt-1 bg-blue-50 text-blue-700 border border-blue-200 font-mono text-[9px] px-1.5 py-0.5 rounded">
+                              Lương: {pc.maBangLuong}
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right font-bold text-red-700 font-mono text-sm">
+                        <td className="py-3 px-4 text-right font-bold text-rose-700 font-mono text-sm">
                           {Number(pc.soTien).toLocaleString()}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-slate-700">
-                            {pc.taiKhoanQuy ? pc.taiKhoanQuy.tenTaiKhoanQuy : 'N/A'}
-                          </div>
+                          <div className="font-medium text-slate-700">{(pc.taiKhoanQuy || pc.tai_khoan_quy)?.tenTaiKhoanQuy ?? 'N/A'}</div>
                           <div className="text-[10px] text-slate-400">
-                            Hình thức: {pc.phuongThucChi === 'CK' ? 'Chuyển khoản' : 'Tiền mặt'}
+                            {pc.phuongThucChi === 'CK' ? 'Chuyển khoản' : 'Tiền mặt'}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          {getStatusBadge(pc.trangThai)}
-                        </td>
+                        <td className="py-3 px-4 text-center">{getStatusBadge(pc.trangThai)}</td>
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center space-x-1">
                             {pc.trangThai === 'Moi' && (
                               <>
+                                <button onClick={() => openEditModal(pc)} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-blue-50 rounded-lg transition cursor-pointer" title="Sửa phiếu chi">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
                                 <button
                                   onClick={() => handleApprove(pc)}
                                   className={`p-1.5 rounded-lg transition cursor-pointer ${
-                                    currentRole === 'KeToanTruong'
-                                      ? 'text-emerald-600 hover:bg-emerald-50'
-                                      : 'text-slate-300 hover:text-slate-400'
+                                    currentRole === 'KeToanTruong' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-300'
                                   }`}
-                                  title={currentRole === 'KeToanTruong' ? "Duyệt phiếu chi (Kiểm tra hạn mức & trừ quỹ)" : "Chỉ Kế toán trưởng có thẩm quyền duyệt"}
+                                  title={currentRole === 'KeToanTruong' ? 'Duyệt phiếu chi' : 'Chỉ Kế toán trưởng có thẩm quyền duyệt'}
                                 >
                                   <CheckCircle2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleSendToReconcile(pc.maPhieuChi)}
+                                  className="p-1.5 text-[#0052FF] hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                  title="Chuyển sang Chờ đối soát ngân hàng"
+                                >
+                                  <Scale className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(pc.maPhieuChi)}
@@ -549,11 +579,22 @@ export default function PhieuChi() {
                               </>
                             )}
 
+                            {pc.trangThai === 'ChoDoiSoat' && (
+                              <button
+                                onClick={() => handleCompleteReconciliation(pc)}
+                                className="px-2 py-1 bg-[#0B2341] hover:bg-[#132F4C] text-white rounded-md text-[10px] font-bold transition flex items-center space-x-1 cursor-pointer"
+                                title="Khớp lệnh đối soát và ghi sổ quỹ"
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Khớp Lệnh</span>
+                              </button>
+                            )}
+
                             {pc.trangThai === 'DaDuyet' && currentRole === 'KeToanTruong' && (
                               <button
                                 onClick={() => handleCancel(pc.maPhieuChi)}
                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer"
-                                title="Hủy phiếu chi & hoàn nguyên số dư quỹ"
+                                title="Hủy phiếu chi & hoàn nguyên quỹ"
                               >
                                 <Ban className="w-4 h-4" />
                               </button>
@@ -568,8 +609,8 @@ export default function PhieuChi() {
                           <td colSpan="9" className="p-4">
                             <div className="bg-white rounded-md border border-slate-200 p-4 shadow-2xs space-y-3">
                               <h4 className="font-bold text-xs text-slate-700 flex items-center space-x-1.5">
-                                <FileText className="w-3.5 h-3.5 text-red-600" />
-                                <span>Chi Tiết Khoản Mục Chi ({pc.chiTiets?.length || 0} khoản)</span>
+                                <FileText className="w-3.5 h-3.5 text-[#0052FF]" />
+                                <span>Chi Tiết Khoản Mục Chi ({(pc.chiTiets || pc.chi_tiets)?.length || 0} khoản)</span>
                               </h4>
                               <table className="w-full text-xs">
                                 <thead className="bg-slate-50 text-slate-500 font-semibold">
@@ -581,11 +622,11 @@ export default function PhieuChi() {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                  {pc.chiTiets?.map((ct) => (
+                                  {(pc.chiTiets || pc.chi_tiets)?.map((ct) => (
                                     <tr key={ct.maChiTietChi}>
                                       <td className="py-2 px-3 font-mono text-slate-600">{ct.maChiTietChi}</td>
                                       <td className="py-2 px-3 font-medium text-slate-800">
-                                        {ct.danhMucChi ? ct.danhMucChi.tenDanhMucChi : 'N/A'}
+                                        {(ct.danhMucChi || ct.danh_muc_chi)?.tenDanhMucChi ?? 'N/A'}
                                       </td>
                                       <td className="py-2 px-3 text-slate-600">{ct.dienGiai || '-'}</td>
                                       <td className="py-2 px-3 text-right font-mono font-bold text-slate-800">
@@ -596,9 +637,9 @@ export default function PhieuChi() {
                                 </tbody>
                               </table>
                               <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
-                                <span>Người lập: <strong>{pc.nhanVienLap ? pc.nhanVienLap.hoTen : pc.nguoiLap}</strong></span>
+                                <span>Người lập: <strong>{(pc.nhanVienLap || pc.nhan_vien_lap)?.hoTen ?? pc.nguoiLap}</strong></span>
                                 {pc.nguoiDuyet && (
-                                  <span>Người duyệt: <strong>{pc.nhanVienDuyet ? pc.nhanVienDuyet.hoTen : pc.nguoiDuyet}</strong></span>
+                                  <span>Người duyệt: <strong>{(pc.nhanVienDuyet || pc.nhan_vien_duyet)?.hoTen ?? pc.nguoiDuyet}</strong></span>
                                 )}
                               </div>
                             </div>
@@ -614,14 +655,14 @@ export default function PhieuChi() {
         </div>
       </div>
 
-      {/* Modal Lập Phiếu Chi Mới (3 Tabs: Purchase vs Payroll vs Manual) */}
+      {/* Modal Lập Phiếu Chi Mới */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 -xs p-4">
-          <div className="bg-white rounded-lg shadow-sm w-full max-w-3xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-150 max-h-[90vh] flex flex-col">
-            <div className="bg-gradient-to-r from-red-700 to-rose-800 text-white px-6 py-4 flex items-center justify-between shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="bg-white rounded-lg shadow-sm w-full max-w-3xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-gradient-to-r from-rose-700 to-red-800 text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-2">
                 <ArrowUpRight className="w-5 h-5" />
-                <h3 className="font-bold text-sm">Lập Phiếu Chi Tiền (FI-FR03, FI-BR02)</h3>
+                <h3 className="font-bold text-sm">Lập Phiếu Chi Tiền (FI-FR04, FI-BR02)</h3>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
@@ -636,31 +677,25 @@ export default function PhieuChi() {
               <button
                 onClick={() => setCreateTab('purchase')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
-                  createTab === 'purchase'
-                    ? 'border-red-600 text-red-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  createTab === 'purchase' ? 'border-rose-600 text-rose-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <Boxes className="w-4 h-4" />
-                <span>Từ Nhập Kho NVL (Kho - FI-BR02)</span>
+                <ShoppingBag className="w-4 h-4" />
+                <span>Từ Phiếu Nhập Kho NVL</span>
               </button>
               <button
                 onClick={() => setCreateTab('payroll')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
-                  createTab === 'payroll'
-                    ? 'border-red-600 text-red-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  createTab === 'payroll' ? 'border-rose-600 text-rose-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <Users className="w-4 h-4" />
-                <span>Từ Bảng Lương (Nhân Sự - FI-BR02)</span>
+                <span>Từ Bảng Lương Nhân Sự</span>
               </button>
               <button
                 onClick={() => setCreateTab('manual')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
-                  createTab === 'manual'
-                    ? 'border-red-600 text-red-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  createTab === 'manual' ? 'border-rose-600 text-rose-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
                 <FileText className="w-4 h-4" />
@@ -669,7 +704,7 @@ export default function PhieuChi() {
             </div>
 
             <div className="overflow-y-auto p-6 space-y-5 flex-1">
-              {/* Tab 1: Purchase Pending Table */}
+              {/* Tab 1: Pending Purchases Table */}
               {createTab === 'purchase' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -679,7 +714,7 @@ export default function PhieuChi() {
                     <button
                       type="button"
                       onClick={fetchPendingPurchases}
-                      className="text-[11px] text-red-600 hover:underline flex items-center space-x-1 cursor-pointer"
+                      className="text-[11px] text-rose-600 hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <RefreshCw className={`w-3 h-3 ${loadingPurchases ? 'animate-spin' : ''}`} />
                       <span>Làm mới</span>
@@ -706,19 +741,19 @@ export default function PhieuChi() {
                           pendingPurchases.map((pn) => (
                             <tr
                               key={pn.maPhieuNhapNVL}
-                              className={`hover:bg-red-50/60 transition ${selectedPurchase?.maPhieuNhapNVL === pn.maPhieuNhapNVL ? 'bg-red-50 border-l-4 border-red-600' : ''}`}
+                              className={`hover:bg-rose-50/60 transition ${selectedPurchase?.maPhieuNhapNVL === pn.maPhieuNhapNVL ? 'bg-rose-50 border-l-4 border-rose-600' : ''}`}
                             >
                               <td className="py-2 px-3 font-mono font-bold text-slate-800">{pn.maPhieuNhapNVL}</td>
                               <td className="py-2 px-3 text-slate-600">{pn.ngayNhap}</td>
                               <td className="py-2 px-3 font-semibold text-slate-800">{pn.tenNCC}</td>
-                              <td className="py-2 px-3 text-right font-mono font-bold text-red-700">
+                              <td className="py-2 px-3 text-right font-mono font-bold text-rose-700">
                                 {Number(pn.tongTien).toLocaleString()}
                               </td>
                               <td className="py-2 px-3 text-center">
                                 <button
                                   type="button"
                                   onClick={() => handleSelectPurchase(pn)}
-                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-[10px] font-bold cursor-pointer transition"
+                                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold cursor-pointer transition"
                                 >
                                   Chọn
                                 </button>
@@ -731,18 +766,18 @@ export default function PhieuChi() {
                   </div>
 
                   {selectedPurchase && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-900 flex items-center justify-between">
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-900 flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0" />
-                        <span>Đã chọn: <strong>{selectedPurchase.maPhieuNhapNVL}</strong> - NCC: <strong>{selectedPurchase.tenNCC}</strong> (Tổng: <strong>{Number(selectedPurchase.tongTien).toLocaleString()} VNĐ</strong>)</span>
+                        <CheckCircle2 className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>Đã chọn: <strong>{selectedPurchase.maPhieuNhapNVL}</strong> - NCC: <strong>{selectedPurchase.tenNCC}</strong> ({Number(selectedPurchase.tongTien).toLocaleString()} VNĐ)</span>
                       </div>
-                      <span className="text-[10px] bg-red-200 text-red-800 font-bold px-2 py-0.5 rounded">Khớp FI-BR02</span>
+                      <span className="text-[10px] bg-rose-200 text-rose-800 font-bold px-2 py-0.5 rounded">FI-BR02</span>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Tab 2: Payroll Pending Table */}
+              {/* Tab 2: Pending Payrolls Table */}
               {createTab === 'payroll' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -752,7 +787,7 @@ export default function PhieuChi() {
                     <button
                       type="button"
                       onClick={fetchPendingPayrolls}
-                      className="text-[11px] text-red-600 hover:underline flex items-center space-x-1 cursor-pointer"
+                      className="text-[11px] text-rose-600 hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <RefreshCw className={`w-3 h-3 ${loadingPayrolls ? 'animate-spin' : ''}`} />
                       <span>Làm mới</span>
@@ -779,7 +814,7 @@ export default function PhieuChi() {
                           pendingPayrolls.map((bl) => (
                             <tr
                               key={bl.maBangLuong}
-                              className={`hover:bg-blue-50/60/60 transition ${selectedPayroll?.maBangLuong === bl.maBangLuong ? 'bg-blue-50/60 border-l-4 border-[#0052FF]' : ''}`}
+                              className={`hover:bg-blue-50/60 transition ${selectedPayroll?.maBangLuong === bl.maBangLuong ? 'bg-blue-50 border-l-4 border-[#0052FF]' : ''}`}
                             >
                               <td className="py-2 px-3 font-mono font-bold text-slate-800">{bl.maBangLuong}</td>
                               <td className="py-2 px-3 text-slate-600">{bl.thangNam}</td>
@@ -804,12 +839,12 @@ export default function PhieuChi() {
                   </div>
 
                   {selectedPayroll && (
-                    <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-md text-xs text-[#0B2341] flex items-center justify-between">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-[#0B2341] flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <CheckCircle2 className="w-4 h-4 text-[#0052FF] shrink-0" />
-                        <span>Đã chọn: <strong>{selectedPayroll.maBangLuong}</strong> - NV: <strong>{selectedPayroll.tenNV}</strong> (Thực lãnh: <strong>{Number(selectedPayroll.thucLanh).toLocaleString()} VNĐ</strong>)</span>
+                        <span>Đã chọn: <strong>{selectedPayroll.maBangLuong}</strong> - NV: <strong>{selectedPayroll.tenNV}</strong> ({Number(selectedPayroll.thucLanh).toLocaleString()} VNĐ)</span>
                       </div>
-                      <span className="text-[10px] bg-purple-200 text-[#0B2341] font-bold px-2 py-0.5 rounded">Khớp FI-BR02</span>
+                      <span className="text-[10px] bg-purple-200 text-[#0B2341] font-bold px-2 py-0.5 rounded">FI-BR02</span>
                     </div>
                   )}
                 </div>
@@ -827,7 +862,7 @@ export default function PhieuChi() {
                       required
                       value={formData.maPhieuChi}
                       onChange={(e) => setFormData({ ...formData, maPhieuChi: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     />
                   </div>
 
@@ -840,7 +875,7 @@ export default function PhieuChi() {
                       required
                       value={formData.ngayChi}
                       onChange={(e) => setFormData({ ...formData, ngayChi: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     />
                   </div>
 
@@ -851,7 +886,7 @@ export default function PhieuChi() {
                     <select
                       value={formData.maDoiTuong}
                       onChange={(e) => setFormData({ ...formData, maDoiTuong: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     >
                       {counterparties.map((dt) => (
                         <option key={dt.maDoiTuong} value={dt.maDoiTuong}>
@@ -864,20 +899,32 @@ export default function PhieuChi() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Tài Khoản Quỹ Chi Tiền <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Tài Khoản Quỹ / Ngân Hàng <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[10px] font-mono font-bold ${isOverBudget ? 'text-red-600' : 'text-emerald-600'}`}>
+                        Số dư: {currentAccBalance.toLocaleString()} đ
+                      </span>
+                    </div>
                     <select
                       value={formData.maTaiKhoanQuy}
                       onChange={(e) => setFormData({ ...formData, maTaiKhoanQuy: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      className={`w-full bg-slate-50 border text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+                        isOverBudget ? 'border-red-300 focus:ring-red-400' : 'border-slate-200 focus:ring-rose-400'
+                      }`}
                     >
                       {accounts.map((acc) => (
                         <option key={acc.maTaiKhoanQuy} value={acc.maTaiKhoanQuy}>
-                          {acc.tenTaiKhoanQuy} (Số dư: {Number(acc.soDuHienTai).toLocaleString()} VNĐ)
+                          {acc.tenTaiKhoanQuy} (Dư: {Number(acc.soDuHienTai).toLocaleString()} đ)
                         </option>
                       ))}
                     </select>
+                    {isOverBudget && (
+                      <span className="text-[10px] text-red-600 mt-1 block">
+                        Cảnh báo: Tổng tiền chi vượt quá số dư khả dụng (FI-BR04 / FI-FR07)
+                      </span>
+                    )}
                   </div>
 
                   <div>
@@ -887,7 +934,7 @@ export default function PhieuChi() {
                     <select
                       value={formData.phuongThucChi}
                       onChange={(e) => setFormData({ ...formData, phuongThucChi: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     >
                       <option value="CK">Chuyển khoản ngân hàng (CK)</option>
                       <option value="TM">Tiền mặt (TM)</option>
@@ -895,27 +942,16 @@ export default function PhieuChi() {
                   </div>
                 </div>
 
-                {/* Over Budget Alert (FI-BR04, FI-FR07) */}
-                {isOverBudget && (
-                  <div className="p-3 bg-red-50 border border-red-300 rounded-md text-xs text-red-900 flex items-start space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="block font-bold">CẢNH BÁO VƯỢT HẠN MỨC SỐ DƯ (FI-BR04 / FI-FR07):</strong>
-                      <span>Số tiền chi yêu cầu ({calculateTotal().toLocaleString()} đ) vượt quá số dư hiện tại của tài khoản quỹ ({currentAccBalance.toLocaleString()} đ). Khi phê duyệt, hệ thống sẽ tự động chặn nếu không đủ hạn mức.</span>
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Lý Do Chi
                   </label>
                   <input
                     type="text"
-                    placeholder="VD: Chi thanh toán tiền nguyên liệu đợt 1..."
+                    placeholder="VD: Thanh toán tiền mua nguyên vật liệu..."
                     value={formData.lyDoChi}
                     onChange={(e) => setFormData({ ...formData, lyDoChi: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                   />
                 </div>
 
@@ -926,7 +962,7 @@ export default function PhieuChi() {
                     <button
                       type="button"
                       onClick={handleAddItem}
-                      className="text-xs text-red-600 hover:text-red-700 font-bold flex items-center space-x-1 cursor-pointer"
+                      className="text-xs text-rose-600 hover:text-rose-700 font-bold flex items-center space-x-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Thêm dòng</span>
@@ -962,13 +998,14 @@ export default function PhieuChi() {
                           min="0"
                           value={item.soTien}
                           onChange={(e) => handleItemChange(idx, 'soTien', e.target.value)}
-                          className="w-36 bg-white border border-slate-200 text-xs font-mono font-bold text-right text-red-700 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                          className="w-36 bg-white border border-slate-200 text-xs font-mono font-bold text-right text-rose-700 rounded-lg px-2.5 py-1.5 focus:outline-none"
                         />
 
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(idx)}
                           className="p-1.5 text-slate-400 hover:text-red-500 rounded-md cursor-pointer"
+                          title="Xóa dòng"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -979,7 +1016,7 @@ export default function PhieuChi() {
                   <div className="flex justify-end pt-2">
                     <div className="text-right">
                       <span className="text-xs text-slate-500 mr-2">Tổng cộng:</span>
-                      <strong className="text-base font-mono font-bold text-red-700">
+                      <strong className={`text-base font-mono font-bold ${isOverBudget ? 'text-red-600' : 'text-rose-700'}`}>
                         {calculateTotal().toLocaleString()} VNĐ
                       </strong>
                     </div>
@@ -1000,7 +1037,7 @@ export default function PhieuChi() {
               <button
                 type="submit"
                 form="pcForm"
-                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-md shadow-sm transition cursor-pointer"
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-md shadow-sm transition cursor-pointer"
               >
                 Lưu Phiếu Chi
               </button>

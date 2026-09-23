@@ -26,4 +26,9 @@ class HoaDon extends Model
     {
         return $this->hasMany(CongNo::class, 'maHoaDon', 'maHoaDon');
     }
+
+    public function giaoHang()
+    {
+        return $this->belongsTo(GiaoHang::class, 'maGiaoHang', 'maGiaoHang');
+    }
 }

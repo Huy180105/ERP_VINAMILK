@@ -1,16 +1,9 @@
 import axios from 'axios';
 
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    if (window.location.port === '3000' || window.location.port === '80' || window.location.port === '443') {
-      return '/api/finance';
-    }
-  }
-  return 'http://localhost:8000/api/finance';
-};
-
 const api = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL: typeof window !== 'undefined' && ['3000', '80', '443'].includes(window.location.port)
+    ? '/api/finance'
+    : 'http://localhost:8000/api/finance',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -20,8 +13,7 @@ const api = axios.create({
 // Interceptor gắn X-User-Role từ localStorage
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const role = localStorage.getItem('vinamilk_finance_role') || 'KeToanTruong';
-    config.headers['X-User-Role'] = role;
+    config.headers['X-User-Role'] = localStorage.getItem('vinamilk_finance_role') || 'KeToanThanhToan';
   }
   return config;
 });
@@ -57,28 +49,29 @@ export const FinanceMasterDataAPI = {
 };
 
 export const ReceiptAPI = {
-  // Lấy chứng từ bán hàng chờ lập phiếu thu (FI-BR01)
   getPendingSales: (params) => api.get('/receipts/pending-sales', { params }),
-
   getReceipts: (params) => api.get('/receipts', { params }),
   getReceipt: (id) => api.get(`/receipts/${id}`),
   createReceipt: (data) => api.post('/receipts', data),
+  updateReceipt: (id, data) => api.put(`/receipts/${id}`, data),
   approveReceipt: (id, data) => api.put(`/receipts/${id}/approve`, data),
   cancelReceipt: (id, data) => api.put(`/receipts/${id}/cancel`, data),
   sendToReconcile: (id) => api.put(`/receipts/${id}/reconcile`),
+  completeReconciliation: (id) => api.put(`/receipts/${id}/reconcile/complete`),
   deleteReceipt: (id) => api.delete(`/receipts/${id}`),
 };
 
 export const PaymentAPI = {
-  // Lấy phiếu nhập NVL (Kho) và Bảng lương (Nhân sự) chờ lập phiếu chi (FI-BR02)
   getPendingPurchases: (params) => api.get('/payments/pending-purchases', { params }),
   getPendingPayrolls: (params) => api.get('/payments/pending-payrolls', { params }),
-
   getPayments: (params) => api.get('/payments', { params }),
   getPayment: (id) => api.get(`/payments/${id}`),
   createPayment: (data) => api.post('/payments', data),
+  updatePayment: (id, data) => api.put(`/payments/${id}`, data),
   approvePayment: (id, data) => api.put(`/payments/${id}/approve`, data),
   cancelPayment: (id, data) => api.put(`/payments/${id}/cancel`, data),
+  sendToReconcile: (id) => api.put(`/payments/${id}/reconcile`),
+  completeReconciliation: (id) => api.put(`/payments/${id}/reconcile/complete`),
   deletePayment: (id) => api.delete(`/payments/${id}`),
 };
 

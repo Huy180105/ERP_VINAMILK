@@ -9,6 +9,7 @@ use App\Models\PhieuNhapSP;
 use App\Models\ChiTietPhieuNhapSP;
 use App\Models\PhieuYeuCauXuatSP;
 use App\Models\TonKho;
+use App\Models\SanPham;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -36,72 +37,70 @@ class InboundController extends Controller
 
     public function getRawMaterialReceipts(Request $request)
     {
-        $query = PhieuNhapNVL::with(['nhaCungCap', 'nhanVienTao', 'nhanVienNhan', 'chiTiets.tonKho']);
-
-        if ($request->has('trangThai')) {
-            $query->where('trangThai', $request->input('trangThai'));
-        }
+        $receipts = PhieuNhapNVL::with(['nhaCungCap', 'nhanVienTao', 'nhanVienNhan', 'chiTiets.tonKho'])
+            ->when($request->filled('trangThai'), fn($q) => $q->where('trangThai', $request->input('trangThai')))
+            ->orderBy('ngayNhap', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->orderBy('ngayNhap', 'desc')->get(),
+            'data'    => $receipts,
         ]);
     }
 
     public function createRawMaterialReceipt(Request $request)
     {
         $validated = $request->validate([
-            'maPhieuNhapNVL' => 'required|string|unique:PhieuNhapNVL,maPhieuNhapNVL',
-            'maNCC' => 'required|string|exists:NhaCungCap,maNCC',
-            'maNVTao' => 'nullable|string|exists:NhanVien,maNV',
-            'maNVNhan' => 'nullable|string|exists:NhanVien,maNV',
-            'ngayNhap' => 'required|date',
-            'ghiChu' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.maTonKho' => 'required|string',
-            'items.*.maNVL' => 'required|string|exists:NguyenVatLieu,maNVL',
-            'items.*.soLuong' => 'required|integer|min:1',
-            'items.*.donGia' => 'nullable|numeric',
+            'maPhieuNhapNVL'      => 'required|string|unique:PhieuNhapNVL,maPhieuNhapNVL',
+            'maNCC'               => 'required|string|exists:NhaCungCap,maNCC',
+            'maNVTao'             => 'nullable|string|exists:NhanVien,maNV',
+            'maNVNhan'            => 'nullable|string|exists:NhanVien,maNV',
+            'ngayNhap'            => 'required|date',
+            'ghiChu'              => 'nullable|string',
+            'items'               => 'required|array|min:1',
+            'items.*.maTonKho'    => 'required|string',
+            'items.*.maNVL'       => 'required|string|exists:NguyenVatLieu,maNVL',
+            'items.*.soLuong'     => 'required|integer|min:1',
+            'items.*.donGia'      => 'nullable|numeric',
             'items.*.ngaySanXuat' => 'required|date',
-            'items.*.hanSuDung' => 'required|date',
+            'items.*.hanSuDung'   => 'required|date',
         ]);
 
         DB::beginTransaction();
         try {
             $receipt = PhieuNhapNVL::create([
                 'maPhieuNhapNVL' => $validated['maPhieuNhapNVL'],
-                'maNCC' => $validated['maNCC'],
-                'maNVTao' => $validated['maNVTao'] ?? null,
-                'maNVNhan' => $validated['maNVNhan'] ?? null,
-                'ngayNhap' => $validated['ngayNhap'],
-                'trangThai' => 'Chờ duyệt',
-                'ghiChu' => $validated['ghiChu'] ?? null,
+                'maNCC'          => $validated['maNCC'],
+                'maNVTao'        => $validated['maNVTao'] ?? null,
+                'maNVNhan'       => $validated['maNVNhan'] ?? null,
+                'ngayNhap'       => $validated['ngayNhap'],
+                'trangThai'      => 'Chờ duyệt',
+                'ghiChu'         => $validated['ghiChu'] ?? null,
             ]);
 
             foreach ($validated['items'] as $item) {
-                // Tạo hoặc cập nhật thông tin Lô tồn kho (TonKho)
                 TonKho::updateOrCreate(
                     ['maTonKho' => $item['maTonKho']],
                     [
-                        'tenTonKho' => 'Lô NVL ' . $item['maNVL'],
-                        'maNVL' => $item['maNVL'],
-                        'ngaySanXuat' => $item['ngaySanXuat'],
-                        'hanSuDung' => $item['hanSuDung'],
-                        'soLuongNhap' => $item['soLuong'],
-                        'soLuongTonHienTai' => 0, // Chưa cộng tồn kho cho tới khi xác nhận hoàn thành
-                        'trangThai' => 'Còn hạn',
+                        'tenTonKho'         => 'Lô NVL ' . $item['maNVL'],
+                        'maNVL'             => $item['maNVL'],
+                        'ngaySanXuat'       => $item['ngaySanXuat'],
+                        'hanSuDung'         => $item['hanSuDung'],
+                        'soLuongNhap'       => $item['soLuong'],
+                        'soLuongTonHienTai' => 0, // Chưa cộng tồn kho cho tới khi hoàn thành
+                        'trangThai'         => 'Còn hạn',
                     ]
                 );
 
                 $donGia = $item['donGia'] ?? 0;
                 ChiTietPhieuNhapNVL::create([
                     'maPhieuNhapNVL' => $receipt->maPhieuNhapNVL,
-                    'maTonKho' => $item['maTonKho'],
-                    'soLuong' => $item['soLuong'],
-                    'donGia' => $donGia,
-                    'thanhTien' => $donGia * $item['soLuong'],
-                    'ngaySanXuat' => $item['ngaySanXuat'],
-                    'hanSuDung' => $item['hanSuDung'],
+                    'maTonKho'       => $item['maTonKho'],
+                    'soLuong'        => $item['soLuong'],
+                    'donGia'         => $donGia,
+                    'thanhTien'      => $donGia * $item['soLuong'],
+                    'ngaySanXuat'    => $item['ngaySanXuat'],
+                    'hanSuDung'      => $item['hanSuDung'],
                 ]);
             }
 
@@ -110,7 +109,7 @@ class InboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Lập phiếu nhập nguyên vật liệu thành công (Trạng thái: Chờ duyệt)',
-                'data' => $receipt->load('chiTiets'),
+                'data'    => $receipt->load('chiTiets'),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -126,7 +125,7 @@ class InboundController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Đã phê duyệt phiếu nhập nguyên vật liệu',
-            'data' => $receipt,
+            'data'    => $receipt,
         ]);
     }
 
@@ -142,11 +141,7 @@ class InboundController extends Controller
         DB::beginTransaction();
         try {
             foreach ($receipt->chiTiets as $detail) {
-                $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
-                if ($tonKho) {
-                    $tonKho->soLuongTonHienTai += $detail->soLuong;
-                    $tonKho->save();
-                }
+                TonKho::where('maTonKho', $detail->maTonKho)->increment('soLuongTonHienTai', $detail->soLuong);
             }
 
             $receipt->update(['trangThai' => 'Hoàn thành']);
@@ -155,7 +150,7 @@ class InboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Xác nhận hoàn thành nhập kho NVL thành công! Tồn kho đã được tự động cộng.',
-                'data' => $receipt,
+                'data'    => $receipt,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -169,129 +164,99 @@ class InboundController extends Controller
 
     public function getNextProductReceiptCode()
     {
-        $todayStr = Carbon::now()->format('Ymd');
-        $prefix = 'PNSP' . $todayStr;
-        
-        $lastReceipt = PhieuNhapSP::where('maPhieuNhapSP', 'LIKE', "{$prefix}%")
-            ->orderBy('maPhieuNhapSP', 'desc')
-            ->first();
-
-        if ($lastReceipt) {
-            $lastNum = (int) substr($lastReceipt->maPhieuNhapSP, -2);
-            $nextNum = str_pad($lastNum + 1, 2, '0', STR_PAD_LEFT);
-        } else {
-            $nextNum = '01';
-        }
-
         return response()->json([
             'success' => true,
-            'code' => $prefix . $nextNum,
+            'code'    => $this->generateProductReceiptCode(),
         ]);
     }
 
     public function getProductReceipts(Request $request)
     {
-        $query = PhieuNhapSP::with(['nhanVienTao', 'nhanVienNhan', 'chiTiets.sanPham']);
-
-        if ($request->has('trangThai') && !empty($request->input('trangThai'))) {
-            $query->where('trangThai', $request->input('trangThai'));
-        }
-
-        if ($request->has('keyword') && !empty($request->input('keyword'))) {
-            $keyword = $request->input('keyword');
-            $query->where(function($q) use ($keyword) {
-                $q->where('maPhieuNhapSP', 'LIKE', "%{$keyword}%")
-                  ->orWhere('ghiChu', 'LIKE', "%{$keyword}%")
-                  ->orWhere('maPhieuYCXSP', 'LIKE', "%{$keyword}%");
-            });
-        }
+        $receipts = PhieuNhapSP::with(['nhanVienTao', 'nhanVienNhan', 'chiTiets.sanPham'])
+            ->when($request->filled('trangThai'), fn($q) => $q->where('trangThai', $request->input('trangThai')))
+            ->when($request->filled('keyword'), function ($q) use ($request) {
+                $kw = $request->input('keyword');
+                $q->where(fn($sub) => $sub->where('maPhieuNhapSP', 'LIKE', "%{$kw}%")
+                    ->orWhere('ghiChu', 'LIKE', "%{$kw}%")
+                    ->orWhere('maPhieuYCXSP', 'LIKE', "%{$kw}%"));
+            })
+            ->orderBy('ngayNhap', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $query->orderBy('ngayNhap', 'desc')->get(),
+            'data'    => $receipts,
         ]);
     }
 
     public function createProductReceipt(Request $request)
     {
-        $validated = $request->validate([
-            'maPhieuNhapSP' => 'nullable|string',
-            'maNVTao' => 'nullable|string|exists:NhanVien,maNV',
-            'maNVNhan' => 'nullable|string|exists:NhanVien,maNV',
-            'ghiChu' => 'required|string',
-            'maPhieuYCXSP' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.maSP' => 'required|string|exists:SanPham,maSanPham',
-            'items.*.soLuongNhap' => 'required|integer|min:1',
-            'items.*.ngaySanXuat' => 'required|date',
-            'items.*.hanSuDung' => 'required|date',
-            'items.*.ghiChu' => 'nullable|string',
-        ], [
-            'ghiChu.required' => 'Ghi chú phiếu nhập không được để trống.',
-            'items.required' => 'Danh sách sản phẩm nhập không được để trống.',
-            'items.*.maSP.required' => 'Sản phẩm không được để trống.',
-            'items.*.soLuongNhap.min' => 'Số lượng nhập phải lớn hơn 0.',
-            'items.*.ngaySanXuat.required' => 'Ngày sản xuất không được để trống.',
-        ]);
+        $validated = $this->validateProductReceiptRequest($request);
 
-        $today = Carbon::today();
-        $todayStr = $today->toDateString();
-        $minExpiryDate = $today->copy()->addDays(180);
-
-        foreach ($validated['items'] as $index => $item) {
-            $mfgDate = Carbon::parse($item['ngaySanXuat']);
-            $expDate = Carbon::parse($item['hanSuDung']);
-
-            if ($mfgDate->gt($today)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Ngày sản xuất (" . $mfgDate->toDateString() . ") không được lớn hơn ngày hiện tại ($todayStr).",
-                ], 422);
-            }
-
-            if ($expDate->lte($minExpiryDate)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Hạn sử dụng (" . $expDate->toDateString() . ") không hợp lệ. Hạn sử dụng phải lớn hơn 180 ngày tính từ hôm nay (sau ngày " . $minExpiryDate->toDateString() . ").",
-                ], 422);
-            }
+        if ($dateErr = $this->validateProductItemDates($validated['items'])) {
+            return response()->json(['success' => false, 'message' => $dateErr], 422);
         }
 
         DB::beginTransaction();
         try {
-            $maPhieu = $validated['maPhieuNhapSP'] ?? null;
-            if (!$maPhieu) {
-                $prefix = 'PNSP' . Carbon::now()->format('Ymd');
-                $lastReceipt = PhieuNhapSP::where('maPhieuNhapSP', 'LIKE', "{$prefix}%")
-                    ->orderBy('maPhieuNhapSP', 'desc')
-                    ->first();
-                $nextNum = $lastReceipt ? str_pad(((int)substr($lastReceipt->maPhieuNhapSP, -2)) + 1, 2, '0', STR_PAD_LEFT) : '01';
-                $maPhieu = $prefix . $nextNum;
-            }
+            $maPhieu = $validated['maPhieuNhapSP'] ?: $this->generateProductReceiptCode();
 
             $receipt = PhieuNhapSP::create([
                 'maPhieuNhapSP' => $maPhieu,
-                'maNVTao' => $validated['maNVTao'] ?? 'NV001',
-                'maNVNhan' => $validated['maNVNhan'] ?? 'NV001',
-                'ngayNhap' => $todayStr,
-                'trangThai' => 'Chờ duyệt',
-                'ghiChu' => $validated['ghiChu'],
-                'maPhieuYCXSP' => $validated['maPhieuYCXSP'] ?? null,
+                'maNVTao'       => $validated['maNVTao'] ?? 'NV001',
+                'maNVNhan'      => $validated['maNVNhan'] ?? 'NV001',
+                'ngayNhap'      => Carbon::today()->toDateString(),
+                'trangThai'     => 'Chờ duyệt',
+                'ghiChu'        => $validated['ghiChu'],
+                'maPhieuYCXSP'  => $validated['maPhieuYCXSP'] ?? null,
             ]);
 
+<<<<<<< HEAD
             if (!empty($validated['maPhieuYCXSP'])) {
                 PhieuYeuCauXuatSP::where('maPhieuYCXSP', $validated['maPhieuYCXSP'])
                     ->update(['trangThai' => 'Đã nhập kho']);
             }
+=======
+            $today = Carbon::today();
+            $dateStr = Carbon::now()->format('Ymd');
+            $prefix = "LOT-SP-{$dateStr}-";
+
+            $lastLot = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")
+                ->orderBy('maTonKho', 'desc')
+                ->value('maTonKho');
+
+            $counter = ($lastLot ? (int) str_replace($prefix, '', $lastLot) : 0) + 1;
+>>>>>>> origin/duc
 
             foreach ($validated['items'] as $item) {
+                $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
+                $spId = $item['maSanPham'] ?? $item['maSP'];
+                $sp = SanPham::where('maSanPham', $spId)->first();
+                $spName = $sp?->tenSanPham ?? ("Sản phẩm " . $spId);
+
+                TonKho::create([
+                    'maTonKho'             => $maTonKho,
+                    'tenTonKho'            => "Lô {$spName} ({$item['ngaySanXuat']})",
+                    'maKho'                => $item['maKho'] ?? 'KHO-TONG',
+                    'maSanPham'            => $spId,
+                    'maNVL'                => null,
+                    'ngaySanXuat'          => $item['ngaySanXuat'],
+                    'hanSuDung'            => $item['hanSuDung'],
+                    'soLuongNhap'          => $item['soLuongNhap'],
+                    'soLuongTonHienTai'    => 0,
+                    'trangThai'            => 'Còn hạn',
+                    'trangThaiHSD'         => 'Còn hạn',
+                    'trangThaiChatLuong'   => 'Chờ kiểm tra',
+                    'ghiChu'               => "Tạo tự động từ phiếu nhập {$receipt->maPhieuNhapSP}",
+                ]);
+
                 ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
-                    'maSP' => $item['maSP'],
-                    'soLuongNhap' => $item['soLuongNhap'],
-                    'ngaySanXuat' => $item['ngaySanXuat'],
-                    'hanSuDung' => $item['hanSuDung'],
-                    'ghiChu' => $item['ghiChu'] ?? null,
+                    'maTonKho'      => $maTonKho,
+                    'soLuong'       => $item['soLuongNhap'],
+                    'ngaySanXuat'   => $item['ngaySanXuat'],
+                    'hanSuDung'     => $item['hanSuDung'],
+                    'ghiChu'        => $item['ghiChu'] ?? null,
                 ]);
             }
 
@@ -300,7 +265,7 @@ class InboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tạo phiếu nhập sản phẩm thành công! Trạng thái: Chờ duyệt.',
-                'data' => $receipt->load(['nhanVienTao', 'chiTiets.sanPham']),
+                'data'    => $receipt->load(['nhanVienTao', 'chiTiets.tonKho']),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -315,61 +280,69 @@ class InboundController extends Controller
         if (!in_array($receipt->trangThai, ['Chờ duyệt', 'Từ chối'])) {
             return response()->json([
                 'success' => false,
-                'message' => "Chỉ được phép sửa phiếu nhập khi đang ở trạng thái 'Chờ duyệt' hoặc 'Từ chối'. Phiếu hiện tại: {$receipt->trangThai}",
+                'message' => "Chỉ được phép sửa phiếu nhập khi đang ở trạng thái 'Chờ duyệt' hoặc 'Từ chối'.",
             ], 400);
         }
 
-        $validated = $request->validate([
-            'ghiChu' => 'required|string',
-            'maPhieuYCXSP' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.maSP' => 'required|string|exists:SanPham,maSanPham',
-            'items.*.soLuongNhap' => 'required|integer|min:1',
-            'items.*.ngaySanXuat' => 'required|date',
-            'items.*.hanSuDung' => 'required|date',
-            'items.*.ghiChu' => 'nullable|string',
-        ]);
+        $validated = $this->validateProductReceiptRequest($request);
 
-        $today = Carbon::today();
-        $minExpiryDate = $today->copy()->addDays(180);
-
-        foreach ($validated['items'] as $index => $item) {
-            $mfgDate = Carbon::parse($item['ngaySanXuat']);
-            $expDate = Carbon::parse($item['hanSuDung']);
-
-            if ($mfgDate->gt($today)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Ngày sản xuất không được lớn hơn ngày hiện tại.",
-                ], 422);
-            }
-
-            if ($expDate->lte($minExpiryDate)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Sản phẩm dòng thứ " . ($index + 1) . ": Hạn sử dụng (" . $expDate->toDateString() . ") không hợp lệ. Hạn sử dụng phải lớn hơn 180 ngày tính từ hôm nay (sau ngày " . $minExpiryDate->toDateString() . ").",
-                ], 422);
-            }
+        if ($dateErr = $this->validateProductItemDates($validated['items'])) {
+            return response()->json(['success' => false, 'message' => $dateErr], 422);
         }
 
         DB::beginTransaction();
         try {
             $receipt->update([
-                'ghiChu' => $validated['ghiChu'],
+                'ghiChu'       => $validated['ghiChu'],
                 'maPhieuYCXSP' => $validated['maPhieuYCXSP'] ?? null,
-                'trangThai' => 'Chờ duyệt',
+                'trangThai'    => 'Chờ duyệt',
             ]);
 
+            $oldDetails = ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->get();
             ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->delete();
+            foreach ($oldDetails as $od) {
+                TonKho::where('maTonKho', $od->maTonKho)->where('soLuongTonHienTai', 0)->delete();
+            }
+
+            $today = Carbon::today();
+            $dateStr = Carbon::now()->format('Ymd');
+            $prefix = "LOT-SP-{$dateStr}-";
+
+            $lastLot = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")
+                ->orderBy('maTonKho', 'desc')
+                ->value('maTonKho');
+
+            $counter = ($lastLot ? (int) str_replace($prefix, '', $lastLot) : 0) + 1;
 
             foreach ($validated['items'] as $item) {
+                $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
+                $spId = $item['maSanPham'] ?? $item['maSP'];
+                $sp = SanPham::where('maSanPham', $spId)->first();
+                $spName = $sp?->tenSanPham ?? ("Sản phẩm " . $spId);
+
+                TonKho::create([
+                    'maTonKho'             => $maTonKho,
+                    'tenTonKho'            => "Lô {$spName} ({$item['ngaySanXuat']})",
+                    'maKho'                => $item['maKho'] ?? 'KHO-TONG',
+                    'maSanPham'            => $spId,
+                    'maNVL'                => null,
+                    'ngaySanXuat'          => $item['ngaySanXuat'],
+                    'hanSuDung'            => $item['hanSuDung'],
+                    'soLuongNhap'          => $item['soLuongNhap'],
+                    'soLuongTonHienTai'    => 0,
+                    'trangThai'            => 'Còn hạn',
+                    'trangThaiHSD'         => 'Còn hạn',
+                    'trangThaiChatLuong'   => 'Chờ kiểm tra',
+                    'ghiChu'               => "Tạo tự động từ phiếu nhập {$receipt->maPhieuNhapSP}",
+                ]);
+
                 ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
-                    'maSP' => $item['maSP'],
-                    'soLuongNhap' => $item['soLuongNhap'],
-                    'ngaySanXuat' => $item['ngaySanXuat'],
-                    'hanSuDung' => $item['hanSuDung'],
-                    'ghiChu' => $item['ghiChu'] ?? null,
+                    'maTonKho'      => $maTonKho,
+                    'soLuong'       => $item['soLuongNhap'],
+                    'ngaySanXuat'   => $item['ngaySanXuat'],
+                    'hanSuDung'     => $item['hanSuDung'],
+                    'ghiChu'        => $item['ghiChu'] ?? null,
                 ]);
             }
 
@@ -378,7 +351,7 @@ class InboundController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Cập nhật phiếu nhập sản phẩm thành công!',
-                'data' => $receipt->load(['nhanVienTao', 'chiTiets.sanPham']),
+                'data'    => $receipt->load(['nhanVienTao', 'chiTiets.tonKho']),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -399,7 +372,11 @@ class InboundController extends Controller
 
         DB::beginTransaction();
         try {
+            $oldDetails = ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->get();
             ChiTietPhieuNhapSP::where('maPhieuNhapSP', $receipt->maPhieuNhapSP)->delete();
+            foreach ($oldDetails as $od) {
+                TonKho::where('maTonKho', $od->maTonKho)->where('soLuongTonHienTai', 0)->delete();
+            }
             $receipt->delete();
             DB::commit();
 
@@ -429,7 +406,7 @@ class InboundController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Quản lý kho đã duyệt phiếu nhập sản phẩm thành công!',
-            'data' => $receipt,
+            'data'    => $receipt,
         ]);
     }
 
@@ -449,7 +426,7 @@ class InboundController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Quản lý kho đã từ chối phiếu nhập sản phẩm!',
-            'data' => $receipt,
+            'data'    => $receipt,
         ]);
     }
 
@@ -467,58 +444,89 @@ class InboundController extends Controller
         DB::beginTransaction();
         try {
             $today = Carbon::today();
-            $dateStr = Carbon::now()->format('Ymd');
-            $prefix = "LOT-SP-{$dateStr}-";
-
-            // Tìm mã số thứ tự lô lớn nhất đã tồn tại trong ngày để tránh trùng khóa chính TonKho.PRIMARY
-            $existingLots = TonKho::where('maTonKho', 'LIKE', "{$prefix}%")->get();
-            $maxCounter = 0;
-            foreach ($existingLots as $lot) {
-                $suffix = str_replace($prefix, '', $lot->maTonKho);
-                if (is_numeric($suffix)) {
-                    $num = (int) $suffix;
-                    if ($num > $maxCounter) {
-                        $maxCounter = $num;
-                    }
-                }
-            }
-            $counter = $maxCounter + 1;
-
             foreach ($receipt->chiTiets as $detail) {
-                $maTonKho = sprintf("LOT-SP-%s-%02d", $dateStr, $counter++);
-                $spName = $detail->sanPham ? $detail->sanPham->tenSanPham : "Sản phẩm " . $detail->maSP;
-
-                $expDate = Carbon::parse($detail->hanSuDung);
-                $daysToExpiry = $today->diffInDays($expDate, false);
-                $trangThaiTon = ($daysToExpiry <= 30) ? 'Ưu tiên xuất FEFO' : 'Còn hạn';
-
-                TonKho::create([
-                    'maTonKho' => $maTonKho,
-                    'tenTonKho' => "Lô {$spName} ({$detail->ngaySanXuat})",
-                    'maSP' => $detail->maSP,
-                    'maNVL' => null,
-                    'ngaySanXuat' => $detail->ngaySanXuat,
-                    'hanSuDung' => $detail->hanSuDung,
-                    'soLuongNhap' => $detail->soLuongNhap,
-                    'soLuongTonHienTai' => $detail->soLuongNhap,
-                    'trangThai' => $trangThaiTon,
-                    'ghiChu' => "Tạo tự động từ phiếu nhập {$receipt->maPhieuNhapSP} (Lấy hàng thành công)",
-                    'maChiTietPhieuNhapSP' => $detail->maChiTietPhieuNhapSP,
-                ]);
+                $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
+                if ($tonKho) {
+                    $expDate = Carbon::parse($detail->hanSuDung);
+                    $daysToExpiry = $today->diffInDays($expDate, false);
+                    $trangThaiTon = ($daysToExpiry <= 30) ? 'Ưu tiên xuất FEFO' : 'Còn hạn';
+                    $tonKho->update([
+                        'soLuongTonHienTai' => $detail->soLuong,
+                        'trangThai'         => $trangThaiTon,
+                    ]);
+                }
             }
 
             $receipt->update(['trangThai' => 'Thành công']);
-
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Xác nhận lấy hàng thành công! Trạng thái phiếu chuyển thành Thành công và lô tồn kho mới đã được tạo.',
-                'data' => $receipt,
+                'data'    => $receipt,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Lỗi xác nhận lấy hàng thành công: ' . $e->getMessage()], 500);
         }
+    }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
+
+    private function generateProductReceiptCode(): string
+    {
+        $prefix = 'PNSP' . Carbon::now()->format('Ymd');
+        $last = PhieuNhapSP::where('maPhieuNhapSP', 'LIKE', "{$prefix}%")
+            ->orderBy('maPhieuNhapSP', 'desc')
+            ->value('maPhieuNhapSP');
+
+        $nextNum = $last ? str_pad(((int) substr($last, -2)) + 1, 2, '0', STR_PAD_LEFT) : '01';
+        return $prefix . $nextNum;
+    }
+
+    private function validateProductReceiptRequest(Request $request): array
+    {
+        return $request->validate([
+            'maPhieuNhapSP'       => 'nullable|string',
+            'maNVTao'             => 'nullable|string|exists:NhanVien,maNV',
+            'maNVNhan'            => 'nullable|string|exists:NhanVien,maNV',
+            'ghiChu'              => 'required|string',
+            'maPhieuYCXSP'        => 'nullable|string',
+            'items'               => 'required|array|min:1',
+            'items.*.maSP'        => 'nullable|string|exists:SanPham,maSanPham',
+            'items.*.maSanPham'   => 'nullable|string|exists:SanPham,maSanPham',
+            'items.*.soLuongNhap' => 'required|integer|min:1',
+            'items.*.ngaySanXuat' => 'required|date',
+            'items.*.hanSuDung'   => 'required|date',
+            'items.*.ghiChu'      => 'nullable|string',
+        ], [
+            'ghiChu.required'         => 'Ghi chú phiếu nhập không được để trống.',
+            'items.required'           => 'Danh sách sản phẩm nhập không được để trống.',
+            'items.*.maSP.required'    => 'Sản phẩm không được để trống.',
+            'items.*.soLuongNhap.min'  => 'Số lượng nhập phải lớn hơn 0.',
+            'items.*.ngaySanXuat.required' => 'Ngày sản xuất không được để trống.',
+        ]);
+    }
+
+    private function validateProductItemDates(array $items): ?string
+    {
+        $today = Carbon::today();
+        $minExp = $today->copy()->addDays(180);
+
+        foreach ($items as $idx => $item) {
+            $mfg = Carbon::parse($item['ngaySanXuat']);
+            $exp = Carbon::parse($item['hanSuDung']);
+            $line = $idx + 1;
+
+            if ($mfg->gt($today)) {
+                return "Sản phẩm dòng thứ {$line}: Ngày sản xuất không được lớn hơn ngày hiện tại.";
+            }
+            if ($exp->lte($minExp)) {
+                return "Sản phẩm dòng thứ {$line}: Hạn sử dụng ({$exp->toDateString()}) không hợp lệ. Phải lớn hơn 180 ngày (sau ngày {$minExp->toDateString()}).";
+            }
+        }
+        return null;
     }
 }

@@ -9,8 +9,6 @@ import {
   ArrowDownLeft, 
   ArrowUpRight, 
   Calendar,
-  CheckCircle2,
-  Clock,
   ChevronRight
 } from 'lucide-react';
 import { 
@@ -52,15 +50,9 @@ export default function FinanceDashboard() {
         PaymentAPI.getPayments(),
       ]);
 
-      if (sumRes.data.success) {
-        setSummary(sumRes.data.data);
-      }
-      if (recRes.data.success) {
-        setRecentReceipts((recRes.data.data || []).slice(0, 5));
-      }
-      if (payRes.data.success) {
-        setRecentPayments((payRes.data.data || []).slice(0, 5));
-      }
+      if (sumRes.data.success) setSummary(sumRes.data.data);
+      if (recRes.data.success) setRecentReceipts((recRes.data.data || []).slice(0, 5));
+      if (payRes.data.success) setRecentPayments((payRes.data.data || []).slice(0, 5));
     } catch (err) {
       console.error('Lỗi tải dữ liệu dashboard tài chính:', err);
     } finally {
@@ -68,9 +60,7 @@ export default function FinanceDashboard() {
     }
   };
 
-  const formatVND = (amount) => {
-    return (amount || 0).toLocaleString('vi-VN') + ' đ';
-  };
+  const formatVND = (amount) => (amount || 0).toLocaleString('vi-VN') + ' đ';
 
   return (
     <div className="space-y-6">
@@ -106,7 +96,7 @@ export default function FinanceDashboard() {
       {/* 4 KPI Statistic Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng Thu */}
-        <div className="bg-white p-5 rounded-lg border border-slate-200/80 shadow-sm space-y-3">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Thu Đã Duyệt</span>
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
@@ -114,17 +104,13 @@ export default function FinanceDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-xl font-bold text-emerald-600">
-              {formatVND(summary.tongThu)}
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Từ {summary.soPhieuThu} phiếu thu hợp lệ
-            </p>
+            <div className="text-xl font-bold text-emerald-600">{formatVND(summary.tongThu)}</div>
+            <p className="text-[11px] text-slate-400 mt-1">Từ {summary.soPhieuThu} phiếu thu hợp lệ</p>
           </div>
         </div>
 
         {/* Card 2: Tổng Chi */}
-        <div className="bg-white p-5 rounded-lg border border-slate-200/80 shadow-sm space-y-3">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Chi Đã Duyệt</span>
             <div className="p-2 bg-rose-50 rounded-lg text-rose-600">
@@ -132,17 +118,13 @@ export default function FinanceDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-xl font-bold text-rose-600">
-              {formatVND(summary.tongChi)}
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Từ {summary.soPhieuChi} phiếu chi hợp lệ
-            </p>
+            <div className="text-xl font-bold text-rose-600">{formatVND(summary.tongChi)}</div>
+            <p className="text-[11px] text-slate-400 mt-1">Từ {summary.soPhieuChi} phiếu chi hợp lệ</p>
           </div>
         </div>
 
         {/* Card 3: Chênh Lệch Dòng Tiền */}
-        <div className="bg-white p-5 rounded-lg border border-slate-200/80 shadow-sm space-y-3">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dòng Tiền Thuần (Net)</span>
             <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
@@ -168,12 +150,8 @@ export default function FinanceDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-xl font-bold text-white">
-              {formatVND(summary.tongSoDuQuy)}
-            </div>
-            <p className="text-[11px] text-blue-200 mt-1">
-              Khả dụng trong toàn hệ thống
-            </p>
+            <div className="text-xl font-bold text-white">{formatVND(summary.tongSoDuQuy)}</div>
+            <p className="text-[11px] text-blue-200 mt-1">Khả dụng trong toàn hệ thống</p>
           </div>
         </div>
       </div>

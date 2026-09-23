@@ -8,7 +8,6 @@ use App\Models\PhieuChi;
 use App\Models\TaiKhoanQuy;
 use App\Models\DoiTuongGiaoDich;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -34,34 +33,32 @@ class ReportController extends Controller
         }
 
         $tongThu = (float) $queryThu->sum('soTien');
-        $soPhieuThu = $queryThu->count();
-
         $tongChi = (float) $queryChi->sum('soTien');
-        $soPhieuChi = $queryChi->count();
 
-        $chenhLech = $tongThu - $tongChi;
+        // Biểu đồ 6 tháng gần nhất: tối ưu 2 truy vấn tổng hợp thay vì lặp 12 lần
+        $sixMonthsAgo = Carbon::now()->subMonths(5)->startOfMonth();
+        $thuMonthly = PhieuThu::where('trangThai', 'DaDuyet')
+            ->whereDate('ngayThu', '>=', $sixMonthsAgo)
+            ->selectRaw('YEAR(ngayThu) as yr, MONTH(ngayThu) as mo, SUM(soTien) as total')
+            ->groupBy('yr', 'mo')
+            ->get()
+            ->keyBy(fn($r) => "{$r->yr}-{$r->mo}");
 
-        $tongSoDuQuy = (float) TaiKhoanQuy::where('trangThai', 1)->sum('soDuHienTai');
+        $chiMonthly = PhieuChi::where('trangThai', 'DaDuyet')
+            ->whereDate('ngayChi', '>=', $sixMonthsAgo)
+            ->selectRaw('YEAR(ngayChi) as yr, MONTH(ngayChi) as mo, SUM(soTien) as total')
+            ->groupBy('yr', 'mo')
+            ->get()
+            ->keyBy(fn($r) => "{$r->yr}-{$r->mo}");
 
         $monthlyChart = [];
         for ($i = 5; $i >= 0; $i--) {
-            $monthDate = Carbon::now()->subMonths($i);
-            $year = $monthDate->year;
-            $month = $monthDate->month;
-            $label = "Tháng {$month}/{$year}";
-
-            $mThu = (float) PhieuThu::where('trangThai', 'DaDuyet')
-                ->whereYear('ngayThu', $year)
-                ->whereMonth('ngayThu', $month)
-                ->sum('soTien');
-
-            $mChi = (float) PhieuChi::where('trangThai', 'DaDuyet')
-                ->whereYear('ngayChi', $year)
-                ->whereMonth('ngayChi', $month)
-                ->sum('soTien');
-
+            $m = Carbon::now()->subMonths($i);
+            $key = "{$m->year}-{$m->month}";
+            $mThu = (float) ($thuMonthly[$key]->total ?? 0);
+            $mChi = (float) ($chiMonthly[$key]->total ?? 0);
             $monthlyChart[] = [
-                'thang' => $label,
+                'thang' => "Tháng {$m->month}/{$m->year}",
                 'thu' => $mThu,
                 'chi' => $mChi,
                 'chenhLech' => $mThu - $mChi,
@@ -73,10 +70,10 @@ class ReportController extends Controller
             'data' => [
                 'tongThu' => $tongThu,
                 'tongChi' => $tongChi,
-                'chenhLech' => $chenhLech,
-                'soPhieuThu' => $soPhieuThu,
-                'soPhieuChi' => $soPhieuChi,
-                'tongSoDuQuy' => $tongSoDuQuy,
+                'chenhLech' => $tongThu - $tongChi,
+                'soPhieuThu' => $queryThu->count(),
+                'soPhieuChi' => $queryChi->count(),
+                'tongSoDuQuy' => (float) TaiKhoanQuy::where('trangThai', 1)->sum('soDuHienTai'),
                 'monthlyChart' => $monthlyChart,
             ]
         ]);
@@ -91,76 +88,57 @@ class ReportController extends Controller
         $tuNgay = $request->input('tuNgay');
         $denNgay = $request->input('denNgay');
 
-        $thuQuery = PhieuThu::with('doiTuong')
-            ->where('trangThai', 'DaDuyet');
+        $applyFilters = function ($query, $dateCol) use ($maTaiKhoanQuy, $tuNgay, $denNgay) {
+            $query->where('trangThai', 'DaDuyet');
+            if ($maTaiKhoanQuy) $query->where('maTaiKhoanQuy', $maTaiKhoanQuy);
+            if ($tuNgay) $query->whereDate($dateCol, '>=', $tuNgay);
+            if ($denNgay) $query->whereDate($dateCol, '<=', $denNgay);
+            return $query;
+        };
 
-        $chiQuery = PhieuChi::with('doiTuong')
-            ->where('trangThai', 'DaDuyet');
+        $thuList = $applyFilters(PhieuThu::with('doiTuong'), 'ngayThu')->get()->map(fn($pt) => [
+            'maPhieu' => $pt->maPhieuThu,
+            'ngayGiaoDich' => $pt->ngayThu,
+            'loaiPhieu' => 'Thu',
+            'soTienThu' => (float) $pt->soTien,
+            'soTienChi' => 0.0,
+            'dienGiai' => $pt->lyDoThu,
+            'phuongThuc' => $pt->phuongThucThu,
+            'maTaiKhoanQuy' => $pt->maTaiKhoanQuy,
+            'tenDoiTuong' => $pt->doiTuong?->tenDoiTuong ?? 'N/A',
+            'trangThai' => $pt->trangThai,
+        ]);
 
-        if ($maTaiKhoanQuy) {
-            $thuQuery->where('maTaiKhoanQuy', $maTaiKhoanQuy);
-            $chiQuery->where('maTaiKhoanQuy', $maTaiKhoanQuy);
-        }
+        $chiList = $applyFilters(PhieuChi::with('doiTuong'), 'ngayChi')->get()->map(fn($pc) => [
+            'maPhieu' => $pc->maPhieuChi,
+            'ngayGiaoDich' => $pc->ngayChi,
+            'loaiPhieu' => 'Chi',
+            'soTienThu' => 0.0,
+            'soTienChi' => (float) $pc->soTien,
+            'dienGiai' => $pc->lyDoChi,
+            'phuongThuc' => $pc->phuongThucChi,
+            'maTaiKhoanQuy' => $pc->maTaiKhoanQuy,
+            'tenDoiTuong' => $pc->doiTuong?->tenDoiTuong ?? 'N/A',
+            'trangThai' => $pc->trangThai,
+        ]);
 
-        if ($tuNgay) {
-            $thuQuery->whereDate('ngayThu', '>=', $tuNgay);
-            $chiQuery->whereDate('ngayChi', '>=', $tuNgay);
-        }
-        if ($denNgay) {
-            $thuQuery->whereDate('ngayThu', '<=', $denNgay);
-            $chiQuery->whereDate('ngayChi', '<=', $denNgay);
-        }
-
-        $thuList = $thuQuery->get()->map(function ($pt) {
-            return [
-                'maPhieu' => $pt->maPhieuThu,
-                'ngayGiaoDich' => $pt->ngayThu,
-                'loaiPhieu' => 'Thu',
-                'soTienThu' => (float) $pt->soTien,
-                'soTienChi' => 0.0,
-                'dienGiai' => $pt->lyDoThu,
-                'phuongThuc' => $pt->phuongThucThu,
-                'maTaiKhoanQuy' => $pt->maTaiKhoanQuy,
-                'tenDoiTuong' => $pt->doiTuong ? $pt->doiTuong->tenDoiTuong : 'N/A',
-                'trangThai' => $pt->trangThai,
-            ];
-        });
-
-        $chiList = $chiQuery->get()->map(function ($pc) {
-            return [
-                'maPhieu' => $pc->maPhieuChi,
-                'ngayGiaoDich' => $pc->ngayChi,
-                'loaiPhieu' => 'Chi',
-                'soTienThu' => 0.0,
-                'soTienChi' => (float) $pc->soTien,
-                'dienGiai' => $pc->lyDoChi,
-                'phuongThuc' => $pc->phuongThucChi,
-                'maTaiKhoanQuy' => $pc->maTaiKhoanQuy,
-                'tenDoiTuong' => $pc->doiTuong ? $pc->doiTuong->tenDoiTuong : 'N/A',
-                'trangThai' => $pc->trangThai,
-            ];
-        });
-
-        // Kết hợp và sắp xếp theo ngày giao dịch
         $combined = $thuList->concat($chiList)->sortBy('ngayGiaoDich')->values();
-
         $runningBalance = 0;
-        $resultTransactions = [];
         $totalThu = 0;
         $totalChi = 0;
 
-        foreach ($combined as $tx) {
+        $transactions = $combined->map(function ($tx) use (&$runningBalance, &$totalThu, &$totalChi) {
             $totalThu += $tx['soTienThu'];
             $totalChi += $tx['soTienChi'];
             $runningBalance += ($tx['soTienThu'] - $tx['soTienChi']);
             $tx['soDuLuyKe'] = $runningBalance;
-            $resultTransactions[] = $tx;
-        }
+            return $tx;
+        });
 
         return response()->json([
             'success' => true,
             'data' => [
-                'transactions' => $resultTransactions,
+                'transactions' => $transactions,
                 'totalThu' => $totalThu,
                 'totalChi' => $totalChi,
                 'chenhLech' => $totalThu - $totalChi,
@@ -170,6 +148,7 @@ class ReportController extends Controller
 
     /**
      * Báo cáo Thu - Chi theo Đối tượng giao dịch (KH / NCC / NV)
+     * Đã tối ưu hóa loại bỏ N+1 query loop
      */
     public function getByCounterpartyReport(Request $request)
     {
@@ -178,32 +157,30 @@ class ReportController extends Controller
         $loaiDoiTuong = $request->input('loaiDoiTuong');
 
         $query = DoiTuongGiaoDich::with(['khachHang', 'nhaCungCap', 'nhanVien']);
-
         if ($loaiDoiTuong) {
             $query->where('loaiDoiTuong', $loaiDoiTuong);
         }
-
         $list = $query->get();
+
+        // 2 câu truy vấn tổng hợp gom nhóm theo maDoiTuong thay vì chạy query trong vòng foreach
+        $thuSums = PhieuThu::where('trangThai', 'DaDuyet')
+            ->when($tuNgay, fn($q) => $q->whereDate('ngayThu', '>=', $tuNgay))
+            ->when($denNgay, fn($q) => $q->whereDate('ngayThu', '<=', $denNgay))
+            ->groupBy('maDoiTuong')
+            ->selectRaw('maDoiTuong, SUM(soTien) as total')
+            ->pluck('total', 'maDoiTuong');
+
+        $chiSums = PhieuChi::where('trangThai', 'DaDuyet')
+            ->when($tuNgay, fn($q) => $q->whereDate('ngayChi', '>=', $tuNgay))
+            ->when($denNgay, fn($q) => $q->whereDate('ngayChi', '<=', $denNgay))
+            ->groupBy('maDoiTuong')
+            ->selectRaw('maDoiTuong, SUM(soTien) as total')
+            ->pluck('total', 'maDoiTuong');
 
         $result = [];
         foreach ($list as $dt) {
-            $thuQ = PhieuThu::where('maDoiTuong', $dt->maDoiTuong)
-                ->where('trangThai', 'DaDuyet');
-
-            $chiQ = PhieuChi::where('maDoiTuong', $dt->maDoiTuong)
-                ->where('trangThai', 'DaDuyet');
-
-            if ($tuNgay) {
-                $thuQ->whereDate('ngayThu', '>=', $tuNgay);
-                $chiQ->whereDate('ngayChi', '>=', $tuNgay);
-            }
-            if ($denNgay) {
-                $thuQ->whereDate('ngayThu', '<=', $denNgay);
-                $chiQ->whereDate('ngayChi', '<=', $denNgay);
-            }
-
-            $tongThu = (float) $thuQ->sum('soTien');
-            $tongChi = (float) $chiQ->sum('soTien');
+            $tongThu = (float) ($thuSums[$dt->maDoiTuong] ?? 0);
+            $tongChi = (float) ($chiSums[$dt->maDoiTuong] ?? 0);
 
             if ($tongThu > 0 || $tongChi > 0) {
                 $result[] = [
@@ -227,7 +204,6 @@ class ReportController extends Controller
 
     /**
      * Báo cáo Đối soát Ngân hàng & Quỹ (FI-FR06)
-     * Đối soát các chứng từ ngân hàng, chứng từ chờ đối soát (ChoDoiSoat) so với số dư sổ phụ
      */
     public function getReconciliationReport(Request $request)
     {
@@ -235,26 +211,19 @@ class ReportController extends Controller
         $tuNgay = $request->input('tuNgay');
         $denNgay = $request->input('denNgay');
 
-        // Danh sách các tài khoản ngân hàng / tiền mặt
         $accountQuery = TaiKhoanQuy::where('trangThai', 1);
         if ($maTaiKhoanQuy) {
             $accountQuery->where('maTaiKhoanQuy', $maTaiKhoanQuy);
         }
         $accounts = $accountQuery->get();
 
-        // Lấy danh sách phiếu thu chờ đối soát hoặc đã duyệt qua tài khoản ngân hàng
-        $ptQuery = PhieuThu::with(['doiTuong', 'taiKhoanQuy'])
-            ->whereIn('trangThai', ['ChoDoiSoat', 'DaDuyet']);
-
-        // Lấy danh sách phiếu chi chờ đối soát hoặc đã duyệt qua tài khoản ngân hàng
-        $pcQuery = PhieuChi::with(['doiTuong', 'taiKhoanQuy'])
-            ->whereIn('trangThai', ['Moi', 'DaDuyet']);
+        $ptQuery = PhieuThu::with(['doiTuong', 'taiKhoanQuy'])->whereIn('trangThai', ['ChoDoiSoat', 'DaDuyet']);
+        $pcQuery = PhieuChi::with(['doiTuong', 'taiKhoanQuy'])->whereIn('trangThai', ['ChoDoiSoat', 'DaDuyet']);
 
         if ($maTaiKhoanQuy) {
             $ptQuery->where('maTaiKhoanQuy', $maTaiKhoanQuy);
             $pcQuery->where('maTaiKhoanQuy', $maTaiKhoanQuy);
         }
-
         if ($tuNgay) {
             $ptQuery->whereDate('ngayThu', '>=', $tuNgay);
             $pcQuery->whereDate('ngayChi', '>=', $tuNgay);
@@ -264,53 +233,52 @@ class ReportController extends Controller
             $pcQuery->whereDate('ngayChi', '<=', $denNgay);
         }
 
-        $receipts = $ptQuery->orderBy('ngayThu', 'desc')->get()->map(function ($pt) {
-            return [
-                'maPhieu' => $pt->maPhieuThu,
-                'loaiPhieu' => 'Thu',
-                'ngay' => $pt->ngayThu,
-                'soTien' => (float) $pt->soTien,
-                'phuongThuc' => $pt->phuongThucThu,
-                'maTaiKhoanQuy' => $pt->maTaiKhoanQuy,
-                'tenTaiKhoanQuy' => $pt->taiKhoanQuy ? $pt->taiKhoanQuy->tenTaiKhoanQuy : 'N/A',
-                'tenDoiTuong' => $pt->doiTuong ? $pt->doiTuong->tenDoiTuong : 'N/A',
-                'trangThai' => $pt->trangThai,
-                'ghiChu' => $pt->lyDoThu,
-            ];
-        });
+        $receipts = $ptQuery->orderBy('ngayThu', 'desc')->get()->map(fn($pt) => [
+            'maPhieu' => $pt->maPhieuThu,
+            'loaiPhieu' => 'Thu',
+            'ngay' => $pt->ngayThu,
+            'soTien' => (float) $pt->soTien,
+            'phuongThuc' => $pt->phuongThucThu,
+            'maTaiKhoanQuy' => $pt->maTaiKhoanQuy,
+            'tenTaiKhoanQuy' => $pt->taiKhoanQuy?->tenTaiKhoanQuy ?? 'N/A',
+            'tenDoiTuong' => $pt->doiTuong?->tenDoiTuong ?? 'N/A',
+            'trangThai' => $pt->trangThai,
+            'ghiChu' => $pt->lyDoThu,
+        ]);
 
-        $payments = $pcQuery->orderBy('ngayChi', 'desc')->get()->map(function ($pc) {
-            return [
-                'maPhieu' => $pc->maPhieuChi,
-                'loaiPhieu' => 'Chi',
-                'ngay' => $pc->ngayChi,
-                'soTien' => (float) $pc->soTien,
-                'phuongThuc' => $pc->phuongThucChi,
-                'maTaiKhoanQuy' => $pc->maTaiKhoanQuy,
-                'tenTaiKhoanQuy' => $pc->taiKhoanQuy ? $pc->taiKhoanQuy->tenTaiKhoanQuy : 'N/A',
-                'tenDoiTuong' => $pc->doiTuong ? $pc->doiTuong->tenDoiTuong : 'N/A',
-                'trangThai' => $pc->trangThai,
-                'ghiChu' => $pc->lyDoChi,
-            ];
-        });
+        $payments = $pcQuery->orderBy('ngayChi', 'desc')->get()->map(fn($pc) => [
+            'maPhieu' => $pc->maPhieuChi,
+            'loaiPhieu' => 'Chi',
+            'ngay' => $pc->ngayChi,
+            'soTien' => (float) $pc->soTien,
+            'phuongThuc' => $pc->phuongThucChi,
+            'maTaiKhoanQuy' => $pc->maTaiKhoanQuy,
+            'tenTaiKhoanQuy' => $pc->taiKhoanQuy?->tenTaiKhoanQuy ?? 'N/A',
+            'tenDoiTuong' => $pc->doiTuong?->tenDoiTuong ?? 'N/A',
+            'trangThai' => $pc->trangThai,
+            'ghiChu' => $pc->lyDoChi,
+        ]);
 
         $pendingReceipts = $receipts->where('trangThai', 'ChoDoiSoat')->values();
+        $pendingPayments = $payments->where('trangThai', 'ChoDoiSoat')->values();
         $approvedReceipts = $receipts->where('trangThai', 'DaDuyet')->values();
+        $approvedPayments = $payments->where('trangThai', 'DaDuyet')->values();
+        $pendingItems = $pendingReceipts->concat($pendingPayments)->sortByDesc('ngay')->values();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'accounts' => $accounts,
                 'pendingReconciliation' => [
-                    'count' => $pendingReceipts->count(),
-                    'totalAmount' => $pendingReceipts->sum('soTien'),
-                    'items' => $pendingReceipts,
+                    'count' => $pendingItems->count(),
+                    'totalAmount' => $pendingItems->sum('soTien'),
+                    'items' => $pendingItems,
                 ],
                 'approvedItems' => [
                     'receiptsCount' => $approvedReceipts->count(),
                     'receiptsTotal' => $approvedReceipts->sum('soTien'),
-                    'paymentsCount' => $payments->count(),
-                    'paymentsTotal' => $payments->sum('soTien'),
+                    'paymentsCount' => $approvedPayments->count(),
+                    'paymentsTotal' => $approvedPayments->sum('soTien'),
                 ],
                 'allVouchers' => $receipts->concat($payments)->sortByDesc('ngay')->values(),
             ]

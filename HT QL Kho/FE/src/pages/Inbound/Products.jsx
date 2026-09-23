@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { InboundAPI, MasterDataAPI } from '../../services/api';
 import { 
-  Layers, CheckCircle2, XCircle, Plus, Search, Filter, 
+  Layers, CheckCircle2, XCircle, Plus, Search, 
   Printer, Edit2, Trash2, PackageCheck, AlertTriangle, FileText, Calendar, User, Eye
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { generateAutoCode } from '../../utils/codeGenerator';
+
+const calculateDefaultExpiry = (mfgDateStr, maSP = '') => {
+  if (!mfgDateStr) return '';
+  const mfg = new Date(mfgDateStr);
+  const daysMap = { SP003: 210, SP006: 210, SP004: 270, SP007: 730 };
+  mfg.setDate(mfg.getDate() + (daysMap[maSP] || 365));
+  return mfg.toISOString().split('T')[0];
+};
 
 export default function InboundProducts() {
   const [receipts, setReceipts] = useState([]);
@@ -15,26 +23,23 @@ export default function InboundProducts() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [keyword, setKeyword] = useState('');
   
-  // Modals state
+  // Modals & Selected receipt
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
-  // Form Data State
   const todayStr = new Date().toISOString().split('T')[0];
-  const [formData, setFormData] = useState({
+  const initialForm = {
     maPhieuNhapSP: '',
     maNVTao: 'NV001',
     ngayNhap: todayStr,
     ghiChu: '',
     maPhieuYCXSP: '',
-    items: [
-      { maSP: '', soLuongNhap: 100, ngaySanXuat: todayStr, hanSuDung: '', ghiChu: '' }
-    ]
-  });
-
+    items: [{ maSP: '', soLuongNhap: 100, ngaySanXuat: todayStr, hanSuDung: '', ghiChu: '' }]
+  };
+  const [formData, setFormData] = useState(initialForm);
   const [formErrors, setFormErrors] = useState([]);
 
   useEffect(() => {
@@ -63,19 +68,6 @@ export default function InboundProducts() {
     }
   };
 
-  const calculateDefaultExpiry = (mfgDateStr, maSP = '') => {
-    if (!mfgDateStr) return '';
-    const mfg = new Date(mfgDateStr);
-    
-    let daysToAdd = 365;
-    if (maSP === 'SP003' || maSP === 'SP006') daysToAdd = 210;
-    else if (maSP === 'SP004') daysToAdd = 270;
-    else if (maSP === 'SP007') daysToAdd = 730;
-
-    mfg.setDate(mfg.getDate() + daysToAdd);
-    return mfg.toISOString().split('T')[0];
-  };
-
   const handleOpenCreateModal = async () => {
     setEditingReceipt(null);
     setFormErrors([]);
@@ -89,33 +81,22 @@ export default function InboundProducts() {
       nextCode = codeRes.data.code;
       handovers = handoverRes.data?.data || [];
     } catch (e) {
+<<<<<<< HEAD
       console.error(e);
     }
     setPendingHandovers(handovers);
 
     if (!nextCode) {
+=======
+>>>>>>> origin/duc
       nextCode = generateAutoCode(receipts, 'maPhieuNhapSP', 'PNSP', 3, true);
     }
 
-    const defaultMfg = todayStr;
-    const defaultMaSP = productsList.length > 0 ? productsList[0].maSanPham : '';
-    const defaultExp = calculateDefaultExpiry(defaultMfg, defaultMaSP);
-
+    const defaultMaSP = productsList[0]?.maSanPham || '';
     setFormData({
+      ...initialForm,
       maPhieuNhapSP: nextCode,
-      maNVTao: 'NV001',
-      ngayNhap: todayStr,
-      ghiChu: '',
-      maPhieuYCXSP: '',
-      items: [
-        { 
-          maSP: defaultMaSP, 
-          soLuongNhap: 1000, 
-          ngaySanXuat: defaultMfg, 
-          hanSuDung: defaultExp, 
-          ghiChu: '' 
-        }
-      ]
+      items: [{ maSP: defaultMaSP, soLuongNhap: 1000, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr, defaultMaSP), ghiChu: '' }]
     });
     setIsFormModalOpen(true);
   };
@@ -152,8 +133,7 @@ export default function InboundProducts() {
 
   const handleOpenEditModal = (receipt) => {
     if (!['Chờ duyệt', 'Từ chối'].includes(receipt.trangThai)) {
-      alert(`Chỉ được phép sửa phiếu ở trạng thái "Chờ duyệt" hoặc "Từ chối". Phiếu hiện tại: ${receipt.trangThai}`);
-      return;
+      return alert(`Chỉ được phép sửa phiếu ở trạng thái "Chờ duyệt" hoặc "Từ chối". Phiếu hiện tại: ${receipt.trangThai}`);
     }
     setEditingReceipt(receipt);
     setFormErrors([]);
@@ -163,91 +143,64 @@ export default function InboundProducts() {
       ngayNhap: receipt.ngayNhap || todayStr,
       ghiChu: receipt.ghiChu || '',
       maPhieuYCXSP: receipt.maPhieuYCXSP || '',
-      items: receipt.chi_tiets && receipt.chi_tiets.length > 0 ? receipt.chi_tiets.map(item => ({
+      items: receipt.chi_tiets?.length ? receipt.chi_tiets.map(item => ({
         maSP: item.maSP,
         soLuongNhap: item.soLuongNhap || 1,
         ngaySanXuat: item.ngaySanXuat || todayStr,
         hanSuDung: item.hanSuDung || calculateDefaultExpiry(item.ngaySanXuat || todayStr, item.maSP),
         ghiChu: item.ghiChu || ''
-      })) : [{ maSP: '', soLuongNhap: 100, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr), ghiChu: '' }]
+      })) : [{ maSP: productsList[0]?.maSanPham || '', soLuongNhap: 100, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr), ghiChu: '' }]
     });
     setIsFormModalOpen(true);
   };
 
   const handleAddItem = () => {
-    const defaultMaSP = productsList.length > 0 ? productsList[0].maSanPham : '';
-    const defaultExp = calculateDefaultExpiry(todayStr, defaultMaSP);
+    const defaultMaSP = productsList[0]?.maSanPham || '';
     setFormData(prev => ({
       ...prev,
-      items: [
-        ...prev.items,
-        { maSP: defaultMaSP, soLuongNhap: 500, ngaySanXuat: todayStr, hanSuDung: defaultExp, ghiChu: '' }
-      ]
+      items: [...prev.items, { maSP: defaultMaSP, soLuongNhap: 500, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr, defaultMaSP), ghiChu: '' }]
     }));
   };
 
   const handleRemoveItem = (index) => {
-    if (formData.items.length === 1) {
-      alert('Phiếu nhập phải có tối thiểu 1 sản phẩm.');
-      return;
-    }
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.filter((_, idx) => idx !== index)
-    }));
+    if (formData.items.length === 1) return alert('Phiếu nhập phải có tối thiểu 1 sản phẩm.');
+    setFormData(prev => ({ ...prev, items: prev.items.filter((_, idx) => idx !== index) }));
   };
 
   const handleItemChange = (index, field, value) => {
     setFormData(prev => {
-      const updatedItems = [...prev.items];
-      const item = { ...updatedItems[index], [field]: value };
-      
-      // Tự động tính hạn sử dụng nếu thay đổi ngày sản xuất hoặc mã sản phẩm
+      const items = [...prev.items];
+      const item = { ...items[index], [field]: value };
       if (field === 'ngaySanXuat' || field === 'maSP') {
         item.hanSuDung = calculateDefaultExpiry(item.ngaySanXuat || todayStr, item.maSP);
       }
-      updatedItems[index] = item;
-      return { ...prev, items: updatedItems };
+      items[index] = item;
+      return { ...prev, items };
     });
   };
 
   const validateForm = () => {
     const errors = [];
-    if (!formData.ghiChu || !formData.ghiChu.trim()) {
-      errors.push('Ghi chú phiếu nhập không được để trống.');
-    }
-    if (!formData.items || formData.items.length === 0) {
-      errors.push('Danh sách sản phẩm không được để trống.');
-    }
+    if (!formData.ghiChu?.trim()) errors.push('Ghi chú phiếu nhập không được để trống.');
+    if (!formData.items?.length) errors.push('Danh sách sản phẩm không được để trống.');
 
     const today = new Date(todayStr);
     const minExpiry = new Date(todayStr);
-    minExpiry.setDate(minExpiry.getDate() + 180); // HSD tối thiểu phải > today + 180 ngày
+    minExpiry.setDate(minExpiry.getDate() + 180);
 
     formData.items.forEach((item, idx) => {
-      const rowNum = idx + 1;
-      if (!item.maSP) {
-        errors.push(`Dòng thứ ${rowNum}: Chưa chọn Sản phẩm.`);
-      }
-      if (!item.soLuongNhap || Number(item.soLuongNhap) <= 0) {
-        errors.push(`Dòng thứ ${rowNum}: Số lượng nhập phải lớn hơn 0.`);
-      }
+      const row = idx + 1;
+      if (!item.maSP) errors.push(`Dòng ${row}: Chưa chọn Sản phẩm.`);
+      if (!item.soLuongNhap || Number(item.soLuongNhap) <= 0) errors.push(`Dòng ${row}: Số lượng nhập phải lớn hơn 0.`);
       if (!item.ngaySanXuat) {
-        errors.push(`Dòng thứ ${rowNum}: Ngày sản xuất không được để trống.`);
-      } else {
-        const mfg = new Date(item.ngaySanXuat);
-        if (mfg > today) {
-          errors.push(`Dòng thứ ${rowNum}: Ngày sản xuất (${item.ngaySanXuat}) không được lớn hơn ngày hiện tại (${todayStr}).`);
-        }
+        errors.push(`Dòng ${row}: Ngày sản xuất không được để trống.`);
+      } else if (new Date(item.ngaySanXuat) > today) {
+        errors.push(`Dòng ${row}: Ngày sản xuất (${item.ngaySanXuat}) không được lớn hơn hôm nay (${todayStr}).`);
       }
       if (!item.hanSuDung) {
-        errors.push(`Dòng thứ ${rowNum}: Hạn sử dụng không được để trống.`);
-      } else {
-        const exp = new Date(item.hanSuDung);
-        if (exp <= minExpiry) {
-          const minExpStr = minExpiry.toISOString().split('T')[0];
-          errors.push(`Dòng thứ ${rowNum}: Hạn sử dụng (${item.hanSuDung}) không hợp lệ! Hạn sử dụng phải lớn hơn 180 ngày tính từ ngày hiện tại (sau ngày ${minExpStr}).`);
-        }
+        errors.push(`Dòng ${row}: Hạn sử dụng không được để trống.`);
+      } else if (new Date(item.hanSuDung) <= minExpiry) {
+        errors.push(`Dòng ${row}: Hạn sử dụng (${item.hanSuDung}) phải sau ngày ${minExpiry.toISOString().split('T')[0]} (>180 ngày).`);
       }
     });
 
@@ -265,76 +218,26 @@ export default function InboundProducts() {
         alert('Cập nhật phiếu nhập sản phẩm thành công!');
       } else {
         await InboundAPI.createProductReceipt(formData);
-        alert('Tạo phiếu nhập sản phẩm mới thành công! Trạng thái ban đầu: Chờ duyệt.');
+        alert('Tạo phiếu nhập sản phẩm mới thành công! (Trạng thái: Chờ duyệt)');
       }
       setIsFormModalOpen(false);
       fetchReceipts();
     } catch (err) {
-      const msg = err.response?.data?.message || err.message;
-      setFormErrors([msg]);
+      setFormErrors([err.response?.data?.message || err.message]);
     }
   };
 
-  // Actions
-  const handleApprove = async (id) => {
-    if (window.confirm(`Quản lý kho xác nhận DUYỆT phiếu nhập ${id}?`)) {
-      try {
-        await InboundAPI.approveProductReceipt(id);
-        alert(`Đã duyệt thành công phiếu nhập ${id}!`);
-        fetchReceipts();
-      } catch (err) {
-        alert('Lỗi phê duyệt: ' + (err.response?.data?.message || err.message));
-      }
+  const handleAction = async (actionFn, id, confirmMsg, successMsg) => {
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    try {
+      await actionFn(id);
+      if (successMsg) alert(successMsg);
+      fetchReceipts();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
   };
 
-  const handleReject = async (id) => {
-    if (window.confirm(`Quản lý kho xác nhận TỪ CHỐI phiếu nhập ${id}?`)) {
-      try {
-        await InboundAPI.rejectProductReceipt(id);
-        alert(`Đã từ chối phiếu nhập ${id}!`);
-        fetchReceipts();
-      } catch (err) {
-        alert('Lỗi từ chối: ' + (err.response?.data?.message || err.message));
-      }
-    }
-  };
-
-  const handleConfirmReceived = async (id) => {
-    if (window.confirm(`Xác nhận "LẤY HÀNG THÀNH CÔNG" cho phiếu nhập ${id}?\n\nTrạng thái sẽ chuyển thành THÀNH CÔNG và hệ thống sẽ tự động tạo các lô tồn kho cho từng sản phẩm.`)) {
-      try {
-        await InboundAPI.confirmGoodsReceived(id);
-        alert(`Xác nhận lấy hàng thành công! Tồn kho các lô thành phẩm đã được ghi nhận.`);
-        fetchReceipts();
-      } catch (err) {
-        alert('Lỗi xác nhận: ' + (err.response?.data?.message || err.message));
-      }
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa phiếu nhập ${id}?`)) {
-      try {
-        await InboundAPI.deleteProductReceipt(id);
-        alert(`Đã xóa phiếu nhập ${id}!`);
-        fetchReceipts();
-      } catch (err) {
-        alert('Lỗi xóa: ' + (err.response?.data?.message || err.message));
-      }
-    }
-  };
-
-  const handleOpenPrint = (receipt) => {
-    setSelectedReceipt(receipt);
-    setIsPrintModalOpen(true);
-  };
-
-  const handleOpenDetail = (receipt) => {
-    setSelectedReceipt(receipt);
-    setIsDetailModalOpen(true);
-  };
-
-  // Filtered receipts
   const filteredReceipts = receipts.filter(r => {
     const matchStatus = filterStatus === 'ALL' || r.trangThai === filterStatus;
     const kw = keyword.toLowerCase();
@@ -347,7 +250,7 @@ export default function InboundProducts() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Header */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm gap-4">
         <div>
           <h1 className="text-xl font-bold text-[#001E50] flex items-center space-x-2">
@@ -355,7 +258,7 @@ export default function InboundProducts() {
             <span>Quản Lý Phiếu Nhập Sản Phẩm (Thành Phẩm Vinamilk)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Quy trình bàn giao từ xưởng sản xuất: Lập phiếu $\rightarrow$ Quản lý kho duyệt $\rightarrow$ Xác nhận lấy hàng thành công $\rightarrow$ Cập nhật Tồn kho
+            Quy trình bàn giao: Lập phiếu &rarr; Quản lý duyệt &rarr; Xác nhận lấy hàng &rarr; Cập nhật Tồn kho FEFO
           </p>
         </div>
         <button
@@ -368,42 +271,29 @@ export default function InboundProducts() {
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            {[
-              { id: 'ALL', label: 'Tất cả' },
-              { id: 'Chờ duyệt', label: 'Chờ duyệt' },
-              { id: 'Đã duyệt', label: 'Đã duyệt' },
-              { id: 'Thành công', label: 'Thành công' },
-              { id: 'Từ chối', label: 'Từ chối' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setFilterStatus(tab.id)}
-                className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                  filterStatus === tab.id
-                    ? 'bg-[#001E50] text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Search Input */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm mã phiếu, ghi chú..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Từ chối'].map(status => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+                filterStatus === status ? 'bg-[#001E50] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {status === 'ALL' ? 'Tất cả' : status}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Tìm mã phiếu, ghi chú..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+          />
         </div>
       </div>
 
@@ -416,15 +306,15 @@ export default function InboundProducts() {
                 <th className="p-3">Mã Phiếu</th>
                 <th className="p-3">Yêu Cầu Xuất SP</th>
                 <th className="p-3">NV Tạo / Ngày Nhập</th>
-                <th className="p-3">Chi Tiết Sản Phẩm Nhập</th>
+                <th className="p-3">Chi Tiết Sản Phẩm</th>
                 <th className="p-3">Ghi Chú</th>
                 <th className="p-3 text-center">Trạng Thái</th>
-                <th className="p-3 text-center min-w-[200px]">Hành Động</th>
+                <th className="p-3 text-center min-w-[180px]">Hành Động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="7" className="p-6 text-center text-slate-400">Đang nạp danh sách phiếu nhập...</td></tr>
+                <tr><td colSpan="7" className="p-6 text-center text-slate-400">Đang tải danh sách...</td></tr>
               ) : filteredReceipts.length === 0 ? (
                 <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không tìm thấy phiếu nhập sản phẩm nào.</td></tr>
               ) : (
@@ -441,7 +331,7 @@ export default function InboundProducts() {
                     <td className="p-3 space-y-0.5">
                       <div className="font-semibold text-slate-800 flex items-center space-x-1">
                         <User className="w-3 h-3 text-slate-400" />
-                        <span>{r.nhan_vien_tao ? r.nhan_vien_tao.hoTen : r.maNVTao}</span>
+                        <span>{r.nhan_vien_tao?.hoTen || r.maNVTao}</span>
                       </div>
                       <div className="text-[11px] text-slate-500 font-mono flex items-center space-x-1">
                         <Calendar className="w-3 h-3 text-slate-400" />
@@ -449,129 +339,87 @@ export default function InboundProducts() {
                       </div>
                     </td>
                     <td className="p-3 space-y-1">
-                      {r.chi_tiets && r.chi_tiets.map((detail, idx) => (
+                      {r.chi_tiets?.map((d, idx) => (
                         <div key={idx} className="bg-blue-50/70 p-2 rounded-lg font-mono text-[11px] border border-blue-100/80 space-y-0.5">
                           <div className="font-bold text-blue-900 flex justify-between">
-                            <span>{detail.san_pham ? detail.san_pham.tenSanPham : detail.maSP}</span>
-                            <span className="text-blue-700">SL: {detail.soLuongNhap?.toLocaleString()}</span>
+                            <span>{d.san_pham?.tenSanPham || d.maSP}</span>
+                            <span className="text-blue-700">SL: {d.soLuongNhap?.toLocaleString()}</span>
                           </div>
                           <div className="text-[10px] text-slate-600 flex justify-between">
-                            <span>NSX: {detail.ngaySanXuat}</span>
-                            <span>HSD: {detail.hanSuDung}</span>
+                            <span>NSX: {d.ngaySanXuat}</span>
+                            <span>HSD: {d.hanSuDung}</span>
                           </div>
                         </div>
                       ))}
                     </td>
-                    <td className="p-3 text-slate-700 max-w-xs truncate" title={r.ghiChu}>
-                      {r.ghiChu}
-                    </td>
-                    <td className="p-3 text-center">
-                      <StatusBadge status={r.trangThai} />
-                    </td>
+                    <td className="p-3 text-slate-700 max-w-xs truncate" title={r.ghiChu}>{r.ghiChu}</td>
+                    <td className="p-3 text-center"><StatusBadge status={r.trangThai} /></td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                        {/* 1. Trạng thái CHỜ DUYỆT -> QL Kho Duyệt / Từ chối / Sửa / Xóa */}
                         {r.trangThai === 'Chờ duyệt' && (
                           <>
                             <button
-                              onClick={() => handleApprove(r.maPhieuNhapSP)}
-                              title="Quản lý kho Duyệt"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
+                              onClick={() => handleAction(InboundAPI.approveProductReceipt, r.maPhieuNhapSP, `Duyệt phiếu nhập ${r.maPhieuNhapSP}?`, 'Đã duyệt thành công!')}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 shadow-sm cursor-pointer"
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Duyệt</span>
+                              <CheckCircle2 className="w-3.5 h-3.5" /><span>Duyệt</span>
                             </button>
                             <button
-                              onClick={() => handleReject(r.maPhieuNhapSP)}
-                              title="Quản lý kho Từ chối"
-                              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
+                              onClick={() => handleAction(InboundAPI.rejectProductReceipt, r.maPhieuNhapSP, `Từ chối phiếu nhập ${r.maPhieuNhapSP}?`, 'Đã từ chối phiếu!')}
+                              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 shadow-sm cursor-pointer"
                             >
-                              <XCircle className="w-3.5 h-3.5" />
-                              <span>Từ chối</span>
+                              <XCircle className="w-3.5 h-3.5" /><span>Từ chối</span>
                             </button>
                             <button
                               onClick={() => handleOpenEditModal(r)}
-                              title="Sửa thông tin phiếu"
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
+                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 shadow-sm cursor-pointer"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Sửa</span>
+                              <Edit2 className="w-3.5 h-3.5" /><span>Sửa</span>
                             </button>
                             <button
-                              onClick={() => handleDelete(r.maPhieuNhapSP)}
-                              title="Xóa phiếu"
-                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition cursor-pointer"
+                              onClick={() => handleAction(InboundAPI.deleteProductReceipt, r.maPhieuNhapSP, `Xác nhận xóa phiếu ${r.maPhieuNhapSP}?`, 'Đã xóa phiếu!')}
+                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </>
                         )}
 
-                        {/* 2. Trạng thái ĐÃ DUYỆT -> Nút LẤY HÀNG THÀNH CÔNG (Nhân viên & Quản lý) */}
                         {r.trangThai === 'Đã duyệt' && (
                           <>
                             <button
-                              onClick={() => handleConfirmReceived(r.maPhieuNhapSP)}
-                              title="Xác nhận Lấy hàng thành công và tạo Tồn kho"
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1.5 shadow-md animate-pulse hover:animate-none cursor-pointer"
+                              onClick={() => handleAction(InboundAPI.confirmGoodsReceived, r.maPhieuNhapSP, `Xác nhận Lấy Hàng Thành Công cho phiếu ${r.maPhieuNhapSP}? Hệ thống sẽ tự động tạo các lô tồn kho.`, 'Lấy hàng thành công! Tồn kho đã ghi nhận.')}
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] flex items-center space-x-1.5 shadow-md cursor-pointer animate-pulse hover:animate-none"
                             >
-                              <PackageCheck className="w-4 h-4" />
-                              <span>Lấy Hàng Thành Công</span>
+                              <PackageCheck className="w-4 h-4" /><span>Lấy Hàng Thành Công</span>
                             </button>
-                            <button
-                              onClick={() => handleOpenPrint(r)}
-                              title="In phiếu nhập"
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer"
-                            >
+                            <button onClick={() => { setSelectedReceipt(r); setIsPrintModalOpen(true); }} className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer">
                               <Printer className="w-3.5 h-3.5" />
                             </button>
                           </>
                         )}
 
-                        {/* 3. Trạng thái TỪ CHỐI -> Cho phép Sửa lại, Xem chi tiết hoặc Xóa */}
                         {r.trangThai === 'Từ chối' && (
                           <>
-                            <button
-                              onClick={() => handleOpenEditModal(r)}
-                              title="Sửa & Gửi lại phiếu"
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Sửa & Gửi lại</span>
+                            <button onClick={() => handleOpenEditModal(r)} className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 shadow-sm cursor-pointer">
+                              <Edit2 className="w-3.5 h-3.5" /><span>Sửa & Gửi lại</span>
                             </button>
-                            <button
-                              onClick={() => handleOpenDetail(r)}
-                              title="Xem chi tiết"
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer"
-                            >
+                            <button onClick={() => { setSelectedReceipt(r); setIsDetailModalOpen(true); }} className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer">
                               <Eye className="w-3.5 h-3.5" />
                             </button>
-                            <button
-                              onClick={() => handleDelete(r.maPhieuNhapSP)}
-                              title="Xóa phiếu từ chối"
-                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition cursor-pointer"
-                            >
+                            <button onClick={() => handleAction(InboundAPI.deleteProductReceipt, r.maPhieuNhapSP, `Xóa phiếu ${r.maPhieuNhapSP}?`, 'Đã xóa phiếu!')} className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg cursor-pointer">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </>
                         )}
 
-                        {/* 4. Trạng thái THÀNH CÔNG / ĐÃ HOÀN THÀNH -> Chỉ cho phép Xem chi tiết & In phiếu (Không sửa) */}
-                        {(r.trangThai === 'Thành công' || r.trangThai === 'Đã hoàn thành') && (
+                        {['Thành công', 'Đã hoàn thành'].includes(r.trangThai) && (
                           <>
-                            <button
-                              onClick={() => handleOpenDetail(r)}
-                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Chi tiết</span>
+                            <button onClick={() => { setSelectedReceipt(r); setIsDetailModalOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 cursor-pointer">
+                              <Eye className="w-3.5 h-3.5 text-slate-500" /><span>Chi tiết</span>
                             </button>
-                            <button
-                              onClick={() => handleOpenPrint(r)}
-                              className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center space-x-1 shadow-sm cursor-pointer"
-                            >
-                              <Printer className="w-3.5 h-3.5" />
-                              <span>In phiếu</span>
+                            <button onClick={() => { setSelectedReceipt(r); setIsPrintModalOpen(true); }} className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 shadow-sm cursor-pointer">
+                              <Printer className="w-3.5 h-3.5" /><span>In phiếu</span>
                             </button>
                           </>
                         )}
@@ -585,9 +433,7 @@ export default function InboundProducts() {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* MODAL 1: THÊM / SỬA PHIẾU NHẬP SẢN PHẨM */}
-      {/* ========================================================================= */}
+      {/* MODAL 1: THÊM / SỬA PHIẾU NHẬP */}
       {isFormModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-5 my-8">
@@ -596,63 +442,37 @@ export default function InboundProducts() {
                 <Layers className="w-5 h-5 text-blue-600" />
                 <span>{editingReceipt ? 'Sửa Phiếu Nhập Sản Phẩm' : 'Lập Phiếu Nhập Sản Phẩm Mới'}</span>
               </h2>
-              <button 
-                onClick={() => setIsFormModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
-              >
-                ✕
-              </button>
+              <button onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 cursor-pointer">✕</button>
             </div>
 
-            {/* Error Banner */}
             {formErrors.length > 0 && (
               <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs space-y-1">
                 <div className="font-bold flex items-center space-x-1">
                   <AlertTriangle className="w-4 h-4 text-rose-600" />
-                  <span>Vui lòng kiểm tra lại các thông tin không hợp lệ:</span>
+                  <span>Vui lòng kiểm tra lại các thông tin:</span>
                 </div>
                 <ul className="list-disc list-inside space-y-0.5 pl-2">
-                  {formErrors.map((err, idx) => (
-                    <li key={idx}>{err}</li>
-                  ))}
+                  {formErrors.map((err, idx) => <li key={idx}>{err}</li>)}
                 </ul>
               </div>
             )}
 
             <form onSubmit={handleSubmitForm} className="space-y-4">
-              {/* Receipt Information Headers */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Mã Phiếu Nhập</label>
-                  <input
-                    type="text"
-                    value={formData.maPhieuNhapSP}
-                    disabled
-                    className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-[#001E50]"
-                  />
+                  <input type="text" value={formData.maPhieuNhapSP} disabled className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-[#001E50]" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">NV Tạo Phiếu</label>
-                  <input
-                    type="text"
-                    value="NV001 - Nguyễn Văn Hùng"
-                    disabled
-                    className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700"
-                  />
+                  <input type="text" value="NV001 - Nguyễn Văn Hùng" disabled className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Ngày Nhập</label>
-                  <input
-                    type="date"
-                    value={formData.ngayNhap}
-                    disabled
-                    className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-medium text-slate-700"
-                  />
+                  <input type="date" value={formData.ngayNhap} disabled className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-medium text-slate-700" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
-                    Ghi Chú Phiếu Nhập
-                  </label>
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Ghi Chú Phiếu Nhập *</label>
                   <input
                     type="text"
                     placeholder="Nhập ghi chú mẻ sản xuất, tiêu chuẩn QC..."
@@ -669,12 +489,19 @@ export default function InboundProducts() {
                     onChange={(e) => handleSelectHandover(e.target.value)}
                     className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
+<<<<<<< HEAD
                     <option value="">-- Nhập thủ công (Không chọn) --</option>
                     {pendingHandovers.map(h => (
                       <option key={h.maPhieuYCXSP} value={h.maPhieuYCXSP}>
                         {h.maPhieuYCXSP} - {h.ghiChu || `Phiếu bàn giao ${h.maPhieuYCXSP}`}
                       </option>
                     ))}
+=======
+                    <option value="">-- Không chọn (Bàn giao trực tiếp) --</option>
+                    <option value="YCXSP20260901">YCXSP20260901 - Bàn giao Sữa tươi UHT Batch 01</option>
+                    <option value="YCXSP20260902">YCXSP20260902 - Bàn giao Sữa chua ăn Batch 02</option>
+                    <option value="YCXSP20260903">YCXSP20260903 - Bàn giao Sữa hạt hạnh nhân Batch 03</option>
+>>>>>>> origin/duc
                   </select>
                 </div>
               </div>
@@ -686,13 +513,8 @@ export default function InboundProducts() {
                     <FileText className="w-4 h-4 text-blue-600" />
                     <span>Danh Sách Sản Phẩm Nhập</span>
                   </h3>
-                  <button
-                    type="button"
-                    onClick={handleAddItem}
-                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-lg text-xs flex items-center space-x-1 transition cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Thêm Sản Phẩm</span>
+                  <button type="button" onClick={handleAddItem} className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-lg text-xs flex items-center space-x-1 transition cursor-pointer">
+                    <Plus className="w-3.5 h-3.5" /><span>Thêm Sản Phẩm</span>
                   </button>
                 </div>
 
@@ -703,7 +525,7 @@ export default function InboundProducts() {
                         <th className="p-2.5 w-5/12">Sản Phẩm</th>
                         <th className="p-2.5 w-2/12">Số Lượng Nhập</th>
                         <th className="p-2.5 w-2/12">Ngày Sản Xuất</th>
-                        <th className="p-2.5 w-2/12">Hạn Sử Dụng</th>
+                        <th className="p-2.5 w-2/12">Hạn Sử Dụng (Tự tính)</th>
                         <th className="p-2.5 w-1/12 text-center">Xóa</th>
                       </tr>
                     </thead>
@@ -719,9 +541,7 @@ export default function InboundProducts() {
                             >
                               <option value="">-- Chọn sản phẩm --</option>
                               {productsList.map(p => (
-                                <option key={p.maSanPham} value={p.maSanPham}>
-                                  {p.maSanPham} - {p.tenSanPham} ({p.donViTinh})
-                                </option>
+                                <option key={p.maSanPham} value={p.maSanPham}>{p.maSanPham} - {p.tenSanPham} ({p.donViTinh})</option>
                               ))}
                             </select>
                           </td>
@@ -751,17 +571,12 @@ export default function InboundProducts() {
                               value={item.hanSuDung}
                               disabled
                               readOnly
-                              title="Hạn sử dụng được tự động tính theo Ngày sản xuất + Thời hạn chuẩn của sản phẩm (không thể sửa thủ công)"
+                              title="Tự động tính theo NSX + Thời hạn chuẩn"
                               className="w-full bg-slate-200/70 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-mono font-semibold text-slate-700 cursor-not-allowed"
                             />
                           </td>
                           <td className="p-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(idx)}
-                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                              title="Xóa dòng"
-                            >
+                            <button type="button" onClick={() => handleRemoveItem(idx)} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
@@ -772,20 +587,12 @@ export default function InboundProducts() {
                 </div>
               </div>
 
-              {/* Form Buttons */}
               <div className="flex justify-end space-x-3 border-t pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsFormModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 font-semibold rounded-xl text-xs hover:bg-slate-100 transition cursor-pointer"
-                >
+                <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 border border-slate-300 text-slate-700 font-semibold rounded-xl text-xs hover:bg-slate-100 transition cursor-pointer">
                   Hủy Bỏ
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs shadow-md hover:shadow-lg transition cursor-pointer"
-                >
-                  {editingReceipt ? 'Lưu Cập Nhật' : 'Lập Phiếu (Trạng Thái Chờ Duyệt)'}
+                <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs shadow-md hover:shadow-lg transition cursor-pointer">
+                  {editingReceipt ? 'Lưu Cập Nhật' : 'Lập Phiếu (Chờ Duyệt)'}
                 </button>
               </div>
             </form>
@@ -793,9 +600,7 @@ export default function InboundProducts() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 2: XEM CHI TIẾT PHIẾU NHẬP */}
-      {/* ========================================================================= */}
+      {/* MODAL 2: XEM CHI TIẾT */}
       {isDetailModalOpen && selectedReceipt && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 my-8">
@@ -803,58 +608,39 @@ export default function InboundProducts() {
               <div>
                 <h2 className="text-lg font-bold text-[#001E50] flex items-center space-x-2">
                   <FileText className="w-5 h-5 text-blue-600" />
-                  <span>Chi Tiết Phiếu Nhập Sản Phẩm: {selectedReceipt.maPhieuNhapSP}</span>
+                  <span>Chi Tiết Phiếu Nhập: {selectedReceipt.maPhieuNhapSP}</span>
                 </h2>
-                <div className="mt-1">
-                  <StatusBadge status={selectedReceipt.trangThai} />
-                </div>
+                <div className="mt-1"><StatusBadge status={selectedReceipt.trangThai} /></div>
               </div>
-              <button 
-                onClick={() => setIsDetailModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
-              >
-                ✕
-              </button>
+              <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 cursor-pointer">✕</button>
             </div>
 
             <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl text-xs border border-slate-200">
-              <div>
-                <span className="text-slate-500 font-semibold">Người Tạo Phiếu:</span>
-                <p className="font-bold text-slate-800">{selectedReceipt.nhan_vien_tao ? selectedReceipt.nhan_vien_tao.hoTen : selectedReceipt.maNVTao}</p>
-              </div>
-              <div>
-                <span className="text-slate-500 font-semibold">Ngày Nhập Phiếu:</span>
-                <p className="font-bold text-slate-800 font-mono">{selectedReceipt.ngayNhap}</p>
-              </div>
-              <div>
-                <span className="text-slate-500 font-semibold">Căn Cứ YC Xuất SP:</span>
-                <p className="font-bold text-slate-800 font-mono">{selectedReceipt.maPhieuYCXSP || 'Không có (Bàn giao trực tiếp)'}</p>
-              </div>
-              <div>
-                <span className="text-slate-500 font-semibold">Ghi Chú Phiếu:</span>
-                <p className="font-medium text-slate-800">{selectedReceipt.ghiChu}</p>
-              </div>
+              <div><span className="text-slate-500 font-semibold">Người Tạo Phiếu:</span> <p className="font-bold text-slate-800">{selectedReceipt.nhan_vien_tao?.hoTen || selectedReceipt.maNVTao}</p></div>
+              <div><span className="text-slate-500 font-semibold">Ngày Nhập Phiếu:</span> <p className="font-bold text-slate-800 font-mono">{selectedReceipt.ngayNhap}</p></div>
+              <div><span className="text-slate-500 font-semibold">Yêu Cầu Xuất SP:</span> <p className="font-bold text-slate-800 font-mono">{selectedReceipt.maPhieuYCXSP || 'Bàn giao trực tiếp'}</p></div>
+              <div><span className="text-slate-500 font-semibold">Ghi Chú:</span> <p className="font-medium text-slate-800">{selectedReceipt.ghiChu}</p></div>
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Danh Sách Sản Phẩm Trong Phiếu</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Danh Sách Sản Phẩm</h3>
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-100 text-slate-600 font-bold uppercase text-[10px]">
                     <tr>
                       <th className="p-2.5">STT</th>
-                      <th className="p-2.5">Mã & Tên Sản Phẩm</th>
-                      <th className="p-2.5 text-right">Số Lượng Nhập</th>
+                      <th className="p-2.5">Sản Phẩm</th>
+                      <th className="p-2.5 text-right">Số Lượng</th>
                       <th className="p-2.5">Ngày Sản Xuất</th>
                       <th className="p-2.5">Hạn Sử Dụng</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {selectedReceipt.chi_tiets && selectedReceipt.chi_tiets.map((d, idx) => (
+                    {selectedReceipt.chi_tiets?.map((d, idx) => (
                       <tr key={idx} className="hover:bg-slate-50">
                         <td className="p-2.5 font-bold text-slate-400">{idx + 1}</td>
                         <td className="p-2.5">
-                          <div className="font-bold text-blue-950">{d.san_pham ? d.san_pham.tenSanPham : d.maSP}</div>
+                          <div className="font-bold text-blue-950">{d.san_pham?.tenSanPham || d.maSP}</div>
                           <div className="text-[10px] text-slate-500 font-mono">Mã: {d.maSP}</div>
                         </td>
                         <td className="p-2.5 text-right font-mono font-bold text-blue-700">{d.soLuongNhap?.toLocaleString()}</td>
@@ -868,56 +654,30 @@ export default function InboundProducts() {
             </div>
 
             <div className="flex justify-end space-x-3 border-t pt-4">
-              <button
-                onClick={() => setIsDetailModalOpen(false)}
-                className="px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs hover:bg-slate-200 transition cursor-pointer"
-              >
-                Đóng
-              </button>
-              <button
-                onClick={() => {
-                  setIsDetailModalOpen(false);
-                  handleOpenPrint(selectedReceipt);
-                }}
-                className="px-4 py-2 bg-slate-800 text-white font-semibold rounded-xl text-xs hover:bg-slate-900 transition flex items-center space-x-1 cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Xem Trang In Phiếu</span>
+              <button onClick={() => setIsDetailModalOpen(false)} className="px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs hover:bg-slate-200 cursor-pointer">Đóng</button>
+              <button onClick={() => { setIsDetailModalOpen(false); setIsPrintModalOpen(true); }} className="px-4 py-2 bg-slate-800 text-white font-semibold rounded-xl text-xs hover:bg-slate-900 flex items-center space-x-1 cursor-pointer">
+                <Printer className="w-3.5 h-3.5" /><span>Xem Trang In</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 3: IN PHIẾU NHẬP SẢN PHẨM CHUẨN VINAMILK */}
-      {/* ========================================================================= */}
+      {/* MODAL 3: IN PHIẾU NHẬP SẢN PHẨM */}
       {isPrintModalOpen && selectedReceipt && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-3xl w-full p-8 shadow-2xl space-y-6 my-8 print:m-0 print:p-0 print:shadow-none print:w-full">
-            {/* Action Bar inside Print Modal */}
             <div className="flex justify-between items-center border-b pb-4 print:hidden">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Xem Trước Bản In Phiếu Nhập</span>
               <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => window.print()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition cursor-pointer"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Thực Hiện In Phiếu</span>
+                <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md cursor-pointer">
+                  <Printer className="w-4 h-4" /><span>Thực Hiện In Phiếu</span>
                 </button>
-                <button
-                  onClick={() => setIsPrintModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
-                >
-                  ✕
-                </button>
+                <button onClick={() => setIsPrintModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 cursor-pointer">✕</button>
               </div>
             </div>
 
-            {/* Printable Content Area */}
             <div className="space-y-6 text-slate-900 font-serif">
-              {/* Company Header */}
               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4">
                 <div>
                   <h1 className="text-base font-extrabold uppercase tracking-wide text-[#001E50]">CÔNG TY CỔ PHẦN SỮA VIỆT NAM (VINAMILK)</h1>
@@ -930,23 +690,20 @@ export default function InboundProducts() {
                 </div>
               </div>
 
-              {/* Title */}
               <div className="text-center space-y-1">
                 <h2 className="text-xl font-bold uppercase tracking-wider text-[#001E50]">PHIẾU NHẬP KHO SẢN PHẨM</h2>
                 <p className="text-xs font-mono italic text-slate-600">Số: <span className="font-bold text-slate-900">{selectedReceipt.maPhieuNhapSP}</span></p>
                 <p className="text-xs font-sans text-slate-600">Ngày nhập: <span className="font-semibold">{selectedReceipt.ngayNhap}</span></p>
               </div>
 
-              {/* General Info Table */}
               <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs font-sans">
-                <div><span className="font-bold">Họ tên người lập phiếu:</span> {selectedReceipt.nhan_vien_tao ? selectedReceipt.nhan_vien_tao.hoTen : selectedReceipt.maNVTao}</div>
+                <div><span className="font-bold">Họ tên người lập phiếu:</span> {selectedReceipt.nhan_vien_tao?.hoTen || selectedReceipt.maNVTao}</div>
                 <div><span className="font-bold">Trạng thái phiếu:</span> <span className="uppercase font-bold">{selectedReceipt.trangThai}</span></div>
-                <div><span className="font-bold">Mã phiếu yêu cầu xuất SP:</span> {selectedReceipt.maPhieuYCXSP || 'Không có'}</div>
+                <div><span className="font-bold">Căn cứ YC xuất SP:</span> {selectedReceipt.maPhieuYCXSP || 'Bàn giao trực tiếp'}</div>
                 <div><span className="font-bold">Địa điểm nhập kho:</span> Kho Thành Phẩm Trung Tâm Vinamilk</div>
-                <div className="col-span-2"><span className="font-bold">Ghi chú phiếu nhập:</span> {selectedReceipt.ghiChu}</div>
+                <div className="col-span-2"><span className="font-bold">Ghi chú:</span> {selectedReceipt.ghiChu}</div>
               </div>
 
-              {/* Detail Items Table */}
               <table className="w-full border-collapse border border-slate-900 text-xs font-sans">
                 <thead>
                   <tr className="bg-slate-100 text-center font-bold">
@@ -960,12 +717,12 @@ export default function InboundProducts() {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedReceipt.chi_tiets && selectedReceipt.chi_tiets.map((d, idx) => (
+                  {selectedReceipt.chi_tiets?.map((d, idx) => (
                     <tr key={idx} className="text-center">
                       <td className="border border-slate-900 p-2 font-bold">{idx + 1}</td>
                       <td className="border border-slate-900 p-2 font-mono">{d.maSP}</td>
-                      <td className="border border-slate-900 p-2 text-left font-semibold">{d.san_pham ? d.san_pham.tenSanPham : d.maSP}</td>
-                      <td className="border border-slate-900 p-2">{d.san_pham ? d.san_pham.donViTinh : 'Thùng'}</td>
+                      <td className="border border-slate-900 p-2 text-left font-semibold">{d.san_pham?.tenSanPham || d.maSP}</td>
+                      <td className="border border-slate-900 p-2">{d.san_pham?.donViTinh || 'Hộp'}</td>
                       <td className="border border-slate-900 p-2 text-right font-bold font-mono">{d.soLuongNhap?.toLocaleString()}</td>
                       <td className="border border-slate-900 p-2 font-mono">{d.ngaySanXuat}</td>
                       <td className="border border-slate-900 p-2 font-mono">{d.hanSuDung}</td>
@@ -974,13 +731,12 @@ export default function InboundProducts() {
                 </tbody>
               </table>
 
-              {/* Signatures */}
               <div className="grid grid-cols-3 text-center text-xs font-sans pt-6">
                 <div>
                   <p className="font-bold uppercase">Người Lập Phiếu</p>
                   <p className="text-[10px] text-slate-500 italic">(Ký, họ tên)</p>
                   <div className="h-16"></div>
-                  <p className="font-semibold">{selectedReceipt.nhan_vien_tao ? selectedReceipt.nhan_vien_tao.hoTen : selectedReceipt.maNVTao}</p>
+                  <p className="font-semibold">{selectedReceipt.nhan_vien_tao?.hoTen || selectedReceipt.maNVTao}</p>
                 </div>
                 <div>
                   <p className="font-bold uppercase">Thủ Kho Nhận</p>
@@ -1002,4 +758,3 @@ export default function InboundProducts() {
     </div>
   );
 }
-

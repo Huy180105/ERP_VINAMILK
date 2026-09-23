@@ -354,54 +354,6 @@ class FinanceSeeder extends Seeder
         DB::table('PhieuChi')->insert($payments);
         DB::table('ChiTietPhieuChi')->insert($paymentDetails);
 
-        // =========================================================================
-        // 7. BÁO CÁO THU CHI (FI-FR06) - 30 Báo Cáo
-        // =========================================================================
-        DB::table('BaoCaoThuChi')->truncate();
-
-        $reports = [
-            // 12 Báo cáo tháng năm 2025
-            ['maBaoCao' => 'BCTC-2025-T01', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-01-01', 'denNgay' => '2025-01-31', 'ngayLap' => '2025-02-02 08:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T02', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-02-01', 'denNgay' => '2025-02-28', 'ngayLap' => '2025-03-02 09:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T03', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-03-01', 'denNgay' => '2025-03-31', 'ngayLap' => '2025-04-03 10:15:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T04', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-04-01', 'denNgay' => '2025-04-30', 'ngayLap' => '2025-05-04 08:45:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T05', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-05-01', 'denNgay' => '2025-05-31', 'ngayLap' => '2025-06-02 11:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T06', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-06-01', 'denNgay' => '2025-06-30', 'ngayLap' => '2025-07-03 09:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T07', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-07-01', 'denNgay' => '2025-07-31', 'ngayLap' => '2025-08-02 14:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T08', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-08-01', 'denNgay' => '2025-08-31', 'ngayLap' => '2025-09-02 15:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T09', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-09-01', 'denNgay' => '2025-09-30', 'ngayLap' => '2025-10-03 09:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T10', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-10-01', 'denNgay' => '2025-10-31', 'ngayLap' => '2025-11-04 10:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T11', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-11-01', 'denNgay' => '2025-11-30', 'ngayLap' => '2025-12-02 08:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-T12', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2025-12-01', 'denNgay' => '2025-12-31', 'ngayLap' => '2026-01-05 16:00:00', 'nguoiLap' => 'NV002'],
-
-            // 4 Báo cáo quý năm 2025
-            ['maBaoCao' => 'BCTC-2025-Q1', 'loaiBaoCao' => 'TongHop', 'tuNgay' => '2025-01-01', 'denNgay' => '2025-03-31', 'ngayLap' => '2025-04-05 09:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-Q2', 'loaiBaoCao' => 'TongHop', 'tuNgay' => '2025-04-01', 'denNgay' => '2025-06-30', 'ngayLap' => '2025-07-06 10:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-Q3', 'loaiBaoCao' => 'TongHop', 'tuNgay' => '2025-07-01', 'denNgay' => '2025-09-30', 'ngayLap' => '2025-10-07 11:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2025-Q4', 'loaiBaoCao' => 'TongHop', 'tuNgay' => '2025-10-01', 'denNgay' => '2025-12-31', 'ngayLap' => '2026-01-10 14:00:00', 'nguoiLap' => 'NV002'],
-
-            // 8 Báo cáo tháng năm 2026
-            ['maBaoCao' => 'BCTC-2026-T01', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-01-01', 'denNgay' => '2026-01-31', 'ngayLap' => '2026-02-03 09:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T02', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-02-01', 'denNgay' => '2026-02-28', 'ngayLap' => '2026-03-03 10:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T03', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-03-01', 'denNgay' => '2026-03-31', 'ngayLap' => '2026-04-03 08:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T04', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-04-01', 'denNgay' => '2026-04-30', 'ngayLap' => '2026-05-04 09:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T05', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-05-01', 'denNgay' => '2026-05-31', 'ngayLap' => '2026-06-03 10:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T06', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-06-01', 'denNgay' => '2026-06-30', 'ngayLap' => '2026-07-03 08:45:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T07', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-07-01', 'denNgay' => '2026-07-31', 'ngayLap' => '2026-08-04 11:15:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-T08', 'loaiBaoCao' => 'ThuChiThang', 'tuNgay' => '2026-08-01', 'denNgay' => '2026-08-31', 'ngayLap' => '2026-09-02 09:30:00', 'nguoiLap' => 'NV002'],
-
-            // 2 Báo cáo quý năm 2026
-            ['maBaoCao' => 'BCTC-2026-Q1', 'loaiBaoCao' => 'TongHop', 'tuNgay' => '2026-01-01', 'denNgay' => '2026-03-31', 'ngayLap' => '2026-04-06 09:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-2026-Q2', 'loaiBaoCao' => 'TongHop', 'tuNgay' => '2026-04-01', 'denNgay' => '2026-06-30', 'ngayLap' => '2026-07-05 10:00:00', 'nguoiLap' => 'NV002'],
-
-            // 4 Báo cáo đối chiếu sổ quỹ
-            ['maBaoCao' => 'BCTC-DCQ-2026-01', 'loaiBaoCao' => 'DoiChieuQuy', 'tuNgay' => '2026-06-01', 'denNgay' => '2026-06-30', 'ngayLap' => '2026-07-01 17:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-DCQ-2026-02', 'loaiBaoCao' => 'DoiChieuQuy', 'tuNgay' => '2026-07-01', 'denNgay' => '2026-07-31', 'ngayLap' => '2026-08-01 17:30:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-DCQ-2026-03', 'loaiBaoCao' => 'DoiChieuQuy', 'tuNgay' => '2026-08-01', 'denNgay' => '2026-08-31', 'ngayLap' => '2026-09-01 18:00:00', 'nguoiLap' => 'NV002'],
-            ['maBaoCao' => 'BCTC-DCQ-2026-04', 'loaiBaoCao' => 'DoiChieuQuy', 'tuNgay' => '2026-09-01', 'denNgay' => '2026-09-30', 'ngayLap' => Carbon::now()->toDateTimeString(), 'nguoiLap' => 'NV002'],
-        ];
-        DB::table('BaoCaoThuChi')->insert($reports);
-
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

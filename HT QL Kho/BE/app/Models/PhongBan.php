@@ -5,25 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class KhoSanPham extends Model
+class PhongBan extends Model
 {
     use HasFactory;
 
-    protected $table = 'KhoSanPham';
-    protected $primaryKey = 'maKhoSP';
+    protected $table = 'PhongBan';
+    protected $primaryKey = 'maPhongBan';
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
-        'maKhoSP',
-        'maTonKho',
-        'tinhTrangKhoSP',
-        'ghiChu',
+        'maPhongBan',
+        'tenPhongBan',
     ];
 
-    public function tonKho()
+    public function nhanViens()
     {
-        return $this->belongsTo(TonKho::class, 'maTonKho', 'maTonKho');
+        return $this->hasMany(NhanVien::class, 'maPhongBan', 'maPhongBan');
     }
 }
+

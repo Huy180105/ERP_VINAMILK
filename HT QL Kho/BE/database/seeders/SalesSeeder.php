@@ -15,10 +15,10 @@ class SalesSeeder extends Seeder
         // 1. Kho (4 Major Distribution & Cold Warehouses)
         DB::table('Kho')->truncate();
         DB::table('Kho')->insert([
-            ['maKho' => 'KHO-TONG', 'tenKho' => 'Kho Tổng Mega Plant Vinamilk Bình Dương', 'diaChi' => 'Lô CN-01, KCN Mỹ Phước 2, Bến Cát, Bình Dương'],
-            ['maKho' => 'KHO-LTM', 'tenKho' => 'Kho Lạnh Sữa Tươi Cao Nguyên Mộc Châu', 'diaChi' => 'Thị trấn Mộc Châu, Sơn La'],
-            ['maKho' => 'KHO-DNG', 'tenKho' => 'Kho Trung Chuyển Miền Trung - Đà Nẵng', 'diaChi' => 'KCN Hòa Khánh, Liên Chiểu, Đà Nẵng'],
-            ['maKho' => 'KHO-CTH', 'tenKho' => 'Kho Phân Phối Trọng Điểm Tây Nam Bộ (Cần Thơ)', 'diaChi' => 'KCN Trà Nóc 1, Bình Thủy, Cần Thơ'],
+            ['maKho' => 'KHO-TONG', 'tenKho' => 'Kho Tổng Mega Plant Vinamilk Bình Dương', 'loaiKho' => 'Kho thành phẩm', 'diaChi' => 'Lô CN-01, KCN Mỹ Phước 2, Bến Cát, Bình Dương'],
+            ['maKho' => 'KHO-LTM', 'tenKho' => 'Kho Lạnh Sữa Tươi Cao Nguyên Mộc Châu', 'loaiKho' => 'Kho NVL', 'diaChi' => 'Thị trấn Mộc Châu, Sơn La'],
+            ['maKho' => 'KHO-DNG', 'tenKho' => 'Kho Trung Chuyển Miền Trung - Đà Nẵng', 'loaiKho' => 'Kho thành phẩm', 'diaChi' => 'KCN Hòa Khánh, Liên Chiểu, Đà Nẵng'],
+            ['maKho' => 'KHO-CTH', 'tenKho' => 'Kho Phân Phối Trọng Điểm Tây Nam Bộ (Cần Thơ)', 'loaiKho' => 'Kho thành phẩm', 'diaChi' => 'KCN Trà Nóc 1, Bình Thủy, Cần Thơ'],
         ]);
 
         // 2. DonHang (6 Realistic Distributor Orders)
@@ -142,9 +142,9 @@ class SalesSeeder extends Seeder
                 'diaChiGiao' => 'Kho Tổng Saigon Co.op, KCN Lê Minh Xuân, Bình Chánh, TP.HCM',
                 'trangThai' => 'Đã giao thành công',
                 'maDonHang' => 'DH20260901',
-                'maPhieuXuat' => 'PXSP2026090201',
+                'maPhieuXuatSP' => 'PXSP2026090501',
                 'maKhachHang' => 'KH001',
-                'maNhanVien' => 'NV004',
+                'maNV' => 'NV004',
             ],
             [
                 'maGiaoHang' => 'GH20260905',
@@ -152,9 +152,9 @@ class SalesSeeder extends Seeder
                 'diaChiGiao' => 'Kho Trung Chuyển WinMart, KCN Sóng Thần 2, Dĩ An, Bình Dương',
                 'trangThai' => 'Đã giao thành công',
                 'maDonHang' => 'DH20260905',
-                'maPhieuXuat' => 'PXSP2026090902',
+                'maPhieuXuatSP' => 'PXSP2026090702',
                 'maKhachHang' => 'KH003',
-                'maNhanVien' => 'NV004',
+                'maNV' => 'NV004',
             ],
             [
                 'maGiaoHang' => 'GH20260908',
@@ -162,9 +162,9 @@ class SalesSeeder extends Seeder
                 'diaChiGiao' => 'Kho Bách Hóa Xanh, KCN Tân Bình, Tây Thạnh, Tân Phú, TP.HCM',
                 'trangThai' => 'Đang giao hàng',
                 'maDonHang' => 'DH20260908',
-                'maPhieuXuat' => 'PXSP2026091003',
+                'maPhieuXuatSP' => 'PXSP2026091003',
                 'maKhachHang' => 'KH005',
-                'maNhanVien' => 'NV009',
+                'maNV' => 'NV009',
             ],
         ]);
 
