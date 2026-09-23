@@ -100,6 +100,35 @@ class QualityControlController extends Controller
                 ]);
             }
 
+            // PR-BR12 & Section 2.2.3.1 e: Tự động tạo Phiếu yêu cầu xuất sản phẩm sang Kho nếu soLuongDat > 0
+            if ($validated['tongSoLuongDat'] > 0) {
+                $orderDetail = ChiTietLenhSanXuat::where('maLenh', $validated['maLenh'])->first();
+                $spId = $orderDetail ? $orderDetail->maSanPham : 'SP001';
+
+                $countReq = PhieuYeuCauXuatSP::count() + 1;
+                $reqCode = 'YCXSP' . Carbon::now()->format('Ymd') . str_pad($countReq, 3, '0', STR_PAD_LEFT);
+                $mfgDate = $validated['ngayNghiemThu'];
+                $expDate = Carbon::parse($mfgDate)->addDays(365)->toDateString();
+
+                PhieuYeuCauXuatSP::create([
+                    'maPhieuYCXSP' => $reqCode,
+                    'maPhieuNghiemThu' => $pntCode,
+                    'maNhanVien' => $validated['maNhanVien'] ?? 'NV001',
+                    'ngayYeuCau' => $validated['ngayNghiemThu'],
+                    'trangThai' => 'Chưa xử lý',
+                    'ghiChu' => "Tự động bàn giao thành phẩm đạt từ biên bản QC {$pntCode}",
+                ]);
+
+                ChiTietPhieuYeuCauXuatSP::create([
+                    'maPhieuYCXSP' => $reqCode,
+                    'maSanPham' => $spId,
+                    'soLuong' => $validated['tongSoLuongDat'],
+                    'ngaySanXuat' => $mfgDate,
+                    'hanSuDung' => $expDate,
+                    'ghiChu' => 'Thành phẩm đạt chuẩn QC',
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([

@@ -37,7 +37,7 @@ class InventoryController extends Controller
         ]);
     }
 
-    // Thuật toán Gợi ý FEFO (First Expired, First Out) khi xuất kho sản phẩm / NVL (CF-FR46)
+    // Thuật toán Gợi ý FEFO (First Expired, First Out) khi xuất kho sản phẩm / NVL (CF-FR46, CF-BR04, CF-BR10)
     public function getFefoSuggestions(Request $request)
     {
         $maSP = $request->input('maSanPham') ?? $request->input('maSP');
@@ -45,6 +45,7 @@ class InventoryController extends Controller
         $suggestions = TonKho::with(['sanPham', 'nguyenVatLieu', 'kho'])
             ->where('soLuongTonHienTai', '>', 0)
             ->where('hanSuDung', '>=', Carbon::today()->toDateString())
+            ->where(fn($q) => $q->whereNull('trangThaiChatLuong')->orWhere('trangThaiChatLuong', 'Đạt'))
             ->when(!empty($maSP), fn($q) => $q->where('maSanPham', $maSP))
             ->when($request->filled('maNVL'), fn($q) => $q->where('maNVL', $request->input('maNVL')))
             ->orderBy('hanSuDung', 'asc')
@@ -52,7 +53,7 @@ class InventoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Gợi ý xuất kho theo nguyên tắc FEFO (Hạn dùng gần nhất xuất trước)',
+            'message' => 'Gợi ý xuất kho theo nguyên tắc FEFO (Hạn dùng gần nhất xuất trước, chất lượng Đạt)',
             'data'    => $suggestions,
         ]);
     }
