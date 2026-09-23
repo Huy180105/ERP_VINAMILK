@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ProductionAPI, MasterDataAPI } from '../../services/api';
+import { generateAutoCode } from '../../utils/codeGenerator';
 import { 
   ShieldCheck, 
   Plus, 
@@ -36,6 +37,22 @@ export default function QualityControl() {
     ghiChu: '',
     lyDoKhongDat: 'Lỗi rò rỉ mép dán vỏ hộp màng nhôm tiệt trùng',
   });
+
+  const handleOpenQCModal = () => {
+    const autoCode = generateAutoCode(qcReports, 'maPhieuNghiemThu', 'PNT', 3, true);
+    setQcForm({
+      maPhieuNghiemThu: autoCode,
+      maLenh: orders[0]?.maLenh || 'LSX001',
+      maNhanVien: staffList[0]?.maNV || 'NV001',
+      tongSoLuongSanPham: 10000,
+      tongSoLuongDat: 9900,
+      tongSoLuongKhongDat: 100,
+      ngayNghiemThu: new Date().toISOString().split('T')[0],
+      ghiChu: '',
+      lyDoKhongDat: 'Lỗi rò rỉ mép dán vỏ hộp màng nhôm tiệt trùng',
+    });
+    setShowQCModal(true);
+  };
 
   // Handover Modal
   const [showHandoverModal, setShowHandoverModal] = useState(false);
@@ -132,7 +149,7 @@ export default function QualityControl() {
         </div>
 
         <button
-          onClick={() => setShowQCModal(true)}
+          onClick={handleOpenQCModal}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />

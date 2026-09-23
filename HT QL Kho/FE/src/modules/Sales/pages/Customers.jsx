@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { SalesAPI } from '../../../services/api';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 import {
   Users,
   Plus,
@@ -78,9 +79,9 @@ export default function SalesCustomers() {
 
   const openAddModal = () => {
     setEditingCustomer(null);
-    const randomCode = 'KH' + String(Date.now()).slice(-4);
+    const autoCode = generateAutoCode(customers, 'maKhachHang', 'KH', 3);
     setFormData({
-      maKhachHang: randomCode,
+      maKhachHang: autoCode,
       tenKhachHang: '',
       soDienThoai: '',
       diaChi: '',

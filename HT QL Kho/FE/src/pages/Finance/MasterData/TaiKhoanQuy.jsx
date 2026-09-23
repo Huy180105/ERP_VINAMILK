@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FinanceMasterDataAPI } from '../../../services/financeApi';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 import { Landmark, Plus, Search, Edit2, Trash2, Wallet, CreditCard } from 'lucide-react';
 
 export default function TaiKhoanQuy() {
@@ -46,7 +47,7 @@ export default function TaiKhoanQuy() {
       soDuHienTai: item.soDuHienTai || 0,
       trangThai: item.trangThai ? 1 : 0,
     } : {
-      maTaiKhoanQuy: `TKQ-${String(Date.now()).slice(-4)}`,
+      maTaiKhoanQuy: generateAutoCode(accounts, 'maTaiKhoanQuy', 'TKQ', 3),
       tenTaiKhoanQuy: '',
       loaiTaiKhoan: 'TM',
       soTaiKhoan: '',

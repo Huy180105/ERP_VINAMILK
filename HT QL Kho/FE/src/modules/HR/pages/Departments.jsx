@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HRApi } from '../../../services/hrApi';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 import {
   Building2,
   Briefcase,
@@ -69,7 +70,7 @@ export default function HRDepartments() {
   // ===================== PHÒNG BAN HANDLERS =====================
   const handleOpenAddDept = () => {
     setEditingDept(null);
-    const nextCode = 'PB' + String(departments.length + 1).padStart(2, '0');
+    const nextCode = generateAutoCode(departments, 'maPhongBan', 'PB', 2);
     setDeptForm({ maPhongBan: nextCode, tenPhongBan: '' });
     setShowDeptModal(true);
   };
@@ -116,7 +117,7 @@ export default function HRDepartments() {
   // ===================== CHỨC VỤ HANDLERS =====================
   const handleOpenAddPos = () => {
     setEditingPos(null);
-    const nextCode = 'CV' + String(positions.length + 1).padStart(2, '0');
+    const nextCode = generateAutoCode(positions, 'maChucVu', 'CV', 2);
     setPosForm({ maChucVu: nextCode, tenChucVu: '', phuCap: 0 });
     setShowPosModal(true);
   };

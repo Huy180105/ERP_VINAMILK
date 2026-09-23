@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { HRApi } from '../../../services/hrApi';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 import {
   Users,
   Search,
@@ -110,7 +111,7 @@ export default function HREmployees() {
 
   // Open Add Modal
   const handleOpenAdd = () => {
-    const nextId = 'NV' + String(employees.length + 1).padStart(3, '0');
+    const nextId = generateAutoCode(employees, 'maNV', 'NV', 3);
     setFormData({
       ...initialForm,
       maNV: nextId,

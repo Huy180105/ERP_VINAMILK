@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ProductionAPI } from '../../services/api';
+import { generateAutoCode } from '../../utils/codeGenerator';
 import { 
   FlaskConical, 
   Plus, 
@@ -29,6 +30,18 @@ export default function SemiFinishedGoods() {
     ghiChu: '',
     items: [{ maBTP: 'BTP001', soLuong: 5000 }]
   });
+
+  const handleOpenTransferModal = () => {
+    const autoCode = generateAutoCode(btpTransfers, 'maPhieuYCBTP', 'YCBTP', 3, true);
+    setTransferForm({
+      maPhieuYCBTP: autoCode,
+      maLenh: orders[0]?.maLenh || 'LSX001',
+      ngayYeuCau: new Date().toISOString().split('T')[0],
+      ghiChu: '',
+      items: [{ maBTP: btpList[0]?.maBTP || 'BTP001', soLuong: 5000 }]
+    });
+    setShowTransferModal(true);
+  };
 
   useEffect(() => {
     fetchData();
@@ -79,7 +92,7 @@ export default function SemiFinishedGoods() {
         </div>
 
         <button
-          onClick={() => setShowTransferModal(true)}
+          onClick={handleOpenTransferModal}
           className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />

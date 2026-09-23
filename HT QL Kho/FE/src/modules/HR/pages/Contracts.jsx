@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { HRApi } from '../../../services/hrApi';
+import { generateAutoCode } from '../../../utils/codeGenerator';
 import {
   FileText,
   Search,
@@ -90,7 +91,7 @@ export default function HRContracts() {
 
   const handleOpenAdd = () => {
     setEditingContract(null);
-    const nextCode = 'HD' + new Date().getFullYear() + '-' + String(contracts.length + 1).padStart(3, '0');
+    const nextCode = generateAutoCode(contracts, 'maHopDong', 'HD' + new Date().getFullYear() + '-', 3);
     setFormData({
       ...initialForm,
       maHopDong: nextCode,

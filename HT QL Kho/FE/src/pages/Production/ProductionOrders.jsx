@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ProductionAPI, MasterDataAPI } from '../../services/api';
+import { generateAutoCode } from '../../utils/codeGenerator';
 import { 
   ClipboardList, 
   Plus, 
@@ -38,6 +39,18 @@ export default function ProductionOrders() {
     ngayTaoLenh: new Date().toISOString().split('T')[0],
     items: [{ maSanPham: 'SP001', soLuong: 5000, ghiChu: '' }],
   });
+
+  const handleOpenCreateModal = () => {
+    const autoCode = generateAutoCode(orders, 'maLenh', 'LSX', 3, true);
+    setFormData({
+      maLenh: autoCode,
+      tenLenh: '',
+      maNhanVien: staffList[0]?.maNV || 'NV001',
+      ngayTaoLenh: new Date().toISOString().split('T')[0],
+      items: [{ maSanPham: products[0]?.maSanPham || 'SP001', soLuong: 5000, ghiChu: '' }],
+    });
+    setShowCreateModal(true);
+  };
 
   // Detail Modal state
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -187,7 +200,7 @@ export default function ProductionOrders() {
         </div>
 
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={handleOpenCreateModal}
           className="bg-[#00249C] hover:bg-blue-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ProductionAPI, MasterDataAPI } from '../../services/api';
+import { generateAutoCode } from '../../utils/codeGenerator';
 import { 
   Boxes, 
   Plus, 
@@ -32,6 +33,18 @@ export default function MaterialRequests() {
     ghiChu: '',
     items: [{ maNVL: 'NVL001', soLuong: 5000 }],
   });
+
+  const handleOpenCreateModal = () => {
+    const autoCode = generateAutoCode(requests, 'maPhieuYCNVL', 'YCNVL', 3, true);
+    setFormData({
+      maPhieuYCNVL: autoCode,
+      maLenh: orders[0]?.maLenh || 'LSX001',
+      ngayYeuCau: new Date().toISOString().split('T')[0],
+      ghiChu: '',
+      items: [{ maNVL: materials[0]?.maNVL || 'NVL001', soLuong: 5000 }],
+    });
+    setShowCreateModal(true);
+  };
 
   useEffect(() => {
     fetchData();
@@ -104,7 +117,7 @@ export default function MaterialRequests() {
         </div>
 
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={handleOpenCreateModal}
           className="bg-[#00249C] hover:bg-blue-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md transition flex items-center space-x-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
