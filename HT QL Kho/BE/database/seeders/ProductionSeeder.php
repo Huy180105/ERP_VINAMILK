@@ -332,7 +332,6 @@ class ProductionSeeder extends Seeder
         ]);
 
         DB::table('ChiTietPhieuYeuCauNVL')->insert([
-<<<<<<< HEAD
             ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL001', 'tenNVL' => 'Sữa Tươi Nguyên Chất 100% Thô (Mộc Châu)', 'soLuong' => 18000],
             ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL002', 'tenNVL' => 'Đường Tinh Luyện Biên Hòa Grade A', 'soLuong' => 1500],
             ['maPhieuYCNVL' => 'YCNVL20260903', 'maNVL' => 'NVL001', 'tenNVL' => 'Sữa Tươi Nguyên Chất 100% Thô (Mộc Châu)', 'soLuong' => 13500],
@@ -343,11 +342,6 @@ class ProductionSeeder extends Seeder
             ['maPhieuYCNVL' => 'YCNVL20260908', 'maNVL' => 'NVL004', 'tenNVL' => 'Vỏ Hộp Giấy Tetra Pak Brik Aseptic 180ml', 'soLuong' => 10000],
             ['maPhieuYCNVL' => 'YCNVL20260910', 'maNVL' => 'NVL010', 'tenNVL' => 'Bơ Hạnh Nhân Tự Nhiên Nhập Khẩu Mỹ', 'soLuong' => 600],
             ['maPhieuYCNVL' => 'YCNVL20260912', 'maNVL' => 'NVL006', 'tenNVL' => 'Men Probiotics LGG Chr. Hansen', 'soLuong' => 120],
-=======
-            ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL001', 'soLuong' => 18000],
-            ['maPhieuYCNVL' => 'YCNVL20260901', 'maNVL' => 'NVL002', 'soLuong' => 1500],
-            ['maPhieuYCNVL' => 'YCNVL20260908', 'maNVL' => 'NVL004', 'soLuong' => 10000],
->>>>>>> origin/duc
         ]);
 
         // 4. PhieuYeuCauBTP & ChiTietPhieuYeuCauBTP
