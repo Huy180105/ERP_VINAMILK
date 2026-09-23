@@ -11,6 +11,7 @@ use App\Models\BangCong;
 use App\Models\BangLuong;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class HRReportController extends Controller
 {
@@ -23,7 +24,9 @@ class HRReportController extends Controller
         $totalResigned = NhanVien::where('trangThai', 'Đã nghỉ việc')->count();
         $totalDepartments = PhongBan::count();
         $totalPositions = ChucVu::count();
-        $totalActiveContracts = HopDong::where('trangThai', 'Hiệu lực')->count();
+        $totalActiveContracts = Schema::hasColumn('HopDong', 'trangThai')
+            ? HopDong::where('trangThai', 'Hiệu lực')->count()
+            : HopDong::count();
 
         // Kỳ lương gần nhất
         $latestPayrollMonth = BangLuong::orderBy('thang', 'desc')->value('thang') ?? date('m/Y');
@@ -40,11 +43,16 @@ class HRReportController extends Controller
             ]);
 
         // Hợp đồng sắp hết hạn trong 30 ngày
-        $expiringContracts = HopDong::with('nhanVien')
-            ->where('trangThai', 'Hiệu lực')
-            ->whereNotNull('ngayHetHan')
-            ->whereBetween('ngayHetHan', [now(), now()->addDays(30)])
-            ->get();
+        $expiringContractsQuery = HopDong::with('nhanVien');
+        if (Schema::hasColumn('HopDong', 'trangThai')) {
+            $expiringContractsQuery->where('trangThai', 'Hiệu lực');
+        }
+        if (Schema::hasColumn('HopDong', 'ngayHetHan')) {
+            $expiringContractsQuery->whereNotNull('ngayHetHan')->whereBetween('ngayHetHan', [now(), now()->addDays(30)]);
+            $expiringContracts = $expiringContractsQuery->get();
+        } else {
+            $expiringContracts = collect();
+        }
 
         // 5 nhân viên mới tiếp nhận gần nhất
         $recentEmployees = NhanVien::with(['phongBan', 'chucVu'])
@@ -94,7 +102,11 @@ class HRReportController extends Controller
             ->get();
 
         // 4. Phân bổ theo loại hợp đồng
-        $contractTypes = HopDong::where('trangThai', 'Hiệu lực')
+        $contractTypesQuery = HopDong::query();
+        if (Schema::hasColumn('HopDong', 'trangThai')) {
+            $contractTypesQuery->where('trangThai', 'Hiệu lực');
+        }
+        $contractTypes = $contractTypesQuery
             ->select('loaiHopDong', DB::raw('count(*) as soLuong'))
             ->groupBy('loaiHopDong')
             ->get();

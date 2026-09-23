@@ -8,6 +8,7 @@ use App\Models\NhanVien;
 use App\Models\BangLuong;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ContractController extends Controller
 {
@@ -37,7 +38,7 @@ class ContractController extends Controller
             $query->where('loaiHopDong', $request->input('loaiHopDong'));
         }
 
-        if ($request->filled('trangThai')) {
+        if ($request->filled('trangThai') && Schema::hasColumn('HopDong', 'trangThai')) {
             $query->where('trangThai', $request->input('trangThai'));
         }
 

@@ -53,7 +53,10 @@ class HRMSeeder extends Seeder
 
         // 4. HopDong (10 Contracts)
         DB::table('HopDong')->truncate();
-        DB::table('HopDong')->insert([
+        $hasTrangThai = \Illuminate\Support\Facades\Schema::hasColumn('HopDong', 'trangThai');
+        $hasNgayHetHan = \Illuminate\Support\Facades\Schema::hasColumn('HopDong', 'ngayHetHan');
+
+        $contractsToInsert = [
             ['maHopDong' => 'HD2020-001', 'maNV' => 'NV001', 'loaiHopDong' => 'Không xác định thời hạn', 'ngayHieuLuc' => '2020-03-15', 'mucLuongCoBan' => 28000000],
             ['maHopDong' => 'HD2021-002', 'maNV' => 'NV002', 'loaiHopDong' => 'Không xác định thời hạn', 'ngayHieuLuc' => '2021-06-10', 'mucLuongCoBan' => 32000000],
             ['maHopDong' => 'HD2019-003', 'maNV' => 'NV003', 'loaiHopDong' => 'Không xác định thời hạn', 'ngayHieuLuc' => '2019-11-01', 'mucLuongCoBan' => 26000000],
@@ -64,7 +67,19 @@ class HRMSeeder extends Seeder
             ['maHopDong' => 'HD2023-008', 'maNV' => 'NV008', 'loaiHopDong' => 'Xác định thời hạn 1 năm', 'ngayHieuLuc' => '2023-04-12', 'mucLuongCoBan' => 14000000],
             ['maHopDong' => 'HD2023-009', 'maNV' => 'NV009', 'loaiHopDong' => 'Xác định thời hạn 1 năm', 'ngayHieuLuc' => '2023-01-10', 'mucLuongCoBan' => 15000000],
             ['maHopDong' => 'HD2022-010', 'maNV' => 'NV010', 'loaiHopDong' => 'Không xác định thời hạn', 'ngayHieuLuc' => '2022-10-01', 'mucLuongCoBan' => 16000000],
-        ]);
+        ];
+
+        foreach ($contractsToInsert as &$c) {
+            if ($hasTrangThai) {
+                $c['trangThai'] = 'Hiệu lực';
+            }
+            if ($hasNgayHetHan) {
+                $c['ngayHetHan'] = null;
+            }
+        }
+        unset($c);
+
+        DB::table('HopDong')->insert($contractsToInsert);
 
         // 5. BangCong (Tháng 08/2026 & Tháng 09/2026)
         DB::table('BangCong')->truncate();
