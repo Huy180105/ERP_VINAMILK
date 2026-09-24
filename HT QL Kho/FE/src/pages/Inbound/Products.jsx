@@ -45,6 +45,7 @@ export default function InboundProducts() {
   useEffect(() => {
     fetchReceipts();
     fetchProductsList();
+    fetchPendingHandovers();
   }, []);
 
   const fetchReceipts = async () => {
@@ -56,6 +57,15 @@ export default function InboundProducts() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingHandovers = async () => {
+    try {
+      const res = await InboundAPI.getPendingProductionHandovers();
+      setPendingHandovers(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -72,18 +82,13 @@ export default function InboundProducts() {
     setEditingReceipt(null);
     setFormErrors([]);
     let nextCode = '';
-    let handovers = [];
     try {
-      const [codeRes, handoverRes] = await Promise.all([
-        InboundAPI.getNextProductReceiptCode(),
-        InboundAPI.getPendingProductionHandovers()
-      ]);
+      const codeRes = await InboundAPI.getNextProductReceiptCode();
       nextCode = codeRes.data.code;
-      handovers = handoverRes.data?.data || [];
+      await fetchPendingHandovers();
     } catch (e) {
       console.error(e);
     }
-    setPendingHandovers(handovers);
 
     if (!nextCode) {
       nextCode = generateAutoCode(receipts, 'maPhieuNhapSP', 'PNSP', 3, true);
@@ -94,6 +99,45 @@ export default function InboundProducts() {
       ...initialForm,
       maPhieuNhapSP: nextCode,
       items: [{ maSP: defaultMaSP, soLuongNhap: 1000, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr, defaultMaSP), ghiChu: '' }]
+    });
+    setIsFormModalOpen(true);
+  };
+
+  const handleCreateFromHandover = async (handover) => {
+    setEditingReceipt(null);
+    setFormErrors([]);
+    let nextCode = '';
+    try {
+      const codeRes = await InboundAPI.getNextProductReceiptCode();
+      nextCode = codeRes.data.code;
+      await fetchPendingHandovers();
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (!nextCode) {
+      nextCode = generateAutoCode(receipts, 'maPhieuNhapSP', 'PNSP', 3, true);
+    }
+
+    const defaultMfg = handover.phieu_nghiem_thu?.ngayNghiemThu || handover.ngayYeuCau || todayStr;
+    const items = handover.chi_tiets?.map(ct => {
+      const mfg = ct.ngaySanXuat || defaultMfg;
+      const exp = ct.hanSuDung || calculateDefaultExpiry(mfg, ct.maSanPham);
+      return {
+        maSP: ct.maSanPham,
+        soLuongNhap: ct.soLuong,
+        ngaySanXuat: mfg,
+        hanSuDung: exp,
+        ghiChu: ct.ghiChu || `Nhập kho theo phiếu bàn giao ${handover.maPhieuYCXSP}`
+      };
+    }) || [];
+
+    setFormData({
+      ...initialForm,
+      maPhieuNhapSP: nextCode,
+      maPhieuYCXSP: handover.maPhieuYCXSP,
+      ghiChu: `Nhập kho theo phiếu bàn giao từ SX (${handover.maPhieuYCXSP})`,
+      items: items.length > 0 ? items : [{ maSP: productsList[0]?.maSanPham || '', soLuongNhap: 1000, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr), ghiChu: '' }]
     });
     setIsFormModalOpen(true);
   };
@@ -266,6 +310,65 @@ export default function InboundProducts() {
           <span>Lập Phiếu Nhập Sản Phẩm Mới</span>
         </button>
       </div>
+
+      {/* Pending Production Handovers */}
+      {pendingHandovers.length > 0 && (
+        <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-200 shadow-sm">
+          <div className="flex items-center space-x-2 mb-4">
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <h2 className="text-sm font-bold text-amber-900">Danh Sách Yêu Cầu Xuất Sản Phẩm Chờ Nhập Kho</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs bg-white rounded-xl overflow-hidden border border-amber-100">
+              <thead className="bg-amber-100/50 text-amber-800 font-semibold uppercase text-[10px]">
+                <tr>
+                  <th className="p-3">Mã Phiếu YCX</th>
+                  <th className="p-3">Người Yêu Cầu</th>
+                  <th className="p-3">Ngày Yêu Cầu</th>
+                  <th className="p-3">Nghiệm Thu</th>
+                  <th className="p-3">Chi Tiết Sản Phẩm</th>
+                  <th className="p-3 text-center">Hành Động</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-50">
+                {pendingHandovers.map(h => (
+                  <tr key={h.maPhieuYCXSP} className="hover:bg-amber-50/30 transition">
+                    <td className="p-3 font-mono font-bold text-amber-900">{h.maPhieuYCXSP}</td>
+                    <td className="p-3 font-medium text-slate-700">{h.nhan_vien?.hoTen || h.maNhanVien}</td>
+                    <td className="p-3 text-slate-600 font-mono">{h.ngayYeuCau}</td>
+                    <td className="p-3">
+                      {h.phieu_nghiem_thu ? (
+                        <span className="text-emerald-600 font-medium text-[11px] bg-emerald-50 px-2 py-1 rounded-lg">
+                          Đã NT ({h.phieu_nghiem_thu.ngayNghiemThu})
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] italic">Chưa NT</span>
+                      )}
+                    </td>
+                    <td className="p-3 space-y-1">
+                      {h.chi_tiets?.map((ct, idx) => (
+                        <div key={idx} className="bg-slate-50 p-1.5 rounded-lg font-mono text-[10px] text-slate-600 flex justify-between border border-slate-100">
+                          <span>{ct.san_pham?.tenSanPham || ct.maSanPham}</span>
+                          <span className="font-bold text-slate-800">SL: {ct.soLuong?.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => handleCreateFromHandover(h)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer mx-auto"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Tạo Phiếu Nhập</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Filter Tabs & Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
