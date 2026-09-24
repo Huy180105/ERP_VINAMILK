@@ -141,19 +141,34 @@ export default function PhieuChi() {
     setFormData({
       maPhieuChi: autoCode,
       ngayChi: new Date().toISOString().split('T')[0],
-      maDoiTuong: counterparties[0]?.maDoiTuong || '',
+      maDoiTuong: '',
       lyDoChi: '',
       phuongThucChi: 'CK',
-      maTaiKhoanQuy: accounts[0]?.maTaiKhoanQuy || '',
+      maTaiKhoanQuy: '',
       maPhieuNhapNVL: '',
       maBangLuong: '',
       items: [
-        { maChiTietChi: `CTPC-${Date.now().toString().slice(-4)}-1`, maDanhMucChi: categories[0]?.maDanhMucChi || '', dienGiai: '', soTien: 0 }
+        { maChiTietChi: `CTPC-${Date.now().toString().slice(-4)}-1`, maDanhMucChi: '', dienGiai: '', soTien: 0 }
       ],
     });
     setModalOpen(true);
     fetchPendingPurchases();
     fetchPendingPayrolls();
+  };
+
+  const changeCreateTab = (tab) => {
+    if (editingId || tab === createTab) return;
+    setCreateTab(tab);
+    setSelectedPurchase(null);
+    setSelectedPayroll(null);
+    setFormData(prev => ({
+      ...prev,
+      maPhieuNhapNVL: '',
+      maBangLuong: '',
+      maDoiTuong: '',
+      lyDoChi: '',
+      items: [{ maChiTietChi: `CTPC-${Date.now().toString().slice(-6)}-1`, maDanhMucChi: '', dienGiai: '', soTien: 0 }],
+    }));
   };
 
   const handleSelectPurchase = (pn) => {
@@ -166,14 +181,15 @@ export default function PhieuChi() {
       ...prev,
       maPhieuNhapNVL: pn.maPhieuNhapNVL,
       maBangLuong: '',
-      maDoiTuong: matchedDt ? matchedDt.maDoiTuong : prev.maDoiTuong,
+      maDoiTuong: matchedDt?.maDoiTuong || '',
       soTien: pn.tongTien,
       phuongThucChi: 'CK',
+      maTaiKhoanQuy: '',
       lyDoChi: `Thanh toán tiền mua NVL phiếu nhập kho ${pn.maPhieuNhapNVL} (NCC: ${pn.tenNCC})`,
       items: [
         {
           maChiTietChi: `CTPC-${timestamp}-1`,
-          maDanhMucChi: categories.find(c => c.maDanhMucChi === 'DMC01')?.maDanhMucChi || categories[0]?.maDanhMucChi || '',
+          maDanhMucChi: '',
           dienGiai: `Chi tiền nhập hàng theo phiếu nhập NVL ${pn.maPhieuNhapNVL}`,
           soTien: pn.tongTien
         }
@@ -209,14 +225,15 @@ export default function PhieuChi() {
       ...prev,
       maBangLuong: bl.maBangLuong,
       maPhieuNhapNVL: '',
-      maDoiTuong: matchedDt ? matchedDt.maDoiTuong : prev.maDoiTuong,
+      maDoiTuong: matchedDt?.maDoiTuong || '',
       soTien: bl.thucLanh,
       phuongThucChi: 'CK',
+      maTaiKhoanQuy: '',
       lyDoChi: `Chi trả lương kỳ ${bl.thangNam} cho nhân viên ${bl.tenNV} (Mã BL: ${bl.maBangLuong})`,
       items: [
         {
           maChiTietChi: `CTPC-${timestamp}-1`,
-          maDanhMucChi: categories.find(c => c.maDanhMucChi === 'DMC02')?.maDanhMucChi || categories[0]?.maDanhMucChi || '',
+          maDanhMucChi: categories.find(c => c.maDanhMucChi === 'DMC08')?.maDanhMucChi || '',
           dienGiai: `Lương thực lãnh tháng ${bl.thangNam} - ${bl.tenNV}`,
           soTien: bl.thucLanh
         }
@@ -231,7 +248,7 @@ export default function PhieuChi() {
       ...prev,
       items: [
         ...prev.items,
-        { maChiTietChi: `CTPC-${timestamp}-${newIdx}`, maDanhMucChi: categories[0]?.maDanhMucChi || '', dienGiai: '', soTien: 0 }
+        { maChiTietChi: `CTPC-${timestamp}-${newIdx}`, maDanhMucChi: '', dienGiai: '', soTien: 0 }
       ]
     }));
   };
@@ -257,13 +274,17 @@ export default function PhieuChi() {
   // Kiểm tra hạn mức quỹ (FI-BR04, FI-FR07)
   const selectedAccountObj = accounts.find(a => a.maTaiKhoanQuy === formData.maTaiKhoanQuy);
   const currentAccBalance = selectedAccountObj ? parseFloat(selectedAccountObj.soDuHienTai) : 0;
-  const isOverBudget = calculateTotal() > currentAccBalance;
+  const isOverBudget = Boolean(formData.maTaiKhoanQuy) && calculateTotal() > currentAccBalance;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const total = calculateTotal();
     if (total <= 0) {
       alert('Tổng số tiền phiếu chi phải lớn hơn 0');
+      return;
+    }
+    if (formData.items.some(item => !item.maDanhMucChi)) {
+      alert('Vui lòng chọn danh mục cho từng khoản chi');
       return;
     }
 
@@ -675,7 +696,8 @@ export default function PhieuChi() {
             {/* Tab Header */}
             <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 shrink-0">
               <button
-                onClick={() => setCreateTab('purchase')}
+                onClick={() => changeCreateTab('purchase')}
+                disabled={!!editingId}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
                   createTab === 'purchase' ? 'border-rose-600 text-rose-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
@@ -684,7 +706,8 @@ export default function PhieuChi() {
                 <span>Từ Phiếu Nhập Kho NVL</span>
               </button>
               <button
-                onClick={() => setCreateTab('payroll')}
+                onClick={() => changeCreateTab('payroll')}
+                disabled={!!editingId}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
                   createTab === 'payroll' ? 'border-rose-600 text-rose-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
@@ -693,7 +716,7 @@ export default function PhieuChi() {
                 <span>Từ Bảng Lương Nhân Sự</span>
               </button>
               <button
-                onClick={() => setCreateTab('manual')}
+                onClick={() => changeCreateTab('manual')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
                   createTab === 'manual' ? 'border-rose-600 text-rose-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
@@ -886,8 +909,10 @@ export default function PhieuChi() {
                     <select
                       value={formData.maDoiTuong}
                       onChange={(e) => setFormData({ ...formData, maDoiTuong: e.target.value })}
+                      required
                       className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     >
+                      <option value="" disabled>Chọn đối tượng nhận</option>
                       {counterparties.map((dt) => (
                         <option key={dt.maDoiTuong} value={dt.maDoiTuong}>
                           {dt.tenDoiTuong} ({dt.loaiDoiTuong})
@@ -903,18 +928,22 @@ export default function PhieuChi() {
                       <label className="text-xs font-semibold text-slate-700">
                         Tài Khoản Quỹ / Ngân Hàng <span className="text-red-500">*</span>
                       </label>
-                      <span className={`text-[10px] font-mono font-bold ${isOverBudget ? 'text-red-600' : 'text-emerald-600'}`}>
-                        Số dư: {currentAccBalance.toLocaleString()} đ
-                      </span>
+                      {formData.maTaiKhoanQuy && (
+                        <span className={`text-[10px] font-mono font-bold ${isOverBudget ? 'text-red-600' : 'text-emerald-600'}`}>
+                          Số dư: {currentAccBalance.toLocaleString()} đ
+                        </span>
+                      )}
                     </div>
                     <select
                       value={formData.maTaiKhoanQuy}
                       onChange={(e) => setFormData({ ...formData, maTaiKhoanQuy: e.target.value })}
+                      required
                       className={`w-full bg-slate-50 border text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
                         isOverBudget ? 'border-red-300 focus:ring-red-400' : 'border-slate-200 focus:ring-rose-400'
                       }`}
                     >
-                      {accounts.map((acc) => (
+                      <option value="" disabled>Chọn tài khoản</option>
+                      {accounts.filter(acc => acc.loaiTaiKhoan === (formData.phuongThucChi === 'CK' ? 'NH' : 'TM')).map((acc) => (
                         <option key={acc.maTaiKhoanQuy} value={acc.maTaiKhoanQuy}>
                           {acc.tenTaiKhoanQuy} (Dư: {Number(acc.soDuHienTai).toLocaleString()} đ)
                         </option>
@@ -933,7 +962,10 @@ export default function PhieuChi() {
                     </label>
                     <select
                       value={formData.phuongThucChi}
-                      onChange={(e) => setFormData({ ...formData, phuongThucChi: e.target.value })}
+                      onChange={(e) => {
+                        const phuongThucChi = e.target.value;
+                        setFormData({ ...formData, phuongThucChi, maTaiKhoanQuy: '' });
+                      }}
                       className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     >
                       <option value="CK">Chuyển khoản ngân hàng (CK)</option>
@@ -975,9 +1007,11 @@ export default function PhieuChi() {
                         <select
                           value={item.maDanhMucChi}
                           onChange={(e) => handleItemChange(idx, 'maDanhMucChi', e.target.value)}
+                          required
                           className="w-44 bg-white border border-slate-200 text-xs text-slate-800 rounded-lg px-2.5 py-1.5 focus:outline-none"
                         >
-                          {categories.map((cat) => (
+                      <option value="" disabled>Chọn danh mục chi</option>
+                      {categories.map((cat) => (
                             <option key={cat.maDanhMucChi} value={cat.maDanhMucChi}>
                               {cat.tenDanhMucChi}
                             </option>

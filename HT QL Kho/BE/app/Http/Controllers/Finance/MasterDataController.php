@@ -169,9 +169,36 @@ class MasterDataController extends Controller
     {
         $loai = $request->input('loaiDoiTuong', 'KH');
         $data = match ($loai) {
-            'KH' => KhachHang::select('maKhachHang as id', 'maKhachHang as maGoc', 'tenKhachHang as ten', 'soDienThoai', 'diaChi', 'maSoThue', 'email')->get(),
-            'NCC' => NhaCungCap::select('maNCC as id', 'maNCC as maGoc', 'tenNCC as ten', 'soDienThoai', 'diaChi', 'maSoThue', 'email')->get(),
-            'NV' => NhanVien::select('maNV as id', 'maNV as maGoc', 'hoTen as ten', 'soDienThoai', 'diaChi', 'email')->get(),
+            'KH' => KhachHang::get(['maKhachHang', 'tenKhachHang', 'soDienThoai', 'diaChi'])
+                ->map(fn ($item) => [
+                    'id' => $item->maKhachHang,
+                    'maGoc' => $item->maKhachHang,
+                    'ten' => $item->tenKhachHang,
+                    'soDienThoai' => $item->soDienThoai,
+                    'diaChi' => $item->diaChi,
+                    'maSoThue' => null,
+                    'email' => null,
+                ]),
+            'NCC' => NhaCungCap::get(['maNCC', 'tenNCC', 'soDienThoai', 'diaChi', 'maSoThue', 'email'])
+                ->map(fn ($item) => [
+                    'id' => $item->maNCC,
+                    'maGoc' => $item->maNCC,
+                    'ten' => $item->tenNCC,
+                    'soDienThoai' => $item->soDienThoai,
+                    'diaChi' => $item->diaChi,
+                    'maSoThue' => $item->maSoThue,
+                    'email' => $item->email,
+                ]),
+            'NV' => NhanVien::get(['maNV', 'hoTen', 'soDienThoai', 'email'])
+                ->map(fn ($item) => [
+                    'id' => $item->maNV,
+                    'maGoc' => $item->maNV,
+                    'ten' => $item->hoTen,
+                    'soDienThoai' => $item->soDienThoai,
+                    'diaChi' => null,
+                    'maSoThue' => null,
+                    'email' => $item->email,
+                ]),
             default => collect(),
         };
 

@@ -8,7 +8,6 @@ use App\Models\ChiTietPhieuThu;
 use App\Models\TaiKhoanQuy;
 use App\Models\ThanhToan;
 use App\Models\CongNo;
-use App\Models\KhachHang;
 use App\Models\DoiTuongGiaoDich;
 use App\Models\NhatKyThuChi;
 use Illuminate\Http\Request;
@@ -64,22 +63,25 @@ class PhieuThuController extends Controller
             ->where('trangThai', '!=', 'Huy')
             ->pluck('maThanhToan');
 
-        $pendingThanhToans = ThanhToan::with('congNo.khachHang')
+        $pendingThanhToans = ThanhToan::with(['congNo.khachHang', 'congNo.hoaDon.giaoHang'])
             ->whereNotIn('maThanhToan', $mappedThanhToanIds)
+            ->whereHas('congNo', fn ($query) => $query->where('soTienDaTra', '>', 0))
             ->get();
 
         $data = $pendingThanhToans->map(function ($tt) {
-            $khachHang = $tt->congNo?->khachHang ?? ($tt->maKhachHang ? KhachHang::find($tt->maKhachHang) : null);
+            $congNo = $tt->congNo;
+            $khachHang = $congNo?->khachHang;
 
             return [
                 'maThanhToan' => $tt->maThanhToan,
                 'ngayThanhToan' => $tt->ngayThanhToan,
-                'maDonHang' => $tt->maDonHang,
-                'maKhachHang' => $tt->maKhachHang,
+                'maDonHang' => $congNo?->hoaDon?->giaoHang?->maDonHang,
+                'maCongNo' => $congNo?->maCongNo,
+                'maHoaDon' => $congNo?->maHoaDon,
+                'maKhachHang' => $congNo?->maKhachHang,
                 'tenKhachHang' => $khachHang?->tenKhachHang ?? 'Khách vãng lai',
-                'soTien' => (float) $tt->soTien,
-                'phuongThucThanhToan' => $tt->phuongThucThanhToan,
-                'trangThai' => $tt->trangThai,
+                'soTien' => (float) $congNo->soTienDaTra,
+                'phuongThucThanhToan' => str_starts_with($tt->phuongThuc, 'Chuyển khoản') ? 'Chuyển khoản' : $tt->phuongThuc,
             ];
         });
 
@@ -157,10 +159,10 @@ class PhieuThuController extends Controller
         $maDoiTuong = $validated['maDoiTuong'] ?? null;
         if (!empty($validated['maThanhToan'])) {
             $tt = ThanhToan::find($validated['maThanhToan']);
-            if ($tt?->maKhachHang) {
+            if ($tt?->congNo?->maKhachHang) {
                 $dt = DoiTuongGiaoDich::firstOrCreate(
-                    ['loaiDoiTuong' => 'KH', 'maThamChieu' => $tt->maKhachHang],
-                    ['maDoiTuong' => $maDoiTuong ?: ('DT-KH-' . $tt->maKhachHang), 'trangThai' => true]
+                    ['loaiDoiTuong' => 'KH', 'maThamChieu' => $tt->congNo->maKhachHang],
+                    ['maDoiTuong' => $maDoiTuong ?: ('DT-KH-' . $tt->congNo->maKhachHang), 'trangThai' => true]
                 );
                 $maDoiTuong = $dt->maDoiTuong;
             }
@@ -281,7 +283,7 @@ class PhieuThuController extends Controller
             }
 
             // Cập nhật công nợ nếu có
-            if ($receipt->maCongNo) {
+            if ($receipt->maCongNo && !$receipt->maThanhToan) {
                 $congNo = CongNo::where('maCongNo', $receipt->maCongNo)->first();
                 if ($congNo) {
                     $congNo->soTienDaTra += $receipt->soTien;
@@ -345,7 +347,7 @@ class PhieuThuController extends Controller
                     $balanceAfter = (float) $account->soDuHienTai;
                 }
 
-                if ($receipt->maCongNo) {
+                if ($receipt->maCongNo && !$receipt->maThanhToan) {
                     $congNo = CongNo::where('maCongNo', $receipt->maCongNo)->first();
                     if ($congNo) {
                         $congNo->soTienDaTra = max(0, $congNo->soTienDaTra - $receipt->soTien);
@@ -385,8 +387,8 @@ class PhieuThuController extends Controller
             return response()->json(['success' => false, 'message' => 'Chỉ Kế toán trưởng mới được chuyển phiếu sang đối soát.'], 403);
         }
         $receipt = PhieuThu::findOrFail($id);
-        if (!in_array($receipt->trangThai, ['Moi', 'DaDuyet'], true)) {
-            return response()->json(['success' => false, 'message' => 'Chỉ phiếu mới hoặc đã duyệt mới được chuyển sang chờ đối soát.'], 400);
+        if ($receipt->trangThai !== 'Moi') {
+            return response()->json(['success' => false, 'message' => 'Chỉ phiếu mới được chuyển sang chờ đối soát.'], 400);
         }
         $receipt->update(['trangThai' => 'ChoDoiSoat']);
         NhatKyThuChi::ghi('PhieuThu', $receipt->maPhieuThu, 'ChuyenDoiSoat', 'Moi', 'ChoDoiSoat', $receipt->maTaiKhoanQuy, null, null, $request->input('nguoiDuyet'));
