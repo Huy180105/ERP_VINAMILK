@@ -18,11 +18,12 @@ import {
 export default function QualityControl() {
   const [qcReports, setQcReports] = useState([]);
   const [compensations, setCompensations] = useState([]);
+  const [handovers, setHandovers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('qc'); // 'qc' | 'compensation'
+  const [activeTab, setActiveTab] = useState('qc'); // 'qc' | 'compensation' | 'handover'
 
   // QC Inspection Modal
   const [showQCModal, setShowQCModal] = useState(false);
@@ -71,15 +72,17 @@ export default function QualityControl() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [qcRes, compRes, ordRes, prodRes, staffRes] = await Promise.all([
+      const [qcRes, compRes, handoversRes, ordRes, prodRes, staffRes] = await Promise.all([
         ProductionAPI.getQCReports(),
         ProductionAPI.getCompensations(),
+        ProductionAPI.getHandovers(),
         ProductionAPI.getOrders(),
         MasterDataAPI.getProducts(),
         MasterDataAPI.getStaff()
       ]);
       setQcReports(qcRes.data.data || []);
       setCompensations(compRes.data.data || []);
+      setHandovers(handoversRes.data.data || []);
       setOrders(ordRes.data.data || []);
       setProducts(prodRes.data.data || []);
       setStaffList(staffRes.data.data || []);
@@ -172,6 +175,18 @@ export default function QualityControl() {
         </button>
 
         <button
+          onClick={() => setActiveTab('handover')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+            activeTab === 'handover'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Truck className="w-4 h-4" />
+          <span>Phiếu Yêu Cầu Xuất Kho ({handovers.length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('compensation')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
             activeTab === 'compensation'
@@ -234,17 +249,77 @@ export default function QualityControl() {
                         <td className="p-4 text-slate-700 font-medium">{qc.nhan_vien?.hoTen || qc.maNhanVien}</td>
                         <td className="p-4 text-slate-500 font-mono text-[11px]">{qc.ngayNghiemThu}</td>
                         <td className="p-4 text-center">
-                          <button
-                            onClick={() => openHandoverModal(qc)}
-                            className="bg-[#00249C] hover:bg-blue-900 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center space-x-1 mx-auto cursor-pointer shadow-xs transition"
-                          >
-                            <Truck className="w-3.5 h-3.5" />
-                            <span>Bàn Giao Kho</span>
-                          </button>
+                          {handovers.some(h => h.maPhieuNghiemThu === qc.maPhieuNghiemThu) ? (
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-100 flex items-center justify-center space-x-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Đã Yêu Cầu Xuất</span>
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => openHandoverModal(qc)}
+                              className="bg-[#00249C] hover:bg-blue-900 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center space-x-1 mx-auto cursor-pointer shadow-xs transition"
+                            >
+                              <Truck className="w-3.5 h-3.5" />
+                              <span>Bàn Giao Kho</span>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
                   })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Handovers */}
+      {activeTab === 'handover' && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200 tracking-wider">
+                <tr>
+                  <th className="p-4">Mã Phiếu YCX</th>
+                  <th className="p-4">Biên Bản QC</th>
+                  <th className="p-4">Người Yêu Cầu</th>
+                  <th className="p-4">Ngày Yêu Cầu</th>
+                  <th className="p-4">Chi Tiết Sản Phẩm</th>
+                  <th className="p-4">Ghi Chú</th>
+                  <th className="p-4 text-center">Trạng Thái</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr><td colSpan="7" className="p-8 text-center text-slate-400">Đang tải phiếu bàn giao...</td></tr>
+                ) : handovers.length === 0 ? (
+                  <tr><td colSpan="7" className="p-8 text-center text-slate-400">Chưa có phiếu yêu cầu xuất kho nào.</td></tr>
+                ) : (
+                  handovers.map((h) => (
+                    <tr key={h.maPhieuYCXSP} className="hover:bg-slate-50/80 transition">
+                      <td className="p-4 font-mono font-black text-blue-800">{h.maPhieuYCXSP}</td>
+                      <td className="p-4 font-mono font-bold text-slate-700">{h.maPhieuNghiemThu}</td>
+                      <td className="p-4 text-slate-700 font-medium">{h.nhan_vien?.hoTen || h.maNhanVien}</td>
+                      <td className="p-4 text-slate-500 font-mono text-[11px]">{h.ngayYeuCau}</td>
+                      <td className="p-4 space-y-1">
+                        {h.chi_tiets?.map((ct, idx) => (
+                          <div key={idx} className="bg-slate-50 p-2 rounded-lg font-mono text-[11px] text-slate-600 flex justify-between border border-slate-100">
+                            <span>{ct.san_pham?.tenSanPham || ct.maSanPham}</span>
+                            <span className="font-bold text-slate-800">SL: {ct.soLuong?.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </td>
+                      <td className="p-4 text-slate-500 max-w-[200px] truncate" title={h.ghiChu}>{h.ghiChu}</td>
+                      <td className="p-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          h.trangThai === 'Đã nhập kho' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {h.trangThai}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

@@ -159,6 +159,21 @@ class QualityControlController extends Controller
     }
 
     /**
+     * Lấy danh sách Phiếu Yêu Cầu Xuất Sản Phẩm (Bàn giao kho)
+     */
+    public function getHandovers(Request $request)
+    {
+        $handovers = PhieuYeuCauXuatSP::with(['chiTiets.sanPham', 'phieuNghiemThu', 'nhanVien'])
+            ->orderBy('ngayYeuCau', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $handovers
+        ]);
+    }
+
+    /**
      * Bàn giao thành phẩm Đạt sang Phân hệ Kho (PR-FR30, PR-BR12)
      * Lập Phiếu Yêu Cầu Xuất Sản Phẩm (PhieuYeuCauXuatSP) để Kho tiến hành nhập kho thành phẩm
      */

@@ -179,6 +179,7 @@ export const ProductionAPI = {
   getQCReports: (params) => productionApi.get('/qc-reports', { params }),
   createQCReport: (data) => productionApi.post('/qc-reports', data),
   getCompensations: (params) => productionApi.get('/compensations', { params }),
+  getHandovers: (params) => productionApi.get('/handovers', { params }),
   handoverToWarehouse: (data) => productionApi.post('/handover-warehouse', data),
 };
 

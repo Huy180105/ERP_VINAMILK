@@ -56,5 +56,6 @@ Route::prefix('production')->group(function () {
     Route::get('/qc-reports', [QualityControlController::class, 'getQCReports']);
     Route::post('/qc-reports', [QualityControlController::class, 'createQCReport']);
     Route::get('/compensations', [QualityControlController::class, 'getCompensationOrders']);
+    Route::get('/handovers', [QualityControlController::class, 'getHandovers']);
     Route::post('/handover-warehouse', [QualityControlController::class, 'handoverToWarehouse']);
 });
