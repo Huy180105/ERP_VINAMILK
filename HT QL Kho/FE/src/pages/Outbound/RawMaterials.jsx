@@ -6,6 +6,7 @@ import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function OutboundRawMaterials() {
   const [dispatches, setDispatches] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [availableLots, setAvailableLots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -30,8 +31,12 @@ export default function OutboundRawMaterials() {
   const fetchDispatches = async () => {
     setLoading(true);
     try {
-      const res = await OutboundAPI.getRawMaterialDispatches();
-      setDispatches(res.data.data || []);
+      const [dispRes, reqRes] = await Promise.all([
+        OutboundAPI.getRawMaterialDispatches(),
+        OutboundAPI.getPendingMaterialRequests()
+      ]);
+      setDispatches(dispRes.data.data || []);
+      setPendingRequests(reqRes.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,6 +51,27 @@ export default function OutboundRawMaterials() {
       maPhieuXuatNVL: autoCode,
       maTonKho: availableLots[0]?.maTonKho || '',
       ngayXuat: new Date().toISOString().split('T')[0],
+      maPhieuYeuCauNVL: '',
+    });
+    setShowModal(true);
+  };
+
+  const handleCreateFromRequest = (req) => {
+    const autoCode = generateAutoCode(dispatches, 'maPhieuXuatNVL', 'PXNVL', 3, true);
+    
+    // Tìm lô đầu tiên có mã nguyên vật liệu khớp với yêu cầu
+    const requestedMaterialCode = req.chi_tiets?.[0]?.maNVL;
+    const matchedLot = availableLots.find(l => l.maSanPham === requestedMaterialCode) || availableLots[0];
+
+    setFormData({
+      ...initialForm,
+      maPhieuXuatNVL: autoCode,
+      maXuong: req.maLenh ? `Xuất cho lệnh: ${req.maLenh}` : 'XSX01',
+      ngayXuat: new Date().toISOString().split('T')[0],
+      ghiChu: `Xuất kho theo phiếu yêu cầu ${req.maPhieuYCNVL}`,
+      maPhieuYeuCauNVL: req.maPhieuYCNVL,
+      maTonKho: matchedLot?.maTonKho || '',
+      soLuong: req.chi_tiets?.[0]?.soLuong || 100,
     });
     setShowModal(true);
   };
@@ -58,6 +84,7 @@ export default function OutboundRawMaterials() {
         maXuong: formData.maXuong,
         ngayXuat: formData.ngayXuat,
         ghiChu: formData.ghiChu,
+        maPhieuYeuCauNVL: formData.maPhieuYeuCauNVL,
         items: [{ maTonKho: formData.maTonKho, soLuong: Number(formData.soLuong) }]
       });
       setShowModal(false);
@@ -99,7 +126,70 @@ export default function OutboundRawMaterials() {
         </button>
       </div>
 
+      {/* Pending Material Requests */}
+      <div className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden mb-6">
+        <div className="bg-blue-50/50 p-4 border-b border-blue-100 flex items-center justify-between">
+          <h2 className="font-bold text-blue-900 flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span>Danh Sách Yêu Cầu NVL Từ Sản Xuất Chờ Cấp Phát</span>
+          </h2>
+          <span className="text-xs font-bold text-blue-800 bg-blue-100 px-2.5 py-1 rounded-full">
+            {pendingRequests.length} yêu cầu
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-white text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
+              <tr>
+                <th className="p-3">Mã Yêu Cầu</th>
+                <th className="p-3">Lệnh Sản Xuất</th>
+                <th className="p-3">Người Yêu Cầu</th>
+                <th className="p-3">Ngày Yêu Cầu</th>
+                <th className="p-3">Chi Tiết Cấp Phát</th>
+                <th className="p-3">Ghi Chú</th>
+                <th className="p-3 text-center">Hành Động</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pendingRequests.length === 0 ? (
+                <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không có yêu cầu NVL nào chờ xử lý.</td></tr>
+              ) : (
+                pendingRequests.map((req) => (
+                  <tr key={req.maPhieuYCNVL} className="hover:bg-blue-50/30 transition">
+                    <td className="p-3 font-mono font-bold text-blue-700">{req.maPhieuYCNVL}</td>
+                    <td className="p-3 font-semibold text-slate-700">{req.lenh_san_xuat?.maLenh} - {req.lenh_san_xuat?.tenLenh}</td>
+                    <td className="p-3 text-slate-700 font-medium">{req.nhan_vien?.hoTen || req.maNhanVien}</td>
+                    <td className="p-3 text-slate-500 font-mono text-[11px]">{req.ngayYeuCau}</td>
+                    <td className="p-3 space-y-1">
+                      {req.chi_tiets?.map((ct, idx) => (
+                        <div key={idx} className="bg-slate-50 p-2 rounded-lg font-mono text-[11px] text-slate-600 flex justify-between border border-slate-100">
+                          <span>{ct.nguyen_vat_lieu?.tenNVL || ct.maNVL}</span>
+                          <span className="font-bold text-slate-800">SL: {ct.soLuong?.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </td>
+                    <td className="p-3 text-slate-500">{req.ghiChu}</td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => handleCreateFromRequest(req)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Tạo Phiếu Xuất NVL</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-slate-50 p-4 border-b border-slate-200">
+          <h2 className="font-bold text-slate-800">Lịch Sử Xuất Kho Nguyên Vật Liệu</h2>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">

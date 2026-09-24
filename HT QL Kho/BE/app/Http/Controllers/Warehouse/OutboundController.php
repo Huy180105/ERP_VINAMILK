@@ -8,6 +8,7 @@ use App\Models\ChiTietPhieuXuatNVL;
 use App\Models\PhieuXuatSP;
 use App\Models\ChiTietPhieuXuatSP;
 use App\Models\TonKho;
+use App\Models\PhieuYeuCauNVL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +17,19 @@ class OutboundController extends Controller
     // =========================================================================
     // 1. XUẤT KHO NVL CẤP PHÁT CHO SẢN XUẤT (CF-FR30 đến CF-FR40)
     // =========================================================================
+
+    public function getPendingMaterialRequests()
+    {
+        $requests = PhieuYeuCauNVL::with(['chiTiets.nguyenVatLieu', 'nhanVien', 'lenhSanXuat'])
+            ->where('trangThai', 'Chưa xử lý')
+            ->orderBy('ngayYeuCau', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $requests,
+        ]);
+    }
 
     public function getRawMaterialDispatches(Request $request)
     {
@@ -70,6 +84,11 @@ class OutboundController extends Controller
                 'ghiChu'           => $validated['ghiChu'] ?? null,
             ]);
 
+            if (!empty($validated['maPhieuYeuCauNVL'])) {
+                PhieuYeuCauNVL::where('maPhieuYCNVL', $validated['maPhieuYeuCauNVL'])
+                    ->update(['trangThai' => 'Đang xử lý']);
+            }
+
             foreach ($validated['items'] as $item) {
                 ChiTietPhieuXuatNVL::create([
                     'maPhieuXuatNVL' => $dispatch->maPhieuXuatNVL,
@@ -108,6 +127,12 @@ class OutboundController extends Controller
             }
 
             $dispatch->update(['trangThai' => 'Hoàn thành']);
+
+            if ($dispatch->maPhieuYeuCauNVL) {
+                PhieuYeuCauNVL::where('maPhieuYCNVL', $dispatch->maPhieuYeuCauNVL)
+                    ->update(['trangThai' => 'Đã hoàn thành']);
+            }
+
             DB::commit();
 
             return response()->json([

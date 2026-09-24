@@ -11,6 +11,7 @@ use App\Http\Controllers\Warehouse\OutboundController;
 
 Route::prefix('warehouse/outbound')->group(function () {
     // Xuất kho NVL cấp phát cho Sản xuất (CF-FR30 -> CF-FR40)
+    Route::get('/raw-materials/pending-requests', [OutboundController::class, 'getPendingMaterialRequests']);
     Route::get('/raw-materials', [OutboundController::class, 'getRawMaterialDispatches']);
     Route::post('/raw-materials', [OutboundController::class, 'createRawMaterialDispatch']);
     Route::put('/raw-materials/{id}/complete', [OutboundController::class, 'completeRawMaterialDispatch']);

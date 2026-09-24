@@ -82,6 +82,7 @@ export const InboundAPI = {
 
 export const OutboundAPI = {
   getRawMaterialDispatches: (params) => api.get('/outbound/raw-materials', { params }),
+  getPendingMaterialRequests: (params) => api.get('/outbound/raw-materials/pending-requests', { params }),
   createRawMaterialDispatch: (data) => api.post('/outbound/raw-materials', data),
   completeRawMaterialDispatch: (id) => api.put(`/outbound/raw-materials/${id}/complete`),
   getProductDispatches: (params) => api.get('/outbound/products', { params }),
