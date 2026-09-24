@@ -265,6 +265,7 @@ export default function InboundProducts() {
       }
       setIsFormModalOpen(false);
       fetchReceipts();
+      fetchPendingHandovers();
     } catch (err) {
       setFormErrors([err.response?.data?.message || err.message]);
     }
@@ -313,67 +314,96 @@ export default function InboundProducts() {
         </button>
       </div>
 
-      {/* Pending Production Handovers */}
-      {pendingHandovers.length > 0 && (
-        <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-200 shadow-sm">
-          <div className="flex items-center space-x-2 mb-4">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
-            <h2 className="text-sm font-bold text-amber-900">Danh Sách Yêu Cầu Xuất Sản Phẩm Chờ Nhập Kho</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs bg-white rounded-xl overflow-hidden border border-amber-100">
-              <thead className="bg-amber-100/50 text-amber-800 font-semibold uppercase text-[10px]">
+      {/* Danh Sách Yêu Cầu Xuất SP Từ Sản Xuất Chờ Nhập Kho (Always Visible) */}
+      <div className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden mb-6">
+        <div className="bg-blue-50/50 p-4 border-b border-blue-100 flex items-center justify-between">
+          <h2 className="font-bold text-blue-900 flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span>Danh Sách Yêu Cầu Xuất SP Từ Sản Xuất Chờ Nhập Kho</span>
+          </h2>
+          <span className="text-xs font-bold text-blue-800 bg-blue-100 px-2.5 py-1 rounded-full">
+            {pendingHandovers.length} yêu cầu
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-white text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
+              <tr>
+                <th className="p-3">Mã Yêu Cầu</th>
+                <th className="p-3">Phiếu Nghiệm Thu / Lệnh SX</th>
+                <th className="p-3">Người Yêu Cầu</th>
+                <th className="p-3">Ngày Yêu Cầu</th>
+                <th className="p-3">Chi Tiết Sản Phẩm Bàn Giao</th>
+                <th className="p-3">Ghi Chú</th>
+                <th className="p-3 text-center">Hành Động</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pendingHandovers.length === 0 ? (
                 <tr>
-                  <th className="p-3">Mã Phiếu YCX</th>
-                  <th className="p-3">Người Yêu Cầu</th>
-                  <th className="p-3">Ngày Yêu Cầu</th>
-                  <th className="p-3">Nghiệm Thu</th>
-                  <th className="p-3">Chi Tiết Sản Phẩm</th>
-                  <th className="p-3 text-center">Hành Động</th>
+                  <td colSpan="7" className="p-6 text-center text-slate-400">
+                    Không có yêu cầu xuất sản phẩm nào chờ xử lý.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-amber-50">
-                {pendingHandovers.map(h => (
-                  <tr key={h.maPhieuYCXSP} className="hover:bg-amber-50/30 transition">
-                    <td className="p-3 font-mono font-bold text-amber-900">{h.maPhieuYCXSP}</td>
-                    <td className="p-3 font-medium text-slate-700">{h.nhan_vien?.hoTen || h.maNhanVien}</td>
-                    <td className="p-3 text-slate-600 font-mono">{h.ngayYeuCau}</td>
-                    <td className="p-3">
-                      {h.phieu_nghiem_thu ? (
-                        <span className="text-emerald-600 font-medium text-[11px] bg-emerald-50 px-2 py-1 rounded-lg">
-                          Đã NT ({h.phieu_nghiem_thu.ngayNghiemThu})
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[11px] italic">Chưa NT</span>
+              ) : (
+                pendingHandovers.map(h => (
+                  <tr key={h.maPhieuYCXSP} className="hover:bg-blue-50/30 transition">
+                    <td className="p-3 font-mono font-bold text-blue-700">{h.maPhieuYCXSP}</td>
+                    <td className="p-3 font-semibold text-slate-700">
+                      <div>{h.maPhieuNghiemThu}</div>
+                      {h.phieu_nghiem_thu && (
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          Lệnh: {h.phieu_nghiem_thu.maLenh} • NT: {h.phieu_nghiem_thu.ngayNghiemThu}
+                        </div>
                       )}
                     </td>
+                    <td className="p-3 text-slate-700 font-medium">{h.nhan_vien?.hoTen || h.maNhanVien}</td>
+                    <td className="p-3 text-slate-500 font-mono text-[11px]">{h.ngayYeuCau}</td>
                     <td className="p-3 space-y-1">
                       {h.chi_tiets?.map((ct, idx) => (
-                        <div key={idx} className="bg-slate-50 p-1.5 rounded-lg font-mono text-[10px] text-slate-600 flex justify-between border border-slate-100">
-                          <span>{ct.san_pham?.tenSanPham || ct.maSanPham}</span>
-                          <span className="font-bold text-slate-800">SL: {ct.soLuong?.toLocaleString()}</span>
+                        <div key={idx} className="bg-slate-50 p-2 rounded-lg font-mono text-[11px] text-slate-600 flex justify-between items-center border border-slate-100">
+                          <div>
+                            <span className="font-bold text-slate-800">{ct.san_pham?.tenSanPham || ct.maSanPham}</span>
+                            {(ct.ngaySanXuat || ct.hanSuDung) && (
+                              <span className="block text-[10px] text-slate-400">
+                                NSX: {ct.ngaySanXuat || '-'} • HSD: {ct.hanSuDung || '-'}
+                              </span>
+                            )}
+                          </div>
+                          <span className="font-bold text-blue-800 ml-3 shrink-0">
+                            SL: {ct.soLuong?.toLocaleString()}
+                          </span>
                         </div>
                       ))}
                     </td>
+                    <td className="p-3 text-slate-500 max-w-[200px]">{h.ghiChu || '-'}</td>
                     <td className="p-3 text-center">
                       <button
                         onClick={() => handleCreateFromHandover(h)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer mx-auto"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1 cursor-pointer"
+                        title="Mở biểu mẫu lập thủ công phiếu nhập kho cho yêu cầu này"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Tạo Phiếu Nhập</span>
                       </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      {/* Filter Tabs & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Section 2: Danh Sách Phiếu Nhập Kho Thành Phẩm */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <PackageCheck className="w-5 h-5 text-blue-600" />
+          <h3 className="text-base font-bold text-[#0B2341]">Lịch Sử Phiếu Nhập Kho Thành Phẩm</h3>
+        </div>
+
+        {/* Filter Tabs & Search Bar */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Từ chối'].map(status => (
             <button
@@ -533,6 +563,7 @@ export default function InboundProducts() {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
 
       {/* MODAL 1: THÊM / SỬA PHIẾU NHẬP */}
