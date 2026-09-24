@@ -41,7 +41,7 @@ class ProductController extends Controller
     public function createProduct(Request $request)
     {
         $validated = $request->validate([
-            'maSanPham'  => 'required|string|unique:SanPham,maSanPham|max:10',
+            'maSanPham'  => 'required|string|unique:SanPham,maSanPham|max:20',
             'tenSanPham' => 'required|string|max:255',
             'donViTinh'  => 'nullable|string|max:50',
             'hanSuDung'  => 'nullable|string|max:50',
