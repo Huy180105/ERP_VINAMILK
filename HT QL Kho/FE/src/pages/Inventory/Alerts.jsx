@@ -96,7 +96,7 @@ export default function Alerts() {
     }
 
     const defaultSP = prefillItem?.maSanPham || products[0]?.maSanPham || 'SP001';
-    const defaultKho = prefillItem?.maKho || warehouses[0]?.maKho || 'KHO-TONG';
+    const defaultKho = prefillItem?.maKho || warehouses[0]?.maKho || 'K004';
     const defaultQty = prefillItem ? Math.max(minQtyThreshold * 2 - (prefillItem.soLuongTonHienTai || 0), 500) : 1000;
 
     setFormData({
@@ -250,11 +250,11 @@ export default function Alerts() {
                     <td className="p-3 text-center">
                       <button
                         onClick={() => handleOpenModal(lot)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-2.5 py-1 rounded text-[11px] inline-flex items-center space-x-1 cursor-pointer shadow-sm transition"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] inline-flex items-center space-x-1.5 cursor-pointer shadow-sm transition hover:scale-105 active:scale-95"
                         title="Tạo đề nghị bổ sung sản phẩm gửi sang Sản Xuất (CF-FR60)"
                       >
-                        <Send className="w-3 h-3" />
-                        <span>Đề Nghị</span>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Đề Nghị SX</span>
                       </button>
                     </td>
                   </tr>
@@ -358,6 +358,10 @@ export default function Alerts() {
               <Send className="w-4 h-4 text-blue-600" />
               <span>Lập Đề Nghị Bổ Sung Sản Phẩm Sang Sản Xuất (CF-FR60)</span>
             </h3>
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-2.5 rounded-lg text-[11px] flex items-center space-x-2">
+              <Send className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>Đề nghị này sẽ tự động chuyển sang phân hệ <strong>Quản Lý Sản Xuất</strong> để Quản đốc xưởng (Anh Long) tiếp nhận và duyệt Lệnh sản xuất.</span>
+            </div>
             <form onSubmit={handleCreateReplenishment} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>

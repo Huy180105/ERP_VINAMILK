@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { MasterDataAPI } from '../../services/api';
-import { Building, Plus, Search, Trash2, Edit3, MapPin, Layers, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { MasterDataAPI, InventoryAPI } from '../../services/api';
+import { 
+  Building, Plus, Search, Trash2, Edit3, MapPin, Layers, 
+  CheckCircle2, AlertCircle, X, Box, Thermometer, ShieldCheck, RefreshCw
+} from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Warehouses() {
+  const [activeTab, setActiveTab] = useState('warehouses'); // 'warehouses' | 'locations'
   const [warehouses, setWarehouses] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const [searchKey, setSearchKey] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [selectedWarehouseFilter, setSelectedWarehouseFilter] = useState('');
 
   // Modals
   const [showModal, setShowModal] = useState(false);
@@ -24,6 +31,7 @@ export default function Warehouses() {
 
   useEffect(() => {
     fetchWarehouses();
+    fetchLocations();
   }, []);
 
   const fetchWarehouses = async () => {
@@ -35,6 +43,25 @@ export default function Warehouses() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const [prodRes, matRes] = await Promise.all([
+        InventoryAPI.getProductLocations(),
+        InventoryAPI.getMaterialLocations()
+      ]);
+      const combined = [
+        ...(prodRes.data.data || []).map(item => ({ ...item, category: 'Thành phẩm' })),
+        ...(matRes.data.data || []).map(item => ({ ...item, category: 'Nguyên vật liệu' }))
+      ];
+      setLocations(combined);
+    } catch (err) {
+      console.error('Lỗi tải vị trí kho:', err);
+    } finally {
+      setLoadingLocations(false);
     }
   };
 
@@ -100,6 +127,32 @@ export default function Warehouses() {
     }
   };
 
+  // Client-side instant filter for Warehouses
+  const filteredWarehouses = warehouses.filter(w => {
+    const matchType = !selectedType || w.loaiKho === selectedType;
+    const kw = searchKey.toLowerCase().trim();
+    const matchKey = !kw || 
+      w.maKho?.toLowerCase().includes(kw) || 
+      w.tenKho?.toLowerCase().includes(kw) || 
+      w.diaChi?.toLowerCase().includes(kw);
+    return matchType && matchKey;
+  });
+
+  // Client-side instant filter for Locations
+  const filteredLocations = locations.filter(loc => {
+    const matchWh = !selectedWarehouseFilter || loc.maKho === selectedWarehouseFilter;
+    const kw = searchKey.toLowerCase().trim();
+    const tonKho = loc.tonKho || {};
+    const itemName = tonKho.san_pham?.tenSanPham || tonKho.nguyenVatLieu?.tenNVL || tonKho.tenTonKho || '';
+    const matchKey = !kw ||
+      loc.maTonKho?.toLowerCase().includes(kw) ||
+      loc.tenKho?.toLowerCase().includes(kw) ||
+      loc.maKho?.toLowerCase().includes(kw) ||
+      itemName.toLowerCase().includes(kw) ||
+      loc.ghiChu?.toLowerCase().includes(kw);
+    return matchWh && matchKey;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -112,15 +165,52 @@ export default function Warehouses() {
             <h1 className="text-xl font-bold text-[#0B2341]">Kho & Vị Trí Lưu Trữ</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1 ml-10">
-            Quản lý các khu vực lưu trữ nguyên vật liệu và thành phẩm.
+            Quản lý các khu vực lưu trữ nguyên vật liệu và thành phẩm (K001 - K004 & Sơ đồ vị trí kệ).
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          {activeTab === 'warehouses' && (
+            <button
+              onClick={handleOpenAddModal}
+              className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow transition flex items-center justify-center space-x-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Thêm Khu Vực Kho</span>
+            </button>
+          )}
+          <button
+            onClick={() => { fetchWarehouses(); fetchLocations(); }}
+            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition cursor-pointer"
+            title="Làm mới dữ liệu"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading || loadingLocations ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs Navigation */}
+      <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-4 pt-2 rounded-t-2xl shadow-xs">
         <button
-          onClick={handleOpenAddModal}
-          className="bg-[#0B2341] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow transition flex items-center justify-center space-x-2 cursor-pointer"
+          onClick={() => setActiveTab('warehouses')}
+          className={`px-4 py-3 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+            activeTab === 'warehouses'
+              ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
         >
-          <Plus className="w-4 h-4" />
-          <span>Thêm Khu Vực Kho</span>
+          <Building className="w-4 h-4" />
+          <span>Danh Mục Khu Vực Kho ({warehouses.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('locations')}
+          className={`px-4 py-3 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+            activeTab === 'locations'
+              ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Vị Trí & Sơ Đồ Lưu Trữ Chi Tiết ({locations.length} lô)</span>
         </button>
       </div>
 
@@ -129,94 +219,190 @@ export default function Warehouses() {
         <div className="flex-1 relative">
           <input
             type="text"
-            placeholder="Tìm kiếm theo mã kho (K001...), tên khu vực kho..."
+            placeholder={activeTab === 'warehouses' 
+              ? "Tìm kiếm theo mã kho (K001...), tên khu vực, địa chỉ..." 
+              : "Tìm kiếm theo mã lô, tên sản phẩm/NVL, kho lưu trữ..."}
             value={searchKey}
             onChange={(e) => setSearchKey(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg pl-9 pr-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
         </div>
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Tất cả Loại Kho</option>
-          <option value="Kho thành phẩm">Kho thành phẩm</option>
-          <option value="Kho NVL">Kho NVL</option>
-          <option value="Kho trung chuyển">Kho trung chuyển</option>
-          <option value="Kho lạnh">Kho lạnh</option>
-        </select>
+
+        {activeTab === 'warehouses' ? (
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Tất cả Loại Kho</option>
+            <option value="Kho thành phẩm">Kho thành phẩm</option>
+            <option value="Kho NVL">Kho NVL</option>
+            <option value="Kho trung chuyển">Kho trung chuyển</option>
+            <option value="Kho lạnh">Kho lạnh</option>
+          </select>
+        ) : (
+          <select
+            value={selectedWarehouseFilter}
+            onChange={(e) => setSelectedWarehouseFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Tất cả kho lưu trữ</option>
+            {warehouses.map(w => (
+              <option key={w.maKho} value={w.maKho}>{w.maKho} - {w.tenKho}</option>
+            ))}
+          </select>
+        )}
+
         <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition cursor-pointer">
           Lọc Dữ Liệu
         </button>
       </form>
 
-      {/* Warehouses Table List */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
-              <tr>
-                <th className="p-3.5">Mã Kho</th>
-                <th className="p-3.5">Tên Khu Vực / Vị Trí Lưu Trữ</th>
-                <th className="p-3.5">Phân Loại Kho</th>
-                <th className="p-3.5">Địa Chỉ / Vị Trí</th>
-                <th className="p-3.5 text-center">Số Lô Đang Lưu Trữ</th>
-                <th className="p-3.5 text-center">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan="6" className="p-6 text-center text-slate-400">Đang tải danh mục khu vực kho...</td></tr>
-              ) : warehouses.length === 0 ? (
-                <tr><td colSpan="6" className="p-6 text-center text-slate-400">Không tìm thấy khu vực kho nào.</td></tr>
-              ) : (
-                warehouses.map((w) => (
-                  <tr key={w.maKho} className="hover:bg-blue-50/20 transition">
-                    <td className="p-3.5 font-mono font-bold text-[#0B2341]">{w.maKho}</td>
-                    <td className="p-3.5 font-bold text-slate-800">{w.tenKho}</td>
-                    <td className="p-3.5">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                        w.loaiKho === 'Kho NVL' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                        w.loaiKho === 'Kho lạnh' ? 'bg-cyan-100 text-cyan-800 border border-cyan-200' :
-                        'bg-blue-100 text-blue-800 border border-blue-200'
-                      }`}>
-                        {w.loaiKho || 'Kho thành phẩm'}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-slate-600 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>{w.diaChi || 'Trụ sở chính'}</span>
-                    </td>
-                    <td className="p-3.5 text-center">
-                      <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded-md">
-                        {w.ton_khos_count || 0} lô
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-center space-x-2">
-                      <button
-                        onClick={() => handleOpenEditModal(w)}
-                        title="Sửa khu vực kho (CF-FR11)"
-                        className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(w.maKho)}
-                        title="Xóa khu vực kho (CF-FR12)"
-                        className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Tab 1: Warehouses Table List */}
+      {activeTab === 'warehouses' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
+                <tr>
+                  <th className="p-3.5">Mã Kho</th>
+                  <th className="p-3.5">Tên Khu Vực / Vị Trí Lưu Trữ</th>
+                  <th className="p-3.5">Phân Loại Kho</th>
+                  <th className="p-3.5">Địa Chỉ / Vị Trí</th>
+                  <th className="p-3.5 text-center">Số Lô Đang Lưu Trữ</th>
+                  <th className="p-3.5 text-center">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr><td colSpan="6" className="p-6 text-center text-slate-400">Đang tải danh mục khu vực kho...</td></tr>
+                ) : filteredWarehouses.length === 0 ? (
+                  <tr><td colSpan="6" className="p-6 text-center text-slate-400">Không tìm thấy khu vực kho nào phù hợp.</td></tr>
+                ) : (
+                  filteredWarehouses.map((w) => (
+                    <tr key={w.maKho} className="hover:bg-blue-50/20 transition">
+                      <td className="p-3.5 font-mono font-bold text-[#0B2341]">{w.maKho}</td>
+                      <td className="p-3.5 font-bold text-slate-800">{w.tenKho}</td>
+                      <td className="p-3.5">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          w.loaiKho === 'Kho NVL' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                          w.loaiKho === 'Kho lạnh' ? 'bg-cyan-100 text-cyan-800 border border-cyan-200' :
+                          'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          {w.loaiKho || 'Kho thành phẩm'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-600 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{w.diaChi || 'Trụ sở chính'}</span>
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded-md">
+                          {w.ton_khos_count || 0} lô
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-center space-x-2">
+                        <button
+                          onClick={() => handleOpenEditModal(w)}
+                          title="Sửa khu vực kho (CF-FR11)"
+                          className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(w.maKho)}
+                          title="Xóa khu vực kho (CF-FR12)"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Tab 2: Storage Locations & Bins List */}
+      {activeTab === 'locations' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
+                <tr>
+                  <th className="p-3.5">Mã Vị Trí / Lô</th>
+                  <th className="p-3.5">Mặt Hàng Lưu Trữ</th>
+                  <th className="p-3.5">Khu Vực Kho</th>
+                  <th className="p-3.5 text-right">Số Lượng Tồn</th>
+                  <th className="p-3.5">Thời Gian HSD</th>
+                  <th className="p-3.5">Điều Kiện Bảo Quản</th>
+                  <th className="p-3.5 text-center">Trạng Thái QC</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loadingLocations ? (
+                  <tr><td colSpan="7" className="p-6 text-center text-slate-400">Đang quét sơ đồ vị trí lưu trữ...</td></tr>
+                ) : filteredLocations.length === 0 ? (
+                  <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không tìm thấy vị trí lưu trữ nào phù hợp.</td></tr>
+                ) : (
+                  filteredLocations.map((loc, idx) => {
+                    const tk = loc.tonKho || {};
+                    const itemName = tk.san_pham?.tenSanPham || tk.nguyenVatLieu?.tenNVL || tk.tenTonKho || 'Hàng hóa';
+                    const unit = tk.san_pham?.donViTinh || tk.nguyenVatLieu?.donVi || 'Đơn vị';
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50 transition">
+                        <td className="p-3.5">
+                          <span className="font-mono font-bold text-blue-900">{loc.maTonKho}</span>
+                          <span className="block text-[10px] text-slate-400 font-mono mt-0.5">
+                            Loại: {loc.category}
+                          </span>
+                        </td>
+                        <td className="p-3.5">
+                          <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                            <Box className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span>{itemName}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            Mã: {tk.maSanPham || tk.maNVL}
+                          </div>
+                        </td>
+                        <td className="p-3.5">
+                          <div className="font-semibold text-slate-700">{loc.tenKho}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">Mã kho: {loc.maKho}</div>
+                        </td>
+                        <td className="p-3.5 text-right font-mono font-bold text-slate-900">
+                          <span className="text-sm">{(tk.soLuongTonHienTai || 0).toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-500 font-normal ml-1">{unit}</span>
+                        </td>
+                        <td className="p-3.5 font-mono text-[11px] text-slate-600">
+                          <div>NSX: {tk.ngaySanXuat || '-'}</div>
+                          <div className="text-emerald-700 font-semibold">HSD: {tk.hanSuDung || '-'}</div>
+                        </td>
+                        <td className="p-3.5 max-w-xs text-slate-600 text-[11px]">
+                          <div className="flex items-center gap-1 text-slate-700">
+                            <Thermometer className="w-3 h-3 text-cyan-600 shrink-0" />
+                            <span>{loc.ghiChu || 'Nhiệt độ phòng tiêu chuẩn'}</span>
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>Đạt</span>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit Modal (CF-FR10, CF-FR11) */}
       {showModal && (
