@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { InventoryAPI } from '../../services/api';
 import { Clock, Search } from 'lucide-react';
 import FefoBadge from '../../components/FefoBadge';
+import Pagination from '../../components/Pagination';
 
 export default function InventoryLots() {
   const [lots, setLots] = useState([]);
@@ -29,6 +30,19 @@ export default function InventoryLots() {
     e.preventDefault();
     fetchLots();
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [typeFilter, searchKey, lots]);
+
+  const totalPages = Math.ceil(lots.length / pageSize) || 1;
+  const paginatedLots = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return lots.slice(start, start + pageSize);
+  }, [lots, currentPage, pageSize]);
 
   return (
     <div className="space-y-6">
@@ -91,7 +105,7 @@ export default function InventoryLots() {
               ) : lots.length === 0 ? (
                 <tr><td colSpan="9" className="p-4 text-center text-slate-400">Không có lô tồn kho nào.</td></tr>
               ) : (
-                lots.map((l) => {
+                paginatedLots.map((l) => {
                   const daysLeft = Math.ceil((new Date(l.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
                   const itemName = l.san_pham?.tenSanPham || l.sanPham?.tenSanPham || l.nguyen_vat_lieu?.tenNVL || l.nguyenVatLieu?.tenNVL || '-';
                   const rawQ = String(l.trangThaiChatLuong || '').trim().toLowerCase();
@@ -131,6 +145,16 @@ export default function InventoryLots() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-slate-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={lots.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
     </div>

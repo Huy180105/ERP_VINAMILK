@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { InventoryAPI, MasterDataAPI } from '../../services/api';
 import { AlertTriangle, Clock, Plus, Search, Send, CheckCircle2, RefreshCw } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
-export default function Alerts() {
+export default function Alerts({ defaultView = 'alerts' }) {
+  const [viewMode, setViewMode] = useState(defaultView); // 'alerts' | 'replenishments'
   const [activeTab, setActiveTab] = useState('low-stock'); // 'low-stock' or 'near-expiry'
   const [daysThreshold, setDaysThreshold] = useState(30);
   const [minQtyThreshold, setMinQtyThreshold] = useState(500);
@@ -21,6 +23,33 @@ export default function Alerts() {
   const [searchReplenishment, setSearchReplenishment] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
+  // Pagination for Alerts
+  const [alertPage, setAlertPage] = useState(1);
+  const [alertPageSize, setAlertPageSize] = useState(10);
+  const currentAlerts = activeTab === 'low-stock' ? lowStockAlerts : nearExpiryAlerts;
+  const totalAlertPages = Math.ceil(currentAlerts.length / alertPageSize) || 1;
+  const paginatedAlerts = useMemo(() => {
+    const start = (alertPage - 1) * alertPageSize;
+    return currentAlerts.slice(start, start + alertPageSize);
+  }, [currentAlerts, alertPage, alertPageSize]);
+
+  useEffect(() => {
+    setAlertPage(1);
+  }, [activeTab, daysThreshold, minQtyThreshold]);
+
+  // Pagination for Replenishments
+  const [repPage, setRepPage] = useState(1);
+  const [repPageSize, setRepPageSize] = useState(10);
+  const totalRepPages = Math.ceil(replenishments.length / repPageSize) || 1;
+  const paginatedReplenishments = useMemo(() => {
+    const start = (repPage - 1) * repPageSize;
+    return replenishments.slice(start, start + repPageSize);
+  }, [replenishments, repPage, repPageSize]);
+
+  useEffect(() => {
+    setRepPage(1);
+  }, [searchReplenishment, statusFilter]);
+
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,6 +60,10 @@ export default function Alerts() {
     ngayCanHang: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     ghiChu: 'Tồn kho xuống dưới mức tối thiểu, đề nghị xưởng sản xuất bổ sung khẩn cấp.',
   });
+
+  useEffect(() => {
+    setViewMode(defaultView);
+  }, [defaultView]);
 
   useEffect(() => {
     fetchAlerts();
@@ -131,10 +164,10 @@ export default function Alerts() {
         <div>
           <h1 className="text-xl font-bold text-[#0B2341] flex items-center space-x-2">
             <AlertTriangle className="w-6 h-6 text-amber-500" />
-            <span>Cảnh Báo Kho & Đề Nghị Bổ Sung</span>
+            <span>Cảnh Báo Kho & Quản Lý Đề Nghị Bổ Sung</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Theo dõi tồn kho giảm dưới mức tối thiểu và gửi yêu cầu bổ sung sang xưởng sản xuất (CF-FR53 - CF-FR61)
+            Theo dõi tồn kho giảm dưới mức tối thiểu và lập đề nghị sản xuất bổ sung (CF-FR56, CF-FR60, CF-FR61)
           </p>
         </div>
         <button
@@ -146,209 +179,354 @@ export default function Alerts() {
         </button>
       </div>
 
-      {/* Threshold Filter Bar */}
-      <form onSubmit={handleApplyThresholds} className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-md border border-slate-200 shadow-sm text-xs">
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Clock className="w-4 h-4 text-slate-400" />
-          <span className="text-slate-600 font-semibold whitespace-nowrap">Số ngày HSD:</span>
-          <input
-            type="number"
-            min="1"
-            max="365"
-            value={daysThreshold}
-            onChange={(e) => setDaysThreshold(Number(e.target.value))}
-            className="w-20 bg-slate-50 border border-slate-200 rounded p-1.5 font-bold text-center text-slate-800"
-          />
-          <span className="text-slate-400">ngày</span>
-        </div>
-
-        <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
-
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <AlertTriangle className="w-4 h-4 text-amber-500" />
-          <span className="text-slate-600 font-semibold whitespace-nowrap">Mức tồn tối thiểu:</span>
-          <input
-            type="number"
-            min="1"
-            value={minQtyThreshold}
-            onChange={(e) => setMinQtyThreshold(Number(e.target.value))}
-            className="w-24 bg-slate-50 border border-slate-200 rounded p-1.5 font-bold text-center text-slate-800"
-          />
-          <span className="text-slate-400">đơn vị</span>
-        </div>
+      {/* Main Tabs Switcher */}
+      <div className="flex border-b border-slate-200 bg-white px-3 pt-2 rounded-t-lg gap-2 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setViewMode('alerts')}
+          className={`pb-3 px-4 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+            viewMode === 'alerts'
+              ? 'border-amber-600 text-amber-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          <span>Cảnh Báo Tồn Kho & Cận Hạn (CF-FR56)</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 font-bold">
+            {lowStockAlerts.length + nearExpiryAlerts.length}
+          </span>
+        </button>
 
         <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-1.5 rounded transition cursor-pointer ml-auto"
+          type="button"
+          onClick={() => setViewMode('replenishments')}
+          className={`pb-3 px-4 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+            viewMode === 'replenishments'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
         >
-          Áp Dụng
+          <Send className="w-4 h-4" />
+          <span>Quản Lý Đề Nghị Bổ Sung Sản Phẩm (CF-FR60, CF-FR61)</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
+            {replenishments.length}
+          </span>
         </button>
-      </form>
-
-      {/* Alert Section with Tabs */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex border-b border-slate-200 bg-slate-50">
-          <button
-            onClick={() => setActiveTab('low-stock')}
-            className={`px-5 py-3 text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
-              activeTab === 'low-stock'
-                ? 'border-b-2 border-rose-600 text-rose-600 bg-white'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>Dưới Mức Tối Thiểu ({lowStockAlerts.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('near-expiry')}
-            className={`px-5 py-3 text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
-              activeTab === 'near-expiry'
-                ? 'border-b-2 border-amber-500 text-amber-600 bg-white'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>Sắp Hết Hạn ({nearExpiryAlerts.length})</span>
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
-              <tr>
-                <th className="p-3">Mã Lô</th>
-                <th className="p-3">Tên Sản Phẩm / Lô Hàng</th>
-                <th className="p-3">Vị Trí Lưu Kho</th>
-                <th className="p-3 text-center">Hạn Sử Dụng</th>
-                <th className="p-3 text-right">Tồn Hiện Tại</th>
-                <th className="p-3 text-center">Trạng Thái</th>
-                <th className="p-3 text-center">Hành Động</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loadingAlerts ? (
-                <tr><td colSpan="7" className="p-4 text-center text-slate-400">Đang quét dữ liệu cảnh báo...</td></tr>
-              ) : (activeTab === 'low-stock' ? lowStockAlerts : nearExpiryAlerts).length === 0 ? (
-                <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không có cảnh báo nào trong điều kiện này.</td></tr>
-              ) : (
-                (activeTab === 'low-stock' ? lowStockAlerts : nearExpiryAlerts).map((lot) => (
-                  <tr key={lot.maTonKho} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-blue-900">{lot.maTonKho}</td>
-                    <td className="p-3 font-semibold text-slate-800">{lot.tenTonKho || lot.sanPham?.tenSanPham || lot.nguyenVatLieu?.tenNVL}</td>
-                    <td className="p-3 text-slate-600">{lot.kho?.tenKho || lot.maKho || 'Kho Tổng'}</td>
-                    <td className="p-3 text-center font-mono text-slate-600">{lot.hanSuDung}</td>
-                    <td className="p-3 text-right font-bold text-rose-600">
-                      {lot.soLuongTonHienTai?.toLocaleString()} {lot.sanPham?.donViTinh || lot.nguyenVatLieu?.donVi || 'hộp'}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        lot.soLuongTonHienTai <= 100 
-                          ? 'bg-rose-100 text-rose-700' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {lot.soLuongTonHienTai === 0 ? 'Hết hàng' : 'Tồn thấp'}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center">
-                      <button
-                        onClick={() => handleOpenModal(lot)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] inline-flex items-center space-x-1.5 cursor-pointer shadow-sm transition hover:scale-105 active:scale-95"
-                        title="Tạo đề nghị bổ sung sản phẩm gửi sang Sản Xuất (CF-FR60)"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Đề Nghị SX</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
 
-      {/* Replenishments List Section (CF-FR61) */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-        <div className="bg-slate-50 p-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="font-bold text-slate-800 text-sm">Đề Nghị Bổ Sung Đã Gửi Sang Sản Xuất (CF-FR61)</h2>
-            <p className="text-[11px] text-slate-500">Tra cứu danh sách đề nghị đã gửi và trạng thái tiếp nhận từ nhà máy</p>
-          </div>
-          <form onSubmit={handleSearchReplenishments} className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
+      {/* MODE 1: CẢNH BÁO TỒN KHO & CẬN HẠN (CF-FR56) */}
+      {viewMode === 'alerts' && (
+        <div className="space-y-6">
+          {/* Threshold Filter Bar */}
+          <form onSubmit={handleApplyThresholds} className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-md border border-slate-200 shadow-sm text-xs">
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <Clock className="w-4 h-4 text-slate-400" />
+              <span className="text-slate-600 font-semibold whitespace-nowrap">Số ngày HSD:</span>
               <input
-                type="text"
-                placeholder="Tìm kiếm theo mã, sản phẩm..."
-                value={searchReplenishment}
-                onChange={(e) => setSearchReplenishment(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-xs rounded-lg pl-8 pr-3 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="number"
+                min="1"
+                max="365"
+                value={daysThreshold}
+                onChange={(e) => setDaysThreshold(Number(e.target.value))}
+                className="w-20 bg-slate-50 border border-slate-200 rounded p-1.5 font-bold text-center text-slate-800"
               />
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+              <span className="text-slate-400">ngày</span>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="ChoDuyet">Chờ tiếp nhận</option>
-              <option value="DaTiepNhan">Đã tiếp nhận</option>
-              <option value="HoanThanh">Đã nhập kho</option>
-            </select>
+
+            <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
+
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <span className="text-slate-600 font-semibold whitespace-nowrap">Mức tồn tối thiểu:</span>
+              <input
+                type="number"
+                min="1"
+                value={minQtyThreshold}
+                onChange={(e) => setMinQtyThreshold(Number(e.target.value))}
+                className="w-24 bg-slate-50 border border-slate-200 rounded p-1.5 font-bold text-center text-slate-800"
+              />
+              <span className="text-slate-400">đơn vị</span>
+            </div>
+
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition cursor-pointer"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-1.5 rounded transition cursor-pointer ml-auto"
             >
-              Lọc
+              Áp Dụng
             </button>
           </form>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-white text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
-              <tr>
-                <th className="p-3">Mã Đề Nghị</th>
-                <th className="p-3">Sản Phẩm</th>
-                <th className="p-3">Kho Tiếp Nhận</th>
-                <th className="p-3 text-right">Số Lượng Đề Nghị</th>
-                <th className="p-3 text-center">Ngày Cần Hàng</th>
-                <th className="p-3 text-center">Ngày Gửi</th>
-                <th className="p-3 text-center">Trạng Thái</th>
-                <th className="p-3">Ghi Chú</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loadingReplenishments ? (
-                <tr><td colSpan="8" className="p-4 text-center text-slate-400">Đang tải danh sách đề nghị...</td></tr>
-              ) : replenishments.length === 0 ? (
-                <tr><td colSpan="8" className="p-6 text-center text-slate-400">Chưa có đề nghị bổ sung nào được gửi.</td></tr>
-              ) : (
-                replenishments.map((r) => (
-                  <tr key={r.maDeNghi} className="hover:bg-slate-50 transition">
-                    <td className="p-3 font-mono font-bold text-blue-700">{r.maDeNghi}</td>
-                    <td className="p-3 font-semibold text-slate-800">{r.san_pham?.tenSanPham || r.maSanPham}</td>
-                    <td className="p-3 text-slate-600">{r.kho?.tenKho || r.maKho}</td>
-                    <td className="p-3 text-right font-bold text-blue-900">{r.soLuong?.toLocaleString()}</td>
-                    <td className="p-3 text-center font-mono text-slate-600">{r.ngayCanHang}</td>
-                    <td className="p-3 text-center font-mono text-[11px] text-slate-500">{r.ngayDeNghi?.slice(0, 10)}</td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        r.trangThai === 'HoanThanh' 
-                          ? 'bg-emerald-100 text-emerald-800' 
-                          : r.trangThai === 'DaTiepNhan' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {r.trangThai === 'HoanThanh' ? 'Đã nhập kho' : r.trangThai === 'DaTiepNhan' ? 'Đã tiếp nhận' : 'Chờ tiếp nhận'}
-                      </span>
-                    </td>
-                    <td className="p-3 text-slate-500 max-w-xs truncate">{r.ghiChu}</td>
+          {/* Alert Section with Tabs */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="flex border-b border-slate-200 bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setActiveTab('low-stock')}
+                className={`px-5 py-3 text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+                  activeTab === 'low-stock'
+                    ? 'border-b-2 border-rose-600 text-rose-600 bg-white'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>Dưới Mức Tối Thiểu ({lowStockAlerts.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('near-expiry')}
+                className={`px-5 py-3 text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+                  activeTab === 'near-expiry'
+                    ? 'border-b-2 border-amber-500 text-amber-600 bg-white'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>Sắp Hết Hạn ({nearExpiryAlerts.length})</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th className="p-3">Mã Lô</th>
+                    <th className="p-3">Tên Sản Phẩm / Lô Hàng</th>
+                    <th className="p-3">Vị Trí Lưu Kho</th>
+                    <th className="p-3 text-center">Hạn Sử Dụng</th>
+                    <th className="p-3 text-right">Tồn Hiện Tại</th>
+                    <th className="p-3 text-center">Trạng Thái</th>
+                    <th className="p-3 text-center">Hành Động</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {loadingAlerts ? (
+                    <tr><td colSpan="7" className="p-4 text-center text-slate-400">Đang quét dữ liệu cảnh báo...</td></tr>
+                  ) : currentAlerts.length === 0 ? (
+                    <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không có cảnh báo nào trong điều kiện này.</td></tr>
+                  ) : (
+                    paginatedAlerts.map((lot) => (
+                      <tr key={lot.maTonKho} className="hover:bg-slate-50 transition">
+                        <td className="p-3 font-mono font-bold text-blue-900">{lot.maTonKho}</td>
+                        <td className="p-3 font-semibold text-slate-800">{lot.tenTonKho || lot.sanPham?.tenSanPham || lot.nguyenVatLieu?.tenNVL}</td>
+                        <td className="p-3 text-slate-600">{lot.kho?.tenKho || lot.maKho || 'Kho Tổng'}</td>
+                        <td className="p-3 text-center font-mono text-slate-600">{lot.hanSuDung}</td>
+                        <td className="p-3 text-right font-bold text-rose-600">
+                          {lot.soLuongTonHienTai?.toLocaleString()} {lot.sanPham?.donViTinh || lot.nguyenVatLieu?.donVi || 'hộp'}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            lot.soLuongTonHienTai <= 100 
+                              ? 'bg-rose-100 text-rose-700' 
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {lot.soLuongTonHienTai === 0 ? 'Hết hàng' : 'Tồn thấp'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModal(lot)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] inline-flex items-center space-x-1.5 cursor-pointer shadow-sm transition hover:scale-105 active:scale-95"
+                            title="Tạo đề nghị bổ sung sản phẩm gửi sang Sản Xuất (CF-FR60)"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Đề Nghị SX</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={alertPage}
+              totalPages={totalAlertPages}
+              totalItems={currentAlerts.length}
+              pageSize={alertPageSize}
+              onPageChange={setAlertPage}
+              onPageSizeChange={setAlertPageSize}
+            />
+          </div>
+
+          {/* Quick link banner to CF-FR61 */}
+          <div className="bg-blue-50/80 border border-blue-200 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-3">
+              <span className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                <Send className="w-5 h-5" />
+              </span>
+              <div>
+                <p className="text-xs font-bold text-blue-900">
+                  Đã ghi nhận {replenishments.length} đề nghị bổ sung sản phẩm gửi sang nhà máy sản xuất (CF-FR60, CF-FR61)
+                </p>
+                <p className="text-[11px] text-blue-700">
+                  Xem chi tiết tiến độ tiếp nhận, duyệt Lệnh sản xuất và giao thành phẩm vào kho
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setViewMode('replenishments')}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-xs cursor-pointer whitespace-nowrap"
+            >
+              Mở Danh Sách Đề Nghị Bổ Sung (CF-FR61) →
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* MODE 2: QUẢN LÝ ĐỀ NGHỊ BỔ SUNG SẢN PHẨM (CF-FR60, CF-FR61) */}
+      {viewMode === 'replenishments' && (
+        <div className="space-y-6">
+          {/* 4 Summary Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase">Tổng Đề Nghị Đã Gửi</p>
+                <p className="text-xl font-black text-[#0B2341] mt-1">{replenishments.length}</p>
+              </div>
+              <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <Send className="w-5 h-5" />
+              </span>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-amber-700 uppercase">Chờ Tiếp Nhận</p>
+                <p className="text-xl font-black text-amber-800 mt-1">
+                  {replenishments.filter(r => r.trangThai === 'ChoDuyet').length}
+                </p>
+              </div>
+              <span className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                <Clock className="w-5 h-5" />
+              </span>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-blue-700 uppercase">Đã Tiếp Nhận / Duyệt</p>
+                <p className="text-xl font-black text-blue-800 mt-1">
+                  {replenishments.filter(r => r.trangThai === 'DaTiepNhan' || r.trangThai === 'DaDuyet').length}
+                </p>
+              </div>
+              <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <CheckCircle2 className="w-5 h-5" />
+              </span>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-emerald-700 uppercase">Đã Nhập Kho</p>
+                <p className="text-xl font-black text-emerald-800 mt-1">
+                  {replenishments.filter(r => r.trangThai === 'HoanThanh').length}
+                </p>
+              </div>
+              <span className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                <CheckCircle2 className="w-5 h-5" />
+              </span>
+            </div>
+          </div>
+
+          {/* Replenishments List Section (CF-FR61) */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-bold text-slate-800 text-sm">Danh Sách & Tìm Kiếm Đề Nghị Bổ Sung Sản Phẩm (CF-FR61)</h2>
+                <p className="text-[11px] text-slate-500">Tra cứu các đề nghị bổ sung sản phẩm đã gửi sang phân hệ Sản Xuất và trạng thái tiếp nhận</p>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal()}
+                  className="bg-[#0B2341] hover:bg-blue-900 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Lập Đề Nghị Mới (CF-FR60)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search and Filters */}
+            <form onSubmit={handleSearchReplenishments} className="p-4 bg-white border-b border-slate-200 flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm theo mã đề nghị, sản phẩm, ghi chú..."
+                  value={searchReplenishment}
+                  onChange={(e) => setSearchReplenishment(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg pl-8 pr-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+              >
+                <option value="">Tất cả trạng thái tiếp nhận</option>
+                <option value="ChoDuyet">Chờ tiếp nhận</option>
+                <option value="DaTiepNhan">Đã tiếp nhận</option>
+                <option value="HoanThanh">Đã nhập kho</option>
+              </select>
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition cursor-pointer whitespace-nowrap"
+              >
+                Tìm Kiếm
+              </button>
+            </form>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th className="p-3">Mã Đề Nghị</th>
+                    <th className="p-3">Sản Phẩm Cần Bổ Sung</th>
+                    <th className="p-3">Kho Tiếp Nhận</th>
+                    <th className="p-3 text-right">Số Lượng Đề Nghị</th>
+                    <th className="p-3 text-center">Ngày Cần Hàng</th>
+                    <th className="p-3 text-center">Ngày Gửi</th>
+                    <th className="p-3 text-center">Trạng Thái Tiếp Nhận</th>
+                    <th className="p-3">Lý Do Đề Nghị / Ghi Chú</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {loadingReplenishments ? (
+                    <tr><td colSpan="8" className="p-6 text-center text-slate-400">Đang tải danh sách đề nghị...</td></tr>
+                  ) : replenishments.length === 0 ? (
+                    <tr><td colSpan="8" className="p-8 text-center text-slate-400">Chưa có đề nghị bổ sung nào được gửi.</td></tr>
+                  ) : (
+                    paginatedReplenishments.map((r) => (
+                      <tr key={r.maDeNghi} className="hover:bg-slate-50 transition">
+                        <td className="p-3 font-mono font-bold text-blue-700">{r.maDeNghi}</td>
+                        <td className="p-3 font-semibold text-slate-800">{r.san_pham?.tenSanPham || r.maSanPham}</td>
+                        <td className="p-3 text-slate-600">{r.kho?.tenKho || r.maKho}</td>
+                        <td className="p-3 text-right font-bold text-blue-900">{r.soLuong?.toLocaleString()}</td>
+                        <td className="p-3 text-center font-mono text-slate-600">{r.ngayCanHang}</td>
+                        <td className="p-3 text-center font-mono text-[11px] text-slate-500">{r.ngayDeNghi?.slice(0, 10)}</td>
+                        <td className="p-3 text-center">
+                          <StatusBadge 
+                            status={r.trangThai === 'HoanThanh' ? 'Đã nhập kho' : r.trangThai === 'DaTiepNhan' ? 'Đã tiếp nhận' : 'Chờ tiếp nhận'} 
+                          />
+                        </td>
+                        <td className="p-3 text-slate-500 max-w-xs truncate" title={r.ghiChu}>{r.ghiChu}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={repPage}
+              totalPages={totalRepPages}
+              totalItems={replenishments.length}
+              pageSize={repPageSize}
+              onPageChange={setRepPage}
+              onPageSizeChange={setRepPageSize}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Modal: Lập Đề Nghị Bổ Sung (CF-FR60) */}
       {showModal && (

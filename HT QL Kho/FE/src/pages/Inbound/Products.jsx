@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { InboundAPI, MasterDataAPI } from '../../services/api';
 import { 
   Layers, CheckCircle2, XCircle, Plus, Search, 
   Printer, Edit2, Trash2, PackageCheck, AlertTriangle, FileText, Calendar, User, Eye
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 import { useAuth } from '../../context/AuthContext';
 
@@ -292,6 +293,19 @@ export default function InboundProducts() {
     return matchStatus && matchKw;
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, keyword]);
+
+  const totalPages = Math.ceil(filteredReceipts.length / pageSize) || 1;
+  const paginatedReceipts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredReceipts.slice(start, start + pageSize);
+  }, [filteredReceipts, currentPage, pageSize]);
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
@@ -405,7 +419,7 @@ export default function InboundProducts() {
         {/* Filter Tabs & Search Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Đã nhập kho', 'Từ chối'].map(status => (
+          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Từ chối'].map(status => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
@@ -450,14 +464,14 @@ export default function InboundProducts() {
               ) : filteredReceipts.length === 0 ? (
                 <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không tìm thấy phiếu nhập sản phẩm nào.</td></tr>
               ) : (
-                filteredReceipts.map((r) => (
+                paginatedReceipts.map((r) => (
                   <tr key={r.maPhieuNhapSP} className="hover:bg-slate-50/80 transition">
                     <td className="p-3 font-mono font-bold text-[#001E50]">{r.maPhieuNhapSP}</td>
                     <td className="p-3 font-medium text-slate-700">
                       {r.maPhieuYCXSP ? (
-                        <span className="bg-slate-100 px-2 py-0.5 rounded font-mono text-[11px] text-slate-600">{r.maPhieuYCXSP}</span>
+                        <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono text-[11px] font-semibold">{r.maPhieuYCXSP}</span>
                       ) : (
-                        <span className="text-slate-400 italic">Bàn giao trực tiếp</span>
+                        <span className="text-slate-400 italic">Bàn giao nội bộ</span>
                       )}
                     </td>
                     <td className="p-3 space-y-0.5">
@@ -520,10 +534,11 @@ export default function InboundProducts() {
                         {r.trangThai === 'Đã duyệt' && (
                           <>
                             <button
-                              onClick={() => handleAction(InboundAPI.confirmGoodsReceived, r.maPhieuNhapSP, `Xác nhận Lấy Hàng Thành Công cho phiếu ${r.maPhieuNhapSP}? Hệ thống sẽ tự động tạo các lô tồn kho.`, 'Lấy hàng thành công! Tồn kho đã ghi nhận.')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] flex items-center space-x-1.5 shadow-md cursor-pointer animate-pulse hover:animate-none"
+                              onClick={() => handleAction(InboundAPI.confirmGoodsReceived, r.maPhieuNhapSP, `Xác nhận nhập hàng thành công cho phiếu ${r.maPhieuNhapSP}? Hệ thống sẽ tự động tạo các lô tồn kho theo quy trình Hình 2.42.`, 'Hàng đã được nhập thành công! Trạng thái chuyển thành Thành công.')}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] flex items-center space-x-1.5 shadow-md cursor-pointer animate-pulse hover:animate-none"
+                              title="Hàng được nhập thành công, nhấn thành công (Hình 2.42)"
                             >
-                              <PackageCheck className="w-4 h-4" /><span>Lấy Hàng Thành Công</span>
+                              <PackageCheck className="w-4 h-4" /><span>Nhấn Thành Công</span>
                             </button>
                             <button onClick={() => { setSelectedReceipt(r); setIsPrintModalOpen(true); }} className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer">
                               <Printer className="w-3.5 h-3.5" />
@@ -562,6 +577,16 @@ export default function InboundProducts() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-slate-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredReceipts.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
       </div>

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { OutboundAPI, InventoryAPI, MasterDataAPI } from '../../services/api';
 import { Truck, CheckCircle2, Zap } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import FefoBadge from '../../components/FefoBadge';
+import Pagination from '../../components/Pagination';
 
 export default function OutboundProducts() {
   const [dispatches, setDispatches] = useState([]);
@@ -37,6 +38,15 @@ export default function OutboundProducts() {
       setLoading(false);
     }
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(dispatches.length / pageSize) || 1;
+  const paginatedDispatches = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return dispatches.slice(start, start + pageSize);
+  }, [dispatches, currentPage, pageSize]);
 
   const fetchFefoSuggestions = async (maSP) => {
     try {
@@ -132,7 +142,7 @@ export default function OutboundProducts() {
               ) : dispatches.length === 0 ? (
                 <tr><td colSpan="6" className="p-4 text-center text-slate-400">Chưa có phiếu xuất sản phẩm nào.</td></tr>
               ) : (
-                dispatches.map((d) => (
+                paginatedDispatches.map((d) => (
                   <tr key={d.maPhieuXuatSP} className="hover:bg-slate-50 transition">
                     <td className="p-3 font-mono font-bold text-[#0B2341]">{d.maPhieuXuatSP}</td>
                     <td className="p-3">
@@ -175,6 +185,16 @@ export default function OutboundProducts() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-slate-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={dispatches.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
 

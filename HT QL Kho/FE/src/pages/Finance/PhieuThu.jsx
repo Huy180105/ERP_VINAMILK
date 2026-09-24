@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ReceiptAPI, FinanceMasterDataAPI } from '../../services/financeApi';
+import Pagination from '../../components/Pagination';
 import { 
   ArrowDownLeft, 
   Plus, 
@@ -26,6 +27,19 @@ export default function PhieuThu() {
   const [trangThai, setTrangThai] = useState('');
   const [tuNgay, setTuNgay] = useState('');
   const [denNgay, setDenNgay] = useState('');
+
+  // Pagination for PhieuThu
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const totalPages = Math.ceil(receipts.length / pageSize) || 1;
+  const paginatedReceipts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return receipts.slice(start, start + pageSize);
+  }, [receipts, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [trangThai, tuNgay, denNgay]);
 
   // Vai trò người dùng (Kế toán trưởng / Kế toán thanh toán / Thủ quỹ)
   const [currentRole, setCurrentRole] = useState(() => {
@@ -446,7 +460,7 @@ export default function PhieuThu() {
                   </td>
                 </tr>
               ) : (
-                receipts.map((pt) => {
+                paginatedReceipts.map((pt) => {
                   const isExpanded = expandedRows[pt.maPhieuThu];
                   return (
                     <React.Fragment key={pt.maPhieuThu}>
@@ -592,6 +606,15 @@ export default function PhieuThu() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={receipts.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modal Lập Phiếu Thu Mới */}

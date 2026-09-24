@@ -158,6 +158,7 @@ export default function App() {
         <Route path="/warehouse/outbound/products" element={<WarehousePage><OutboundProducts /></WarehousePage>} />
         <Route path="/warehouse/inventory/lots" element={<WarehousePage><InventoryLots /></WarehousePage>} />
         <Route path="/warehouse/inventory/alerts" element={<WarehousePage><Alerts /></WarehousePage>} />
+        <Route path="/warehouse/inventory/replenishments" element={<WarehousePage><Alerts defaultView="replenishments" /></WarehousePage>} />
         <Route path="/warehouse/reports/summary" element={<WarehousePage><Reports /></WarehousePage>} />
 
         {/* Route 4: Warehouse Sub-pages WITHOUT /warehouse prefix */}
@@ -171,6 +172,7 @@ export default function App() {
         <Route path="/outbound/products" element={<WarehousePage><OutboundProducts /></WarehousePage>} />
         <Route path="/inventory/lots" element={<WarehousePage><InventoryLots /></WarehousePage>} />
         <Route path="/inventory/alerts" element={<WarehousePage><Alerts /></WarehousePage>} />
+        <Route path="/inventory/replenishments" element={<WarehousePage><Alerts defaultView="replenishments" /></WarehousePage>} />
         <Route path="/reports/summary" element={<WarehousePage><Reports /></WarehousePage>} />
 
         {/* Route 5: Finance Subsystem (Phân Hệ Quản Lý Thu Chi) */}

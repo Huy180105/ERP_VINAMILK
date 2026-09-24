@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { SalesAPI } from '../../../services/api';
+import Pagination from '../../../components/Pagination';
 import {
   ReceiptText,
   Plus,
@@ -98,6 +99,19 @@ export default function SalesInvoices() {
         (inv.dhMaDonHang || inv.maDonHang || '').toLowerCase().includes(q)
     );
   }, [invoices, keyword]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(filteredInvoices.length / pageSize) || 1;
+  const paginatedInvoices = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredInvoices.slice(start, start + pageSize);
+  }, [filteredInvoices, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [keyword]);
 
   const openCreateInvoice = () => {
     setCreateFormData({
@@ -258,14 +272,14 @@ export default function SalesInvoices() {
                     Đang nạp danh sách hóa đơn...
                   </td>
                 </tr>
-              ) : filteredInvoices.length === 0 ? (
+              ) : paginatedInvoices.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
                     Chưa có hóa đơn nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredInvoices.map((inv) => (
+                paginatedInvoices.map((inv) => (
                   <tr key={inv.maHoaDon} className="hover:bg-blue-50/40 transition-colors">
                     <td className="px-5 py-3.5 font-bold text-[#002795]">{inv.maHoaDon}</td>
                     <td className="px-5 py-3.5 text-slate-600">{inv.ngayLap?.slice(0, 10)}</td>
@@ -314,6 +328,15 @@ export default function SalesInvoices() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredInvoices.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modal Lập Hóa Đơn */}

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { OutboundAPI, InventoryAPI } from '../../services/api';
 import { ArrowUpRight, Plus, CheckCircle2, XCircle, Eye, Printer, Search } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 import { useAuth } from '../../context/AuthContext';
 
@@ -146,6 +147,19 @@ export default function OutboundRawMaterials() {
     );
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKey]);
+
+  const totalPages = Math.ceil(filteredDispatches.length / pageSize) || 1;
+  const paginatedDispatches = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredDispatches.slice(start, start + pageSize);
+  }, [filteredDispatches, currentPage, pageSize]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
@@ -260,7 +274,7 @@ export default function OutboundRawMaterials() {
               ) : filteredDispatches.length === 0 ? (
                 <tr><td colSpan="6" className="p-4 text-center text-slate-400">Chưa có phiếu xuất NVL nào.</td></tr>
               ) : (
-                filteredDispatches.map((d) => (
+                paginatedDispatches.map((d) => (
                   <tr key={d.maPhieuXuatNVL} className="hover:bg-slate-50 transition">
                     <td className="p-3 font-mono font-bold text-[#0B2341]">{d.maPhieuXuatNVL}</td>
                     <td className="p-3 font-semibold text-slate-800">{d.maXuong || 'Xưởng Sản Xuất 1'}</td>
@@ -326,6 +340,16 @@ export default function OutboundRawMaterials() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-slate-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredDispatches.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
 

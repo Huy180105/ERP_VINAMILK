@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SalesAPI } from '../../../services/api';
 import { generateAutoCode } from '../../../utils/codeGenerator';
 import { isValidPhone } from '../../../utils/validateInput';
+import Pagination from '../../../components/Pagination';
 import {
   Users,
   Plus,
@@ -77,6 +78,19 @@ export default function SalesCustomers() {
         (c.diaChi || '').toLowerCase().includes(q)
     );
   }, [customers, keyword]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(filteredCustomers.length / pageSize) || 1;
+  const paginatedCustomers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredCustomers.slice(start, start + pageSize);
+  }, [filteredCustomers, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [keyword]);
 
   const openAddModal = () => {
     setEditingCustomer(null);
@@ -241,14 +255,14 @@ export default function SalesCustomers() {
                     Đang tải danh sách khách hàng...
                   </td>
                 </tr>
-              ) : filteredCustomers.length === 0 ? (
+              ) : paginatedCustomers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
                     Không tìm thấy khách hàng nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredCustomers.map((c) => (
+                paginatedCustomers.map((c) => (
                   <tr key={c.maKhachHang} className="hover:bg-blue-50/40 transition-colors">
                     <td className="px-5 py-3.5 font-bold text-[#002795]">{c.maKhachHang}</td>
                     <td className="px-5 py-3.5">
@@ -319,6 +333,15 @@ export default function SalesCustomers() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredCustomers.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modal Thêm / Sửa Khách hàng */}

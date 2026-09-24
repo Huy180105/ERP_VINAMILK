@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MasterDataAPI, InventoryAPI } from '../../services/api';
 import { 
   Building, Plus, Search, Trash2, Edit3, MapPin, Layers, 
   CheckCircle2, AlertCircle, X, Box, Thermometer, ShieldCheck, RefreshCw
 } from 'lucide-react';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Warehouses() {
@@ -152,6 +153,19 @@ export default function Warehouses() {
       loc.ghiChu?.toLowerCase().includes(kw);
     return matchWh && matchKey;
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKey, selectedWarehouseFilter, activeTab]);
+
+  const totalPages = Math.ceil(filteredLocations.length / pageSize) || 1;
+  const paginatedLocations = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLocations.slice(start, start + pageSize);
+  }, [filteredLocations, currentPage, pageSize]);
 
   return (
     <div className="space-y-6">
@@ -349,7 +363,7 @@ export default function Warehouses() {
                 ) : filteredLocations.length === 0 ? (
                   <tr><td colSpan="7" className="p-6 text-center text-slate-400">Không tìm thấy vị trí lưu trữ nào phù hợp.</td></tr>
                 ) : (
-                  filteredLocations.map((loc, idx) => {
+                  paginatedLocations.map((loc, idx) => {
                     const tk = loc.tonKho || {};
                     const itemName = tk.san_pham?.tenSanPham || tk.nguyenVatLieu?.tenNVL || tk.tenTonKho || 'Hàng hóa';
                     const unit = tk.san_pham?.donViTinh || tk.nguyenVatLieu?.donVi || 'Đơn vị';
@@ -400,6 +414,16 @@ export default function Warehouses() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="p-3 border-t border-slate-100">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filteredLocations.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
           </div>
         </div>
       )}

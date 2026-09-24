@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { InboundAPI, MasterDataAPI } from '../../services/api';
 import { ArrowDownLeft, Plus, CheckCircle2, XCircle, Edit3, Trash2, Printer, Search, Eye } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,6 +14,8 @@ export default function InboundRawMaterials() {
   const [loading, setLoading] = useState(true);
   const [searchKey, setSearchKey] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -186,6 +189,28 @@ export default function InboundRawMaterials() {
     }
   };
 
+  const filteredReceipts = useMemo(() => {
+    return receipts.filter(r => {
+      const matchStatus = !statusFilter || r.trangThai === statusFilter;
+      const kw = searchKey.toLowerCase().trim();
+      const matchKw = !kw || 
+        r.maPhieuNhapNVL?.toLowerCase().includes(kw) ||
+        r.nha_cung_cap?.tenNCC?.toLowerCase().includes(kw) ||
+        r.ghiChu?.toLowerCase().includes(kw);
+      return matchStatus && matchKw;
+    });
+  }, [receipts, statusFilter, searchKey]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchKey]);
+
+  const totalPages = Math.ceil(filteredReceipts.length / pageSize) || 1;
+  const paginatedReceipts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredReceipts.slice(start, start + pageSize);
+  }, [filteredReceipts, currentPage, pageSize]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -253,10 +278,10 @@ export default function InboundRawMaterials() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr><td colSpan="6" className="p-4 text-center text-slate-400">Đang tải phiếu nhập...</td></tr>
-              ) : receipts.length === 0 ? (
-                <tr><td colSpan="6" className="p-4 text-center text-slate-400">Chưa có phiếu nhập NVL nào.</td></tr>
+              ) : filteredReceipts.length === 0 ? (
+                <tr><td colSpan="6" className="p-4 text-center text-slate-400">Không tìm thấy phiếu nhập NVL nào phù hợp.</td></tr>
               ) : (
-                receipts.map((r) => (
+                paginatedReceipts.map((r) => (
                   <tr key={r.maPhieuNhapNVL} className="hover:bg-slate-50 transition">
                     <td className="p-3 font-mono font-bold text-[#0B2341]">{r.maPhieuNhapNVL}</td>
                     <td className="p-3 font-medium text-slate-800">{r.nha_cung_cap?.tenNCC || r.maNCC}</td>
@@ -345,6 +370,16 @@ export default function InboundRawMaterials() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-slate-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredReceipts.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
 

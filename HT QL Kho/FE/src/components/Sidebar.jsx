@@ -13,7 +13,8 @@ import {
   Building,
   Layers,
   AlertTriangle,
-  Heart
+  Heart,
+  Send
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -51,7 +52,8 @@ export default function Sidebar() {
       title: 'TỒN KHO & LÔ HÀNG',
       items: [
         { name: 'Tra Cứu Lô & HSD', path: '/warehouse/inventory/lots', icon: Clock },
-        { name: 'Cảnh Báo & Đề Nghị Hàng', path: '/warehouse/inventory/alerts', icon: AlertTriangle },
+        { name: 'Cảnh Báo Tồn Kho (CF-FR56)', path: '/warehouse/inventory/alerts', icon: AlertTriangle },
+        { name: 'Đề Nghị Bổ Sung SP (CF-FR60)', path: '/warehouse/inventory/replenishments', icon: Send },
       ]
     },
     {

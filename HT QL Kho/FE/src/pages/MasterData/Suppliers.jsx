@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MasterDataAPI } from '../../services/api';
 import { Building2, Plus, Mail, Phone, MapPin, Edit3, Trash2, Search, RefreshCw } from 'lucide-react';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 import { isValidPhone, isValidEmail } from '../../utils/validateInput';
 
@@ -43,6 +44,19 @@ export default function Suppliers() {
     setSearchKey('');
     fetchSuppliers('');
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKey, suppliers]);
+
+  const totalPages = Math.ceil(suppliers.length / pageSize) || 1;
+  const paginatedSuppliers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return suppliers.slice(start, start + pageSize);
+  }, [suppliers, currentPage, pageSize]);
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -172,7 +186,7 @@ export default function Suppliers() {
             Không tìm thấy nhà cung cấp nào phù hợp với từ khóa "{searchKey}".
           </div>
         ) : (
-          suppliers.map((s) => (
+          paginatedSuppliers.map((s) => (
             <div key={s.maNCC} className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
               <div className="flex items-start justify-between border-b pb-3">
                 <div>
@@ -217,6 +231,15 @@ export default function Suppliers() {
           ))
         )}
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={suppliers.length}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
 
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">

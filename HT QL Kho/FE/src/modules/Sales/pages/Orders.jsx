@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { SalesAPI } from '../../../services/api';
+import Pagination from '../../../components/Pagination';
 import {
   ShoppingCart,
   Plus,
@@ -164,6 +165,19 @@ export default function SalesOrders() {
     });
   }, [orders, statusFilter, keyword]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(filteredOrders.length / pageSize) || 1;
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [keyword, statusFilter]);
+
   const openCreateModal = () => {
     setEditingOrderId(null);
     setFormData({
@@ -178,8 +192,8 @@ export default function SalesOrders() {
   };
 
   const openEditModal = (order) => {
-    if (order.trangThai !== 'Chờ xác nhận') {
-      notify('error', 'Chỉ đơn hàng "Chờ xác nhận" mới được phép chỉnh sửa.');
+    if (!['Chờ xác nhận', 'Chờ kho xác nhận'].includes(order.trangThai)) {
+      notify('error', 'Chỉ đơn hàng "Chờ xác nhận" hoặc "Chờ kho xác nhận" mới được phép chỉnh sửa.');
       return;
     }
 
@@ -341,6 +355,7 @@ export default function SalesOrders() {
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="Chờ xác nhận">Chờ xác nhận</option>
+            <option value="Chờ kho xác nhận">Chờ kho xác nhận</option>
             <option value="Đã xác nhận">Đã xác nhận</option>
             <option value="Đang giao">Đang giao</option>
             <option value="Đã giao">Đã giao</option>
@@ -376,14 +391,14 @@ export default function SalesOrders() {
                     Đang nạp danh sách đơn hàng...
                   </td>
                 </tr>
-              ) : filteredOrders.length === 0 ? (
+              ) : paginatedOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
                     Chưa có đơn hàng nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => (
+                paginatedOrders.map((o) => (
                   <tr key={o.maDonHang} className="hover:bg-blue-50/40 transition-colors">
                     <td className="px-5 py-3.5 font-bold text-[#002795]">{o.maDonHang}</td>
                     <td className="px-5 py-3.5">
@@ -461,6 +476,15 @@ export default function SalesOrders() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modal Tạo / Sửa Đơn Hàng */}

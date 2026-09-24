@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { PaymentAPI, FinanceMasterDataAPI } from '../../services/financeApi';
+import Pagination from '../../components/Pagination';
 import { 
   ArrowUpRight, 
   Plus, 
@@ -27,6 +28,19 @@ export default function PhieuChi() {
   const [trangThai, setTrangThai] = useState('');
   const [tuNgay, setTuNgay] = useState('');
   const [denNgay, setDenNgay] = useState('');
+
+  // Pagination for PhieuChi
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const totalPages = Math.ceil(payments.length / pageSize) || 1;
+  const paginatedPayments = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return payments.slice(start, start + pageSize);
+  }, [payments, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [trangThai, tuNgay, denNgay]);
 
   // Role state
   const [currentRole, setCurrentRole] = useState(() => {
@@ -502,7 +516,7 @@ export default function PhieuChi() {
                   </td>
                 </tr>
               ) : (
-                payments.map((pc) => {
+                paginatedPayments.map((pc) => {
                   const isExpanded = expandedRows[pc.maPhieuChi];
                   return (
                     <React.Fragment key={pc.maPhieuChi}>
@@ -653,6 +667,15 @@ export default function PhieuChi() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={payments.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modal Lập Phiếu Chi Mới */}

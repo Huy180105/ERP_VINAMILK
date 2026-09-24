@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ProductionAPI } from '../../services/api';
+import Pagination from '../../components/Pagination';
 import { 
   PackageCheck, Search, CheckCircle2, XCircle, AlertCircle, 
   Calendar, Building2, Clock, RefreshCw, AlertTriangle, X, Check, Box
@@ -18,6 +19,10 @@ export default function WarehouseReplenishments() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchReplenishments();
@@ -94,6 +99,16 @@ export default function WarehouseReplenishments() {
       item.kho?.tenKho?.toLowerCase().includes(kw);
     return matchStatus && matchKey;
   });
+
+  const totalPages = Math.ceil(filteredItems.length / pageSize) || 1;
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKey, selectedStatus]);
 
   const pendingCount = replenishments.filter(r => r.trangThai === 'ChoDuyet').length;
   const acceptedCount = replenishments.filter(r => r.trangThai === 'DaTiepNhan').length;
@@ -252,7 +267,7 @@ export default function WarehouseReplenishments() {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((item) => (
+                paginatedItems.map((item) => (
                   <tr key={item.maDeNghi} className="hover:bg-slate-50/80 transition">
                     <td className="p-3.5 font-mono font-bold text-blue-900">
                       {item.maDeNghi}
@@ -344,6 +359,15 @@ export default function WarehouseReplenishments() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredItems.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Rejection Modal */}

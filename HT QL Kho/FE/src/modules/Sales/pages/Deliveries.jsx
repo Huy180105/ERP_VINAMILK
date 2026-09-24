@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { SalesAPI } from '../../../services/api';
+import Pagination from '../../../components/Pagination';
 import {
   Truck,
   Plus,
@@ -97,6 +98,19 @@ export default function SalesDeliveries() {
       return matchStatus && matchKeyword;
     });
   }, [deliveries, statusFilter, keyword]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(filteredDeliveries.length / pageSize) || 1;
+  const paginatedDeliveries = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredDeliveries.slice(start, start + pageSize);
+  }, [filteredDeliveries, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [keyword, statusFilter]);
 
   const openCreateModal = () => {
     setFormData({
@@ -254,14 +268,14 @@ export default function SalesDeliveries() {
                     Đang nạp danh sách giao hàng...
                   </td>
                 </tr>
-              ) : filteredDeliveries.length === 0 ? (
+              ) : paginatedDeliveries.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
                     Chưa có phiếu giao hàng nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredDeliveries.map((d) => (
+                paginatedDeliveries.map((d) => (
                   <tr key={d.maGiaoHang} className="hover:bg-blue-50/40 transition-colors">
                     <td className="px-5 py-3.5 font-bold text-[#002795]">{d.maGiaoHang}</td>
                     <td className="px-5 py-3.5 font-mono text-slate-800 font-bold">{d.maDonHang || '—'}</td>
@@ -296,14 +310,31 @@ export default function SalesDeliveries() {
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        {d.trangThai === 'Đang giao' && (
+                        {d.trangThai === 'Chờ giao' && (
                           <button
-                            onClick={() => handleUpdateStatus(d, 'Đã giao')}
-                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
-                            title="Xác nhận giao thành công"
+                            onClick={() => handleUpdateStatus(d, 'Đang giao')}
+                            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
                           >
-                            Xác Nhận Đã Giao
+                            Bắt Đầu Giao
                           </button>
+                        )}
+                        {d.trangThai === 'Đang giao' && (
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(d, 'Đã giao')}
+                              className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
+                              title="Xác nhận giao thành công"
+                            >
+                              Xác Nhận Đã Giao
+                            </button>
+                            <button
+                              onClick={() => handleUpdateStatus(d, 'Giao thất bại')}
+                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
+                              title="Giao hàng thất bại"
+                            >
+                              Không Giao Được
+                            </button>
+                          </>
                         )}
                         <button
                           onClick={() => viewDetail(d)}
@@ -319,6 +350,15 @@ export default function SalesDeliveries() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredDeliveries.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modal Tạo Phiếu Giao Hàng */}

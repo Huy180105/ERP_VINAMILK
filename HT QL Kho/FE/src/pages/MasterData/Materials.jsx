@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MasterDataAPI } from '../../services/api';
 import { Boxes, Plus, Search, Trash2, Edit3 } from 'lucide-react';
+import Pagination from '../../components/Pagination';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Materials() {
@@ -9,6 +10,8 @@ export default function Materials() {
   const [loading, setLoading] = useState(true);
   const [searchKey, setSearchKey] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -116,6 +119,12 @@ export default function Materials() {
     }
   };
 
+  const totalPages = Math.ceil(materials.length / pageSize) || 1;
+  const paginatedMaterials = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return materials.slice(start, start + pageSize);
+  }, [materials, currentPage, pageSize]);
+
   return (
     <div className="space-y-6">
       {/* Header & Filter */}
@@ -187,7 +196,7 @@ export default function Materials() {
               ) : materials.length === 0 ? (
                 <tr><td colSpan="6" className="p-4 text-center text-slate-400">Không tìm thấy dữ liệu.</td></tr>
               ) : (
-                materials.map((m) => (
+                paginatedMaterials.map((m) => (
                   <tr key={m.maNVL} className="hover:bg-slate-50 transition">
                     <td className="p-3 font-mono font-bold text-[#0B2341]">{m.maNVL}</td>
                     <td className="p-3 font-semibold text-slate-800">{m.tenNVL}</td>
@@ -215,6 +224,16 @@ export default function Materials() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-slate-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={materials.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
 
