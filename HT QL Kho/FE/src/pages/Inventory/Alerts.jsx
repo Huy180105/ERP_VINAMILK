@@ -291,7 +291,7 @@ export default function Alerts() {
               <option value="">Tất cả trạng thái</option>
               <option value="ChoDuyet">Chờ tiếp nhận</option>
               <option value="DaTiepNhan">Đã tiếp nhận</option>
-              <option value="HoanThanh">Hoàn thành</option>
+              <option value="HoanThanh">Đã nhập kho</option>
             </select>
             <button
               type="submit"
@@ -338,7 +338,7 @@ export default function Alerts() {
                           ? 'bg-blue-100 text-blue-800' 
                           : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {r.trangThai === 'HoanThanh' ? 'Hoàn thành' : r.trangThai === 'DaTiepNhan' ? 'Đã tiếp nhận' : 'Chờ tiếp nhận'}
+                        {r.trangThai === 'HoanThanh' ? 'Đã nhập kho' : r.trangThai === 'DaTiepNhan' ? 'Đã tiếp nhận' : 'Chờ tiếp nhận'}
                       </span>
                     </td>
                     <td className="p-3 text-slate-500 max-w-xs truncate">{r.ghiChu}</td>

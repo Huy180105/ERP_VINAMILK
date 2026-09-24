@@ -545,7 +545,7 @@ export default function InboundProducts() {
                           </>
                         )}
 
-                        {['Thành công', 'Đã nhập kho', 'Đã hoàn thành'].includes(r.trangThai) && (
+                        {['Thành công', 'Đã nhập kho'].includes(r.trangThai) && (
                           <>
                             <button onClick={() => { setSelectedReceipt(r); setIsDetailModalOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 cursor-pointer">
                               <Eye className="w-3.5 h-3.5 text-slate-500" /><span>Chi tiết</span>

@@ -17,6 +17,7 @@ export default function StatusBadge({ status }) {
     case 'Đã duyệt':
     case 'Đang kinh doanh':
     case 'Còn hạn':
+    case 'Đạt':
       style = 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm';
       Icon = CheckCircle2;
       break;
@@ -27,13 +28,16 @@ export default function StatusBadge({ status }) {
     case 'Chờ duyệt':
     case 'Chờ xác nhận':
     case 'Chờ xử lý':
+    case 'Chưa xử lý':
     case 'Chờ tiếp nhận':
+    case 'Chờ kiểm tra':
       style = 'bg-amber-50 text-amber-800 border-amber-200 shadow-sm';
       Icon = Clock;
       break;
     case 'Từ chối':
     case 'Hủy':
     case 'Hết hạn':
+    case 'Không đạt':
       style = 'bg-rose-50 text-rose-800 border-rose-200 shadow-sm';
       Icon = XCircle;
       break;

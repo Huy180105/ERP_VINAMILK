@@ -14,6 +14,7 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
+import StatusBadge from '../../components/StatusBadge';
 
 export default function QualityControl({ defaultTab = 'qc' }) {
   const [qcReports, setQcReports] = useState([]);
@@ -316,11 +317,7 @@ export default function QualityControl({ defaultTab = 'qc' }) {
                       </td>
                       <td className="p-4 text-slate-500 max-w-[200px] truncate" title={h.ghiChu}>{h.ghiChu}</td>
                       <td className="p-4 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          h.trangThai === 'Đã nhập kho' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {h.trangThai}
-                        </span>
+                        <StatusBadge status={h.trangThai} />
                       </td>
                     </tr>
                   ))
