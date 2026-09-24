@@ -1,5 +1,7 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './pages/Login';
 import ERPHeader from './components/ERPHeader';
 import Sidebar from './components/Sidebar';
 import FinanceSidebar from './components/FinanceSidebar';
@@ -63,6 +65,13 @@ import SalesCustomers from './modules/Sales/pages/Customers';
 import SalesPricing from './modules/Sales/pages/Pricing';
 
 // Warehouse App Shell Wrapper Component
+// Protected Route Wrapper
+function ProtectedRoute({ children, module }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
 function WarehousePage({ children }) {
   return (
     <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
@@ -125,9 +134,11 @@ function HRPage({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Route 1: Portal Home */}
-        <Route path="/" element={<PortalHome />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          {/* Route 1: Portal Home */}
+          <Route path="/" element={<ProtectedRoute><PortalHome /></ProtectedRoute>} />
 
         {/* Route 2: Warehouse Dashboard */}
         <Route path="/warehouse" element={<WarehousePage><Dashboard /></WarehousePage>} />
@@ -172,8 +183,9 @@ export default function App() {
         <Route path="/production/stages" element={<ProductionLayout><ProductionStages /></ProductionLayout>} />
         <Route path="/production/material-requests" element={<ProductionLayout><MaterialRequests /></ProductionLayout>} />
         <Route path="/production/semi-finished" element={<ProductionLayout><SemiFinishedGoods /></ProductionLayout>} />
-        <Route path="/production/quality-control" element={<ProductionLayout><QualityControl /></ProductionLayout>} />
-        <Route path="/production/compensations" element={<ProductionLayout><QualityControl /></ProductionLayout>} />
+        <Route path="/production/quality-control" element={<ProductionLayout><QualityControl defaultTab="qc" /></ProductionLayout>} />
+        <Route path="/production/handovers" element={<ProductionLayout><QualityControl defaultTab="handover" /></ProductionLayout>} />
+        <Route path="/production/compensations" element={<ProductionLayout><QualityControl defaultTab="compensation" /></ProductionLayout>} />
         <Route path="/production/reports" element={<ProductionLayout><ProductionReports /></ProductionLayout>} />
 
         {/* Route 7: Sales Subsystem (Phân Hệ Quản Lý Bán Hàng) */}
@@ -198,6 +210,7 @@ export default function App() {
         {/* Fallback for any unknown route -> Portal Home */}
         <Route path="*" element={<PortalHome />} />
       </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

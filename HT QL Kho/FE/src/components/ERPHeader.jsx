@@ -1,222 +1,58 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, UserCircle, LogOut } from 'lucide-react';
 import VinamilkLogo from './VinamilkLogo';
+import { useAuth } from '../context/AuthContext';
 
-const FINANCE_ROLES = [
-  {
-    id: 'KeToanTruong',
-    name: 'Kế toán trưởng',
-    description: 'Toàn quyền duyệt phiếu, quản trị danh mục',
-    badge: 'Admin'
-  },
-  {
-    id: 'KeToanThanhToan',
-    name: 'Kế toán thanh toán',
-    description: 'Lập phiếu, theo dõi công nợ',
-    badge: 'User'
-  },
-  {
-    id: 'ThuQuy',
-    name: 'Thủ quỹ',
-    description: 'Xác nhận thu/chi tiền mặt',
-    badge: 'User'
-  }
-];
-
-const SALES_ROLES = [
-  {
-    id: 'NhanVienBanHang',
-    name: 'Nhân viên bán hàng',
-    description: 'Lập đơn hàng, tra cứu khách hàng & tồn kho',
-    badge: 'Kinh doanh'
-  },
-  {
-    id: 'QuanLyKinhDoanh',
-    name: 'Quản lý kinh doanh',
-    description: 'Duyệt đơn hàng, phê duyệt công nợ & báo cáo',
-    badge: 'Quản lý'
-  },
-  {
-    id: 'NhanVienGiaoHang',
-    name: 'Nhân viên giao hàng',
-    description: 'Nhận đơn giao, xác nhận giao & thanh toán',
-    badge: 'Giao vận'
-  }
-];
-
-const HR_ROLES = [
-  {
-    id: 'QuanLyNhanSu',
-    name: 'Quản lý nhân sự',
-    description: 'Toàn quyền hồ sơ, hợp đồng, bảng lương & tài khoản',
-    badge: 'HR Manager'
-  },
-  {
-    id: 'ChuyenVienNhanSu',
-    name: 'Chuyên viên nhân sự',
-    description: 'Quản lý hồ sơ, chấm công, hợp đồng & lập bảng lương',
-    badge: 'HR Specialist'
-  },
-  {
-    id: 'NhanVien',
-    name: 'Nhân viên',
-    description: 'Tra cứu công cá nhân, xem lương & đổi mật khẩu',
-    badge: 'Employee'
-  }
-];
-
-export default function ERPHeader({ module = 'portal', showRoleSwitcher = false }) {
+export default function ERPHeader({ module = 'portal' }) {
   const navigate = useNavigate();
-  const isSales = module === 'sales';
-  const isHR = module === 'hr';
+  const { user, logout } = useAuth();
 
-  let roleStorageKey = 'vinamilk_finance_role';
-  let rolesList = FINANCE_ROLES;
-  let defaultRole = 'KeToanThanhToan';
-  let eventName = 'finance_role_changed';
-
-  if (isSales) {
-    roleStorageKey = 'vinamilk_sales_role';
-    rolesList = SALES_ROLES;
-    defaultRole = 'NhanVienBanHang';
-    eventName = 'sales_role_changed';
-  } else if (isHR) {
-    roleStorageKey = 'vinamilk_hr_role';
-    rolesList = HR_ROLES;
-    defaultRole = 'QuanLyNhanSu';
-    eventName = 'hr_role_changed';
-  }
-
-  const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem(roleStorageKey) || defaultRole;
-  });
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsRoleDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleRoleSelect = (roleId) => {
-    setCurrentRole(roleId);
-    localStorage.setItem(roleStorageKey, roleId);
-    window.dispatchEvent(new CustomEvent(eventName, { detail: roleId }));
-    setIsRoleDropdownOpen(false);
-  };
-
-  const activeRoleInfo = rolesList.find(r => r.id === currentRole) || rolesList[0];
-  const initial = activeRoleInfo.name.charAt(0);
-
-  const getModuleName = () => {
-    switch (module) {
-      case 'warehouse': return 'QUẢN LÝ KHO';
-      case 'finance': return 'TÀI CHÍNH KẾ TOÁN';
-      case 'production': return 'QUẢN LÝ SẢN XUẤT';
-      case 'sales': return 'QUẢN LÝ BÁN HÀNG';
-      case 'hr': return 'QUẢN LÝ NHÂN SỰ';
-      default: return 'CỔNG THÔNG TIN';
-    }
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
-    <div className="flex flex-col w-full">
-      {/* Top bar */}
-      <div className="bg-[#001F7D] text-white py-1.5 px-6 text-xs font-mono flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>VINAMILK ERP · HỆ THỐNG QUẢN TRỊ TỔNG THỂ · EST 1976</span>
-        </div>
-        <div className="flex gap-4">
-          <button onClick={() => navigate('/')} className="hover:text-sky-200 cursor-pointer">Trang Chủ Vinamilk</button>
-          <span className="text-white/30">|</span>
-          <a href="#" className="hover:text-sky-200">Hỗ trợ</a>
-        </div>
-      </div>
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div className="flex items-center justify-between px-6 py-2.5">
+        
+        {/* Left: Logo & Portal Return */}
+        <div className="flex items-center space-x-6">
+          <VinamilkLogo className="h-8" />
+          
+          <div className="h-6 w-px bg-slate-200"></div>
 
-      {/* Main header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 h-16 px-6 flex items-center justify-between shadow-2xs">
-        <div className="flex items-center gap-6">
-          <button onClick={() => navigate('/')} className="hover:opacity-90 transition-opacity cursor-pointer">
-            <VinamilkLogo className="h-9 w-auto text-[#002795]" />
+          <button 
+            onClick={() => navigate('/')}
+            className="flex items-center space-x-1.5 text-slate-500 hover:text-blue-700 transition font-medium text-sm cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Cổng Thông Tin Portal</span>
           </button>
-          
-          <div className="h-6 w-px bg-gray-200"></div>
-          
-          <div className="flex items-center gap-2">
-            <h1 className="text-[#002795] font-black text-base uppercase tracking-wider font-display">
-              {getModuleName()}
-            </h1>
-            <span className="bg-blue-50 border border-blue-200 text-[#002795] text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase">
-              ERP 4.0
-            </span>
-          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {module !== 'portal' && (
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#002795] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Cổng Thông Tin Portal</span>
-            </button>
-          )}
-
-          {showRoleSwitcher && (
-            <div className="relative" ref={dropdownRef}>
-              <button 
-                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                className="flex items-center gap-2.5 hover:bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 transition-colors cursor-pointer"
-              >
-                <div className="h-7 w-7 bg-[#002795] text-white rounded-full flex items-center justify-center font-bold text-xs">
-                  {initial}
-                </div>
-                <div className="text-left hidden md:block">
-                  <div className="text-xs font-bold text-gray-900">{activeRoleInfo.name}</div>
-                  <div className="text-[10px] text-gray-500 font-mono">{activeRoleInfo.badge}</div>
-                </div>
-              </button>
-
-              {isRoleDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-2 border-b border-gray-100 text-xs font-mono uppercase text-gray-400 font-semibold">
-                    Chuyển đổi vai trò
-                  </div>
-                  <div className="py-1">
-                    {FINANCE_ROLES.map(role => (
-                      <button
-                        key={role.id}
-                        onClick={() => handleRoleSelect(role.id)}
-                        className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-start flex-col gap-0.5 transition-colors cursor-pointer ${
-                          currentRole === role.id ? 'bg-blue-50/70' : ''
-                        }`}
-                      >
-                        <div className="flex justify-between w-full items-center">
-                          <span className={`text-xs font-bold ${currentRole === role.id ? 'text-[#002795]' : 'text-gray-900'}`}>
-                            {role.name}
-                          </span>
-                          {currentRole === role.id && (
-                            <span className="text-[#002795] text-xs font-bold">✓</span>
-                          )}
-                        </div>
-                        <span className="text-[11px] text-gray-500">{role.description}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {/* Right: User Menu */}
+        {user && (
+          <div className="flex items-center space-x-4">
+            <div className="flex flex-col text-right">
+              <span className="text-sm font-bold text-slate-800">{user.hoTen}</span>
+              <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full inline-block mt-0.5 border border-blue-100">{user.vaiTro}</span>
             </div>
-          )}
-        </div>
+            <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-500">
+              <UserCircle className="w-5 h-5" />
+            </div>
+            <div className="h-6 w-px bg-slate-200"></div>
+            <button 
+              onClick={handleLogout}
+              className="text-slate-500 hover:text-red-600 transition p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
+              title="Đăng xuất"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
-    </div>
+    </header>
   );
 }

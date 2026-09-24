@@ -35,7 +35,7 @@ export default function MaterialRequests() {
   });
 
   const handleOpenCreateModal = () => {
-    const autoCode = generateAutoCode(requests, 'maPhieuYCNVL', 'YCNVL', 3, true);
+    const autoCode = generateAutoCode(requests, 'maPhieuYCNVL', 'YCNVL', 3, false);
     setFormData({
       maPhieuYCNVL: autoCode,
       maLenh: orders[0]?.maLenh || 'LSX001',

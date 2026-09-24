@@ -3,8 +3,10 @@ import { InboundAPI, MasterDataAPI } from '../../services/api';
 import { ArrowDownLeft, Plus, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { generateAutoCode } from '../../utils/codeGenerator';
+import { useAuth } from '../../context/AuthContext';
 
 export default function InboundRawMaterials() {
+  const { hasPermission } = useAuth();
   const [receipts, setReceipts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [materials, setMaterials] = useState([]);
@@ -83,6 +85,17 @@ export default function InboundRawMaterials() {
     }
   };
 
+  const handleApprove = async (id) => {
+    if (window.confirm(`Xác nhận duyệt phiếu nhập ${id}?`)) {
+      try {
+        await InboundAPI.approveRawMaterialReceipt(id);
+        fetchReceipts();
+      } catch (err) {
+        alert('Lỗi duyệt phiếu: ' + (err.response?.data?.message || err.message));
+      }
+    }
+  };
+
   const handleComplete = async (id) => {
     if (window.confirm(`Xác nhận hoàn thành phiếu ${id}? Tồn kho sẽ được tự động cộng theo lô.`)) {
       try {
@@ -149,14 +162,23 @@ export default function InboundRawMaterials() {
                     <td className="p-3 text-center">
                       <StatusBadge status={r.trangThai} />
                     </td>
-                    <td className="p-3 text-center">
-                      {r.trangThai !== 'Hoàn thành' && (
+                    <td className="p-3 text-center space-y-2 flex flex-col items-center">
+                      {r.trangThai === 'Chờ duyệt' && hasPermission('warehouse', 'approve') && (
                         <button
-                          onClick={() => handleComplete(r.maPhieuNhapNVL)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1 cursor-pointer"
+                          onClick={() => handleApprove(r.maPhieuNhapNVL)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center justify-center space-x-1 cursor-pointer w-full max-w-[120px]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Xác Nhận Nhập Kho</span>
+                          <span>Duyệt Phiếu</span>
+                        </button>
+                      )}
+                      {r.trangThai === 'Đã duyệt' && (
+                        <button
+                          onClick={() => handleComplete(r.maPhieuNhapNVL)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center justify-center space-x-1 cursor-pointer w-full max-w-[120px]"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Nhập Kho Thực Tế</span>
                         </button>
                       )}
                     </td>

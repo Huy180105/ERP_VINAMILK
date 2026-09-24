@@ -25,10 +25,6 @@ export default function QualityControl({ defaultTab = 'qc' }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(defaultTab); // 'qc' | 'compensation' | 'handover'
 
-  useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
-
   // QC Inspection Modal
   const [showQCModal, setShowQCModal] = useState(false);
   const [qcForm, setQcForm] = useState({

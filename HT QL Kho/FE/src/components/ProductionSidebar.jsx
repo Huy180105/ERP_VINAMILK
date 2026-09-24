@@ -44,6 +44,7 @@ export default function ProductionSidebar() {
       title: 'CHẤT LƯỢNG & NGHIỆM THU',
       items: [
         { name: 'Kiểm Tra QC & Bàn Giao Kho', path: '/production/quality-control', icon: ShieldCheck },
+        { name: 'Yêu Cầu Xuất Kho SP', path: '/production/handovers', icon: Truck },
         { name: 'Lệnh Sản Xuất Bù (Phế phẩm)', path: '/production/compensations', icon: RotateCcw },
       ]
     },

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { generateAutoCode } from '../../utils/codeGenerator';
+import { useAuth } from '../../context/AuthContext';
 
 const calculateDefaultExpiry = (mfgDateStr, maSP = '') => {
   if (!mfgDateStr) return '';
@@ -16,6 +17,7 @@ const calculateDefaultExpiry = (mfgDateStr, maSP = '') => {
 };
 
 export default function InboundProducts() {
+  const { hasPermission } = useAuth();
   const [receipts, setReceipts] = useState([]);
   const [productsList, setProductsList] = useState([]);
   const [pendingHandovers, setPendingHandovers] = useState([]);
@@ -456,7 +458,7 @@ export default function InboundProducts() {
                     <td className="p-3 text-center"><StatusBadge status={r.trangThai} /></td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                        {r.trangThai === 'Chờ duyệt' && (
+                        {r.trangThai === 'Chờ duyệt' && hasPermission('warehouse', 'approve') && (
                           <>
                             <button
                               onClick={() => handleAction(InboundAPI.approveProductReceipt, r.maPhieuNhapSP, `Duyệt phiếu nhập ${r.maPhieuNhapSP}?`, 'Đã duyệt thành công!')}
