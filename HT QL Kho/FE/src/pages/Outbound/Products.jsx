@@ -160,7 +160,7 @@ export default function OutboundProducts() {
                       <StatusBadge status={d.trangThai} />
                     </td>
                     <td className="p-3 text-center">
-                      {d.trangThai !== 'Hoàn thành' && (
+                      {d.trangThai !== 'Đã xuất kho' && d.trangThai !== 'Hoàn thành' && (
                         <button
                           onClick={() => handleComplete(d.maPhieuXuatSP)}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1 cursor-pointer"

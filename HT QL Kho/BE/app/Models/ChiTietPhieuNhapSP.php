@@ -16,11 +16,16 @@ class ChiTietPhieuNhapSP extends Model
     protected $fillable = [
         'maPhieuNhapSP',
         'maTonKho',
+        'maSP',
+        'maSanPham',
         'soLuong',
+        'soLuongNhap',
         'ngaySanXuat',
         'hanSuDung',
         'ghiChu',
     ];
+
+    protected $appends = ['maSanPham', 'maSP', 'soLuongNhap'];
 
     public function tonKho()
     {
@@ -34,21 +39,32 @@ class ChiTietPhieuNhapSP extends Model
 
     public function sanPham()
     {
-        return $this->hasOneThrough(SanPham::class, TonKho::class, 'maTonKho', 'maSanPham', 'maTonKho', 'maSanPham');
+        return $this->belongsTo(SanPham::class, 'maSP', 'maSanPham');
     }
 
     public function getMaSanPhamAttribute()
     {
-        return $this->tonKho?->maSanPham;
+        return $this->attributes['maSanPham'] ?? $this->attributes['maSP'] ?? $this->tonKho?->maSanPham;
     }
 
     public function getMaSPAttribute()
     {
-        return $this->tonKho?->maSanPham;
+        return $this->attributes['maSP'] ?? $this->attributes['maSanPham'] ?? $this->tonKho?->maSanPham;
     }
 
-    public function getSoLuongNhapAttribute()
+    public function getSoLuongNhapAttribute($value = null)
     {
-        return $this->soLuong;
+        if (!empty($value) && $value > 0) {
+            return $value;
+        }
+        return $this->attributes['soLuong'] ?? 0;
+    }
+
+    public function getSoLuongAttribute($value = null)
+    {
+        if (!empty($value) && $value > 0) {
+            return $value;
+        }
+        return $this->attributes['soLuongNhap'] ?? 0;
     }
 }

@@ -450,7 +450,10 @@ class InboundController extends Controller
                 ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
                     'maTonKho'      => $maTonKho,
+                    'maSP'          => $spId,
+                    'maSanPham'     => $spId,
                     'soLuong'       => $item['soLuongNhap'],
+                    'soLuongNhap'   => $item['soLuongNhap'],
                     'ngaySanXuat'   => $item['ngaySanXuat'],
                     'hanSuDung'     => $item['hanSuDung'],
                     'ghiChu'        => $item['ghiChu'] ?? null,
@@ -536,7 +539,10 @@ class InboundController extends Controller
                 ChiTietPhieuNhapSP::create([
                     'maPhieuNhapSP' => $receipt->maPhieuNhapSP,
                     'maTonKho'      => $maTonKho,
+                    'maSP'          => $spId,
+                    'maSanPham'     => $spId,
                     'soLuong'       => $item['soLuongNhap'],
+                    'soLuongNhap'   => $item['soLuongNhap'],
                     'ngaySanXuat'   => $item['ngaySanXuat'],
                     'hanSuDung'     => $item['hanSuDung'],
                     'ghiChu'        => $item['ghiChu'] ?? null,

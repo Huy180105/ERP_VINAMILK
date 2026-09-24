@@ -12,7 +12,8 @@ import {
   Factory,
   Sparkles,
   Package,
-  Truck
+  Truck,
+  PackageCheck
 } from 'lucide-react';
 
 export default function ProductionSidebar() {
@@ -27,6 +28,7 @@ export default function ProductionSidebar() {
     {
       title: 'KẾ HOẠCH & ĐIỀU ĐỘ',
       items: [
+        { name: 'Đề Nghị Bổ Sung Từ Kho', path: '/production/warehouse-replenishments', icon: PackageCheck, highlight: true },
         { name: 'Lệnh Sản Xuất (LSX)', path: '/production/orders', icon: ClipboardList },
       ]
     },

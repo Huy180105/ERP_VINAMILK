@@ -153,8 +153,8 @@ class OutboundController extends Controller
     {
         $dispatch = PhieuXuatNVL::with('chiTiets')->findOrFail($id);
 
-        if ($dispatch->trangThai === 'Hoàn thành') {
-            return response()->json(['success' => false, 'message' => 'Phiếu xuất đã được hoàn thành trước đó'], 400);
+        if ($dispatch->trangThai === 'Đã xuất kho' || $dispatch->trangThai === 'Hoàn thành') {
+            return response()->json(['success' => false, 'message' => 'Phiếu xuất đã được xuất kho trước đó'], 400);
         }
 
         DB::beginTransaction();
@@ -164,11 +164,11 @@ class OutboundController extends Controller
                 return response()->json(['success' => false, 'message' => $err], 400);
             }
 
-            $dispatch->update(['trangThai' => 'Hoàn thành']);
+            $dispatch->update(['trangThai' => 'Đã xuất kho']);
 
             if ($dispatch->maPhieuYeuCauNVL) {
                 PhieuYeuCauNVL::where('maPhieuYCNVL', $dispatch->maPhieuYeuCauNVL)
-                    ->update(['trangThai' => 'Đã hoàn thành']);
+                    ->update(['trangThai' => 'Đã xuất kho']);
             }
 
             DB::commit();
@@ -243,8 +243,8 @@ class OutboundController extends Controller
     {
         $dispatch = PhieuXuatSP::with('chiTiets')->findOrFail($id);
 
-        if ($dispatch->trangThai === 'Hoàn thành') {
-            return response()->json(['success' => false, 'message' => 'Phiếu xuất đã được hoàn thành trước đó'], 400);
+        if ($dispatch->trangThai === 'Đã xuất kho' || $dispatch->trangThai === 'Hoàn thành') {
+            return response()->json(['success' => false, 'message' => 'Phiếu xuất đã được xuất kho trước đó'], 400);
         }
 
         DB::beginTransaction();
@@ -254,7 +254,7 @@ class OutboundController extends Controller
                 return response()->json(['success' => false, 'message' => $err], 400);
             }
 
-            $dispatch->update(['trangThai' => 'Hoàn thành']);
+            $dispatch->update(['trangThai' => 'Đã xuất kho']);
             DB::commit();
 
             return response()->json([

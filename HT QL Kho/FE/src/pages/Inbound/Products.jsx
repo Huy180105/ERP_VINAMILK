@@ -187,10 +187,10 @@ export default function InboundProducts() {
       ghiChu: receipt.ghiChu || '',
       maPhieuYCXSP: receipt.maPhieuYCXSP || '',
       items: receipt.chi_tiets?.length ? receipt.chi_tiets.map(item => ({
-        maSP: item.maSP,
-        soLuongNhap: item.soLuongNhap || 1,
+        maSP: item.maSP || item.maSanPham || item.ton_kho?.maSanPham || '',
+        soLuongNhap: item.soLuongNhap || item.soLuong || 1,
         ngaySanXuat: item.ngaySanXuat || todayStr,
-        hanSuDung: item.hanSuDung || calculateDefaultExpiry(item.ngaySanXuat || todayStr, item.maSP),
+        hanSuDung: item.hanSuDung || calculateDefaultExpiry(item.ngaySanXuat || todayStr, item.maSP || item.maSanPham),
         ghiChu: item.ghiChu || ''
       })) : [{ maSP: productsList[0]?.maSanPham || '', soLuongNhap: 100, ngaySanXuat: todayStr, hanSuDung: calculateDefaultExpiry(todayStr), ghiChu: '' }]
     });
@@ -474,8 +474,8 @@ export default function InboundProducts() {
                       {r.chi_tiets?.map((d, idx) => (
                         <div key={idx} className="bg-blue-50/70 p-2 rounded-lg font-mono text-[11px] border border-blue-100/80 space-y-0.5">
                           <div className="font-bold text-blue-900 flex justify-between">
-                            <span>{d.san_pham?.tenSanPham || d.maSP}</span>
-                            <span className="text-blue-700">SL: {d.soLuongNhap?.toLocaleString()}</span>
+                            <span>{d.san_pham?.tenSanPham || d.maSP || d.maSanPham}</span>
+                            <span className="text-blue-700">SL: {(d.soLuong || d.soLuongNhap || 0).toLocaleString()}</span>
                           </div>
                           <div className="text-[10px] text-slate-600 flex justify-between">
                             <span>NSX: {d.ngaySanXuat}</span>
@@ -769,7 +769,7 @@ export default function InboundProducts() {
                           <div className="font-bold text-blue-950">{d.san_pham?.tenSanPham || d.maSP}</div>
                           <div className="text-[10px] text-slate-500 font-mono">Mã: {d.maSP}</div>
                         </td>
-                        <td className="p-2.5 text-right font-mono font-bold text-blue-700">{d.soLuongNhap?.toLocaleString()}</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-blue-700">{(d.soLuong || d.soLuongNhap || 0).toLocaleString()}</td>
                         <td className="p-2.5 font-mono text-slate-600">{d.ngaySanXuat}</td>
                         <td className="p-2.5 font-mono text-emerald-700 font-semibold">{d.hanSuDung}</td>
                       </tr>
@@ -849,7 +849,7 @@ export default function InboundProducts() {
                       <td className="border border-slate-900 p-2 font-mono">{d.maSP}</td>
                       <td className="border border-slate-900 p-2 text-left font-semibold">{d.san_pham?.tenSanPham || d.maSP}</td>
                       <td className="border border-slate-900 p-2">{d.san_pham?.donViTinh || 'Hộp'}</td>
-                      <td className="border border-slate-900 p-2 text-right font-bold font-mono">{d.soLuongNhap?.toLocaleString()}</td>
+                      <td className="border border-slate-900 p-2 text-right font-bold font-mono">{(d.soLuong || d.soLuongNhap || 0).toLocaleString()}</td>
                       <td className="border border-slate-900 p-2 font-mono">{d.ngaySanXuat}</td>
                       <td className="border border-slate-900 p-2 font-mono">{d.hanSuDung}</td>
                     </tr>

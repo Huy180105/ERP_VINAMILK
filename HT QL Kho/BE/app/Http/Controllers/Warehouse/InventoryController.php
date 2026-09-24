@@ -226,15 +226,27 @@ class InventoryController extends Controller
     public function updateDeNghiBoSungStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'trangThai' => 'required|string|max:30',
+            'trangThai' => 'required|string|max:50',
+            'ghiChu'    => 'nullable|string|max:255',
         ]);
 
         $item = DeNghiBoSungSanPham::findOrFail($id);
-        $item->update(['trangThai' => $validated['trangThai']]);
+        $updateData = ['trangThai' => $validated['trangThai']];
+        if ($request->filled('ghiChu')) {
+            $updateData['ghiChu'] = $request->ghiChu;
+        }
+        $item->update($updateData);
+
+        $msg = match ($validated['trangThai']) {
+            'DaTiepNhan' => 'Đã tiếp nhận đề nghị bổ sung thành phẩm từ Kho thành công!',
+            'TuChoi'     => 'Đã từ chối đề nghị bổ sung thành phẩm.',
+            'DaDuyet'    => 'Đã duyệt đề nghị bổ sung thành phẩm.',
+            default      => 'Cập nhật trạng thái phiếu đề nghị bổ sung thành công.',
+        };
 
         return response()->json([
             'success' => true,
-            'message' => 'Cập nhật trạng thái phiếu đề nghị bổ sung thành công',
+            'message' => $msg,
             'data'    => $item->load(['sanPham', 'kho', 'nhanVien']),
         ]);
     }

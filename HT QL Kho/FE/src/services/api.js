@@ -205,6 +205,10 @@ export const ProductionAPI = {
   getCompensations: (params) => productionApi.get('/compensations', { params }),
   getHandovers: (params) => productionApi.get('/handovers', { params }),
   handoverToWarehouse: (data) => productionApi.post('/handover-warehouse', data),
+
+  // Tiếp Nhận Đề Nghị Bổ Sung Từ Kho (Screenshot 4)
+  getWarehouseReplenishments: (params) => productionApi.get('/warehouse-replenishments', { params }),
+  updateWarehouseReplenishmentStatus: (id, data) => productionApi.put(`/warehouse-replenishments/${id}/status`, data),
 };
 
 export default api;

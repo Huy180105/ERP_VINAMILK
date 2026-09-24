@@ -46,7 +46,7 @@ export default function Warehouses() {
   const handleOpenAddModal = () => {
     setIsEditing(false);
     setEditingId(null);
-    const autoCode = generateAutoCode(warehouses, 'maKho', 'KHO', 2, false);
+    const autoCode = generateAutoCode(warehouses, 'maKho', 'K', 3, false);
     setFormData({
       ...initialForm,
       maKho: autoCode,
@@ -129,7 +129,7 @@ export default function Warehouses() {
         <div className="flex-1 relative">
           <input
             type="text"
-            placeholder="Tìm kiếm theo mã kho (KHO-xxx), tên khu vực kho..."
+            placeholder="Tìm kiếm theo mã kho (K001...), tên khu vực kho..."
             value={searchKey}
             onChange={(e) => setSearchKey(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg pl-9 pr-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"

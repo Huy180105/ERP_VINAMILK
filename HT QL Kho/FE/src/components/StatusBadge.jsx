@@ -6,11 +6,17 @@ export default function StatusBadge({ status }) {
   let Icon = Clock;
 
   switch (status) {
-    case 'Hoàn thành':
+    case 'Đã xuất kho':
     case 'Đã duyệt':
     case 'Đang kinh doanh':
     case 'Còn hạn':
+    case 'Hoàn thành':
+    case 'Đã hoàn thành':
       style = 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm';
+      Icon = CheckCircle2;
+      break;
+    case 'Đã tiếp nhận':
+      style = 'bg-blue-50 text-blue-800 border-blue-200 shadow-sm';
       Icon = CheckCircle2;
       break;
     case 'Chờ duyệt':

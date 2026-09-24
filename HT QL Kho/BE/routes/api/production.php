@@ -66,4 +66,8 @@ Route::prefix('production')->group(function () {
     Route::get('/compensations', [QualityControlController::class, 'getCompensationOrders']);
     Route::get('/handovers', [QualityControlController::class, 'getHandovers']);
     Route::post('/handover-warehouse', [QualityControlController::class, 'handoverToWarehouse']);
+
+    // 7. Tiếp Nhận Đề Nghị Bổ Sung Từ Kho (Screenshot 4)
+    Route::get('/warehouse-replenishments', [\App\Http\Controllers\Warehouse\InventoryController::class, 'getDeNghiBoSung']);
+    Route::put('/warehouse-replenishments/{id}/status', [\App\Http\Controllers\Warehouse\InventoryController::class, 'updateDeNghiBoSungStatus']);
 });

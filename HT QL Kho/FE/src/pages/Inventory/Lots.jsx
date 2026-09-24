@@ -94,7 +94,12 @@ export default function InventoryLots() {
                 lots.map((l) => {
                   const daysLeft = Math.ceil((new Date(l.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
                   const itemName = l.san_pham?.tenSanPham || l.sanPham?.tenSanPham || l.nguyen_vat_lieu?.tenNVL || l.nguyenVatLieu?.tenNVL || '-';
-                  const qualityStatus = l.trangThaiChatLuong || 'Đạt';
+                  const rawQ = String(l.trangThaiChatLuong || '').trim().toLowerCase();
+                  const qualityStatus = (rawQ.includes('kiểm tra') || rawQ.includes('kiem tra'))
+                    ? 'Chờ kiểm tra'
+                    : (rawQ.includes('không') || rawQ.includes('khong') || rawQ.includes('hỏng') || rawQ.includes('hong'))
+                    ? 'Không đạt'
+                    : 'Đạt';
                   return (
                     <tr key={l.maTonKho} className="hover:bg-slate-50 transition">
                       <td className="p-3 font-mono font-bold text-[#0B2341]">{l.maTonKho}</td>
