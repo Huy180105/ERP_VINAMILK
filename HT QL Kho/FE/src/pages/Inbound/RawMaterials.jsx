@@ -49,7 +49,7 @@ export default function InboundRawMaterials() {
   };
 
   const handleOpenModal = () => {
-    const autoCode = generateAutoCode(receipts, 'maPhieuNhapNVL', 'PNNVL', 3, true);
+    const autoCode = generateAutoCode(receipts, 'maPhieuNhapNVL', 'PNNVL', 2, true);
     const autoLot = generateAutoCode(receipts.flatMap(r => r.chi_tiets || []), 'maTonKho', 'TK-NVL-', 3, true);
     setFormData({
       ...initialForm,

@@ -7,6 +7,8 @@ export function generateAutoCode(list = [], codeProp = 'id', prefix = 'CODE', di
   const fullPrefix = includeDate ? `${prefix}${todayStr}` : prefix;
 
   let maxNum = 0;
+  // If includeDate is true: match only codes starting with fullPrefix (e.g. PNNVL20260924...)
+  // If includeDate is false: match codes starting with prefix (e.g. NVL001, NVL-001)
   const regex = new RegExp(`^${fullPrefix}[-_]?(\\d+)`, 'i');
 
   if (Array.isArray(list) && list.length > 0) {
@@ -29,24 +31,22 @@ export function generateAutoCode(list = [], codeProp = 'id', prefix = 'CODE', di
         ).trim();
       }
 
-      // Check regex match
+      // Check regex match against fullPrefix
       const match = code.match(regex);
       if (match) {
         const num = parseInt(match[1], 10);
         if (!isNaN(num) && num > maxNum) {
           maxNum = num;
         }
-      } else {
-        // Fallback: if code contains prefix and trailing digits
+      } else if (!includeDate) {
+        // Fallback ONLY when NOT using date prefix (to avoid capturing date digits like 2026090803)
         const upperCode = code.toUpperCase();
         const upperPrefix = prefix.toUpperCase();
-        if (upperCode.includes(upperPrefix)) {
-          const digitsMatch = code.match(/(\d+)\s*$/);
-          if (digitsMatch) {
-            const num = parseInt(digitsMatch[1], 10);
-            if (!isNaN(num) && num > maxNum) {
-              maxNum = num;
-            }
+        if (upperCode.startsWith(upperPrefix)) {
+          const digitsPart = code.slice(upperPrefix.length).replace(/^[_-]/, '');
+          const num = parseInt(digitsPart, 10);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
           }
         }
       }
