@@ -6,21 +6,11 @@ use Tests\TestCase;
 
 class SalesApiTest extends TestCase
 {
-    public function test_sales_dashboard_endpoint_returns_success_response(): void
+    public function test_sales_context_is_available_without_authentication(): void
     {
-        $response = $this->getJson('/api/warehouse/sales/dashboard');
+        $response = $this->getJson('/api/warehouse/sales/me');
 
-        $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'data' => [
-                         'summary',
-                         'orders',
-                         'customers',
-                         'deliveries',
-                         'invoices',
-                         'receivables',
-                     ],
-                 ]);
+        $response->assertOk()->assertJsonPath('data.sales_role', 'manager');
+        $this->assertNull($response->json('data.id'));
     }
 }

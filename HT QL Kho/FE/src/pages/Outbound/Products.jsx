@@ -10,6 +10,7 @@ export default function OutboundProducts() {
   const [loading, setLoading] = useState(true);
   const [showFefoModal, setShowFefoModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('SP001');
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     fetchDispatches();
@@ -40,10 +41,12 @@ export default function OutboundProducts() {
   const handleComplete = async (id) => {
     if (window.confirm(`Xác nhận xuất kho giao hàng cho khách hàng theo phiếu ${id}? Tồn kho sẽ giảm theo lô.`)) {
       try {
-        await OutboundAPI.completeProductDispatch(id);
-        fetchDispatches();
+        const response = await OutboundAPI.completeProductDispatch(id);
+        setNotice(response.data?.message || 'Đã xác nhận xuất kho và tạo yêu cầu giao hàng.');
+        await fetchDispatches();
       } catch (err) {
-        alert('Lỗi xuất hàng: ' + (err.response?.data?.message || err.message));
+        const businessError = err.response?.data?.errors?.business;
+        alert('Lỗi xuất hàng: ' + (Array.isArray(businessError) ? businessError[0] : businessError || err.response?.data?.message || err.message));
       }
     }
   };
@@ -69,6 +72,8 @@ export default function OutboundProducts() {
           <span>Tra Cứu Lô Gợi Ý FEFO</span>
         </button>
       </div>
+
+      {notice && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{notice}</div>}
 
       {/* FEFO Quick Recommendation Cards */}
       <div className="bg-amber-50/70 border border-amber-200/80 rounded-lg p-4 space-y-3">
@@ -138,13 +143,13 @@ export default function OutboundProducts() {
                       <StatusBadge status={d.trangThai} />
                     </td>
                     <td className="p-3 text-center">
-                      {d.trangThai !== 'Hoàn thành' && (
+                      {!['Hoàn thành', 'Đã hủy'].includes(d.trangThai) && (
                         <button
                           onClick={() => handleComplete(d.maPhieuXuatSP)}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm transition inline-flex items-center space-x-1"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Xuất Hàng</span>
+                          <span>Xác Nhận Xuất</span>
                         </button>
                       )}
                     </td>

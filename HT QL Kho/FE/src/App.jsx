@@ -39,8 +39,14 @@ import ProductionReports from './pages/Production/ProductionReports';
 
 // Subsystem Preview Pages
 import HRModule from './pages/Subsystems/HRModule';
+import SalesSidebar from './components/SalesSidebar';
 import SalesDashboard from './modules/Sales/pages/Dashboard';
 import SalesOrders from './modules/Sales/pages/Orders';
+import SalesDeliveries from './modules/Sales/pages/Deliveries';
+import SalesInvoices from './modules/Sales/pages/Invoices';
+import SalesReceivables from './modules/Sales/pages/Receivables';
+import SalesCustomers from './modules/Sales/pages/Customers';
+import SalesPricing from './modules/Sales/pages/Pricing';
 
 // Warehouse App Shell Wrapper Component
 function WarehousePage({ children }) {
@@ -64,6 +70,20 @@ function FinancePage({ children }) {
       <ERPHeader module="finance" showRoleSwitcher />
       <div className="flex flex-1">
         <FinanceSidebar />
+        <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function SalesPage({ children }) {
+  return (
+    <div className="min-h-screen bg-[#F7F7F7] flex flex-col">
+      <ERPHeader module="sales" />
+      <div className="flex flex-1">
+        <SalesSidebar />
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
           {children}
         </main>
@@ -128,8 +148,13 @@ export default function App() {
 
         {/* Route 7: Other ERP Subsystems */}
         <Route path="/hr" element={<WarehousePage><HRModule /></WarehousePage>} />
-        <Route path="/sales" element={<WarehousePage><SalesDashboard /></WarehousePage>} />
-        <Route path="/sales/orders" element={<WarehousePage><SalesOrders /></WarehousePage>} />
+        <Route path="/sales" element={<SalesPage><SalesDashboard /></SalesPage>} />
+        <Route path="/sales/orders" element={<SalesPage><SalesOrders /></SalesPage>} />
+        <Route path="/sales/deliveries" element={<SalesPage><SalesDeliveries /></SalesPage>} />
+        <Route path="/sales/invoices" element={<SalesPage><SalesInvoices /></SalesPage>} />
+        <Route path="/sales/receivables" element={<SalesPage><SalesReceivables /></SalesPage>} />
+        <Route path="/sales/customers" element={<SalesPage><SalesCustomers /></SalesPage>} />
+        <Route path="/sales/pricing" element={<SalesPage><SalesPricing /></SalesPage>} />
 
         {/* Fallback for any unknown route -> Portal Home */}
         <Route path="*" element={<PortalHome />} />

@@ -86,15 +86,28 @@ export const OutboundAPI = {
 
 export const SalesAPI = {
   getDashboard: () => api.get('/sales/dashboard'),
+  checkStock: () => api.get('/sales/check-stock'),
   getOrders: (params) => api.get('/sales/orders', { params }),
+  getOrderDetail: (id) => api.get(`/sales/orders/${id}`),
   createOrder: (data) => api.post('/sales/orders', data),
   updateOrder: (id, data) => api.put(`/sales/orders/${id}`, data),
   deleteOrder: (id) => api.delete(`/sales/orders/${id}`),
   updateOrderStatus: (id, status) => api.put(`/sales/orders/${id}/status`, { trangThai: status }),
   getCustomers: (params) => api.get('/sales/customers', { params }),
+  getCustomerDetail: (id) => api.get(`/sales/customers/${id}`),
+  createCustomer: (data) => api.post('/sales/customers', data),
+  updateCustomer: (id, data) => api.put(`/sales/customers/${id}`, data),
+  deleteCustomer: (id) => api.delete(`/sales/customers/${id}`),
   getDeliveries: (params) => api.get('/sales/deliveries', { params }),
+  getDeliveryDetail: (id) => api.get(`/sales/deliveries/${id}`),
   getInvoices: (params) => api.get('/sales/invoices', { params }),
+  getInvoiceDetail: (id) => api.get(`/sales/invoices/${id}`),
+  recordPayment: (data) => api.post('/sales/payments', data),
   getReceivables: (params) => api.get('/sales/receivables', { params }),
+  getReceivableDetail: (id) => api.get(`/sales/receivables/${id}`),
+  getPricing: (params) => api.get('/sales/prices', { params }),
+  updatePrice: (id, data) => api.put(`/sales/prices/${id}`, { donGia: data.giaBan ?? data.donGia }),
+  updateDeliveryStatus: (id, status) => api.put(`/sales/deliveries/${id}/status`, { trangThai: status }),
 };
 
 export const ReportAPI = {

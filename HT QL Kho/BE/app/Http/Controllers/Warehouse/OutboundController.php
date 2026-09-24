@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Warehouse;
 
 use App\Http\Controllers\Controller;
-use App\Models\PhieuXuatNVL;
 use App\Models\ChiTietPhieuXuatNVL;
+use App\Models\PhieuXuatNVL;
 use App\Models\PhieuXuatSP;
-use App\Models\ChiTietPhieuXuatSP;
 use App\Models\TonKho;
+use App\Services\SalesStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -51,7 +51,7 @@ class OutboundController extends Controller
             // Kiểm tra tồn kho khả dụng trước khi cho phép xuất
             foreach ($validated['items'] as $item) {
                 $tonKho = TonKho::where('maTonKho', $item['maTonKho'])->first();
-                if (!$tonKho || $tonKho->soLuongTonHienTai < $item['soLuong']) {
+                if (! $tonKho || $tonKho->soLuongTonHienTai < $item['soLuong']) {
                     return response()->json([
                         'success' => false,
                         'message' => "Không đủ tồn kho khả dụng cho mã lô {$item['maTonKho']} (Tồn hiện tại: {$tonKho->soLuongTonHienTai})",
@@ -87,7 +87,8 @@ class OutboundController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Lỗi xuất kho NVL: ' . $e->getMessage()], 500);
+
+            return response()->json(['success' => false, 'message' => 'Lỗi xuất kho NVL: '.$e->getMessage()], 500);
         }
     }
 
@@ -107,6 +108,7 @@ class OutboundController extends Controller
                 if ($tonKho) {
                     if ($tonKho->soLuongTonHienTai < $detail->soLuong) {
                         DB::rollBack();
+
                         return response()->json(['success' => false, 'message' => "Lô {$detail->maTonKho} không đủ tồn kho để trừ"], 400);
                     }
                     $tonKho->soLuongTonHienTai -= $detail->soLuong;
@@ -124,7 +126,8 @@ class OutboundController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Lỗi trừ tồn kho: ' . $e->getMessage()], 500);
+
+            return response()->json(['success' => false, 'message' => 'Lỗi trừ tồn kho: '.$e->getMessage()], 500);
         }
     }
 
@@ -148,33 +151,17 @@ class OutboundController extends Controller
 
     public function completeProductDispatch($id)
     {
-        $dispatch = PhieuXuatSP::with('chiTiets')->findOrFail($id);
-
-        DB::beginTransaction();
-        try {
-            foreach ($dispatch->chiTiets as $detail) {
-                $tonKho = TonKho::where('maTonKho', $detail->maTonKho)->first();
-                if ($tonKho) {
-                    if ($tonKho->soLuongTonHienTai < $detail->soLuong) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => "Lô sản phẩm {$detail->maTonKho} không đủ tồn kho"], 400);
-                    }
-                    $tonKho->soLuongTonHienTai -= $detail->soLuong;
-                    $tonKho->save();
-                }
+        $dispatch = PhieuXuatSP::findOrFail($id);
+        if ($dispatch->maDonHang) {
+            $user = auth('sanctum')->user();
+            if ($user) {
+                abort_unless($user->sales_role === 'manager' && $user->maNhanVien, 403, 'Cần quyền quản lý để xác nhận xuất kho đơn bán hàng.');
             }
-
-            $dispatch->update(['trangThai' => 'Hoàn thành']);
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Xuất kho sản phẩm cho khách hàng thành công! Tồn kho đã giảm theo lô.',
-                'data' => $dispatch,
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Lỗi xuất kho thành phẩm: ' . $e->getMessage()], 500);
         }
+        return response()->json([
+            'success' => true,
+            'message' => 'Kho đã xác nhận xuất hàng; đơn hàng đã được xác nhận và yêu cầu giao hàng đã được tạo.',
+            'data' => app(SalesStock::class)->complete($id),
+        ]);
     }
 }

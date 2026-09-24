@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SalesAPI } from '../../../services/api';
 import {
   ShoppingCart,
@@ -13,6 +14,9 @@ import {
   Search,
   Filter,
   MapPin,
+  Tag,
+  PlusCircle,
+  ExternalLink
 } from 'lucide-react';
 
 const currency = (value) =>
@@ -34,6 +38,7 @@ const formatDate = (value) => {
 };
 
 export default function SalesDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState({
     summary: {},
     orders: [],
@@ -45,38 +50,6 @@ export default function SalesDashboard() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
 
-  const fallbackData = {
-    summary: {
-      orders: 128,
-      customers: 54,
-      deliveries: 23,
-      invoices: 97,
-      receivables: 245000000,
-    },
-    orders: [
-      { maDonHang: 'DH-2026-001', tenKhachHang: 'Công ty Sữa Việt', trangThai: 'Đã xác nhận', ngayMua: '2026-09-15T08:30:00', tongTien: 18500000 },
-      { maDonHang: 'DH-2026-002', tenKhachHang: 'Siêu thị VinMart', trangThai: 'Đang giao', ngayMua: '2026-09-15T09:20:00', tongTien: 32500000 },
-      { maDonHang: 'DH-2026-003', tenKhachHang: 'Nhà phân phối Bắc Giang', trangThai: 'Chờ xác nhận', ngayMua: '2026-09-14T15:10:00', tongTien: 42000000 },
-    ],
-    customers: [
-      { maKhachHang: 'KH001', tenKhachHang: 'Công ty Sữa Việt', soDienThoai: '0912.111.222' },
-      { maKhachHang: 'KH002', tenKhachHang: 'Siêu thị VinMart', soDienThoai: '0908.333.444' },
-      { maKhachHang: 'KH003', tenKhachHang: 'Nhà phân phối Bắc Giang', soDienThoai: '0988.555.666' },
-    ],
-    deliveries: [
-      { maGiaoHang: 'GH001', trangThai: 'Đang giao', diaChiGiao: 'Hà Nội - Ba Đình' },
-      { maGiaoHang: 'GH002', trangThai: 'Đã giao', diaChiGiao: 'Đà Nẵng - Hải Châu' },
-    ],
-    invoices: [
-      { maHoaDon: 'HD001', tongTien: 18500000, ngayLap: '2026-09-15T08:40:00', maGiaoHang: 'GH001' },
-      { maHoaDon: 'HD002', tongTien: 32500000, ngayLap: '2026-09-15T09:40:00', maGiaoHang: 'GH002' },
-    ],
-    receivables: [
-      { maCongNo: 'CN001', tenKhachHang: 'Công ty Sữa Việt', soTienConLai: 6800000, hanThanhToan: '2026-09-22', trangThai: 'Còn nợ' },
-      { maCongNo: 'CN002', tenKhachHang: 'Siêu thị VinMart', soTienConLai: 12400000, hanThanhToan: '2026-09-30', trangThai: 'Còn nợ' },
-    ],
-  };
-
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -84,10 +57,10 @@ export default function SalesDashboard() {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const res = await SalesAPI.getDashboard().catch(() => ({ data: { success: true, data: fallbackData } }));
-      setData(res.data.data || fallbackData);
+      const res = await SalesAPI.getDashboard();
+      setData(res.data?.data || {});
     } catch (err) {
-      setData(fallbackData);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -96,133 +69,204 @@ export default function SalesDashboard() {
   const filteredOrders = useMemo(() => {
     if (!keyword.trim()) return data.orders || [];
     const q = keyword.toLowerCase();
-    return (data.orders || []).filter((item) =>
-      (item.maDonHang || '').toLowerCase().includes(q) ||
-      (item.tenKhachHang || '').toLowerCase().includes(q)
+    return (data.orders || []).filter(
+      (item) =>
+        (item.maDonHang || '').toLowerCase().includes(q) ||
+        (item.tenKhachHang || '').toLowerCase().includes(q)
     );
   }, [data.orders, keyword]);
 
   const statCards = [
     {
-      title: 'Đơn hàng',
-      value: data.summary.orders ?? 0,
-      sub: 'Theo tổng số đơn bán',
-      icon: ShoppingCart,
-      color: 'from-amber-500 to-orange-600',
+      title: 'Doanh thu bán hàng',
+      value: currency(data.summary?.totalRevenue ?? 0),
+      sub: 'Từ các đơn đã xác nhận/giao',
+      icon: TrendingUp,
+      color: 'from-[#002795] to-blue-800',
+      path: '/sales/orders',
     },
     {
-      title: 'Khách hàng',
-      value: data.summary.customers ?? 0,
-      sub: 'Nhà phân phối / đại lý',
-      icon: Users,
-      color: 'from-sky-500 to-cyan-600',
+      title: 'Đơn hàng',
+      value: data.summary?.orders ?? 0,
+      sub: `${data.summary?.pendingOrders ?? 0} đơn đang chờ duyệt`,
+      icon: ShoppingCart,
+      color: 'from-amber-500 to-orange-600',
+      path: '/sales/orders',
     },
     {
       title: 'Giao hàng',
-      value: data.summary.deliveries ?? 0,
-      sub: 'Đang vận chuyển',
+      value: data.summary?.deliveries ?? 0,
+      sub: `${data.summary?.activeDeliveries ?? 0} chuyến đang trên đường giao`,
       icon: Truck,
       color: 'from-emerald-500 to-teal-600',
+      path: '/sales/deliveries',
     },
     {
-      title: 'Hóa đơn',
-      value: data.summary.invoices ?? 0,
-      sub: 'Đã lập hóa đơn',
+      title: 'Hóa đơn đã lập',
+      value: data.summary?.invoices ?? 0,
+      sub: 'Hóa đơn bán hàng xuất kho',
       icon: ReceiptText,
       color: 'from-violet-500 to-purple-600',
+      path: '/sales/invoices',
     },
     {
-      title: 'Công nợ',
-      value: currency(data.summary.receivables ?? 0),
-      sub: 'Tổng số tiền còn nợ',
+      title: 'Công nợ phải thu',
+      value: currency(data.summary?.receivables ?? 0),
+      sub: 'Dư nợ khách hàng cần thu',
       icon: CircleDollarSign,
       color: 'from-rose-500 to-red-600',
+      path: '/sales/receivables',
     },
+  ];
+
+  const quickActions = [
+    { name: 'Tạo Đơn Hàng', path: '/sales/orders', icon: ShoppingCart, color: 'bg-blue-50 text-[#002795]' },
+    { name: 'Điều Phối Giao Hàng', path: '/sales/deliveries', icon: Truck, color: 'bg-emerald-50 text-emerald-700' },
+    { name: 'Hóa Đơn Tự Động & Thu Tiền', path: '/sales/invoices', icon: ReceiptText, color: 'bg-purple-50 text-purple-700' },
+    { name: 'Đối Soát Công Nợ', path: '/sales/receivables', icon: CircleDollarSign, color: 'bg-rose-50 text-rose-700' },
+    { name: 'Quản Lý Khách Hàng', path: '/sales/customers', icon: Users, color: 'bg-sky-50 text-sky-700' },
+    { name: 'Bảng Giá Sản Phẩm', path: '/sales/pricing', icon: Tag, color: 'bg-amber-50 text-amber-700' },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 p-7 text-white shadow-lg">
+      {/* Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-[#001F7D] via-[#002795] to-blue-900 p-7 text-white shadow-xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100">Sales & Distribution</p>
-            <h1 className="mt-2 text-2xl font-black">Phân hệ quản lý bán hàng</h1>
-            <p className="mt-2 max-w-2xl text-sm text-orange-50">
-              Theo dõi đơn hàng, khách hàng, giao hàng, hóa đơn và công nợ phải thu trên cùng một dashboard vận hành.
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 border border-emerald-400/30">
+                PHÂN HỆ BÁN HÀNG & PHÂN PHỐI (SD)
+              </span>
+              <span className="text-white/40 text-xs">·</span>
+              <span className="text-white/70 text-xs">Mạng lưới 250.000 điểm bán</span>
+            </div>
+            <h1 className="mt-2 text-2xl font-black">Trung Tâm Điều Hành Bán Hàng Vinamilk</h1>
+            <p className="mt-1 max-w-2xl text-xs text-blue-100/80">
+              Quản trị vòng đời đơn hàng khép kín: kiểm tra tồn kho, Kho xác nhận, tự tạo hóa đơn, điều phối giao vận và quản lý công nợ.
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 text-xs font-bold backdrop-blur-sm ring-1 ring-white/30 transition hover:bg-white/20">
-            <TrendingUp className="h-4 w-4" />
-            Xem báo cáo bán hàng
+          <button
+            onClick={() => navigate('/sales/orders')}
+            className="inline-flex items-center gap-2 rounded-2xl bg-white text-[#002795] px-4 py-2.5 text-xs font-black shadow-md hover:bg-blue-50 transition cursor-pointer shrink-0"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Vào Quản Lý Đơn Hàng
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>
 
+      {/* Quick Action Buttons */}
+      <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+        <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3 px-2">
+          Truy Cập Nhanh Nghiệp Vụ
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {quickActions.map((action, idx) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={idx}
+                onClick={() => navigate(action.path)}
+                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/30 transition-all text-center gap-2 cursor-pointer group"
+              >
+                <div className={`p-2.5 rounded-xl ${action.color} group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">{action.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* KPI Stat Cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {statCards.map(({ title, value, sub, icon: Icon, color }) => (
-          <div key={title} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        {statCards.map(({ title, value, sub, icon: Icon, color, path }) => (
+          <div
+            key={title}
+            onClick={() => navigate(path)}
+            className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xs hover:border-blue-400 transition-all cursor-pointer"
+          >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{title}</p>
-                <p className="mt-3 text-2xl font-black text-slate-900">{value}</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{title}</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{value}</p>
               </div>
-              <div className={`rounded-2xl bg-gradient-to-br ${color} p-3 text-white`}>
+              <div className={`rounded-2xl bg-gradient-to-br ${color} p-2.5 text-white shadow-sm`}>
                 <Icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="mt-4 text-[11px] text-slate-500">{sub}</p>
+            <p className="mt-3 text-[11px] text-slate-500">{sub}</p>
           </div>
         ))}
       </div>
 
+      {/* Main Grid: Orders & Deliveries */}
       <div className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-base font-black text-slate-900">Đơn hàng gần đây</h2>
-              <p className="text-[11px] text-slate-500">Danh sách đơn bán mới nhất</p>
+              <h2 className="text-base font-black text-slate-900">Đơn hàng mới tiếp nhận</h2>
+              <p className="text-[11px] text-slate-500">Danh sách đơn bán hàng gần nhất</p>
             </div>
             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <Search className="h-4 w-4 text-slate-500" />
+              <Search className="h-4 w-4 text-slate-400" />
               <input
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Tìm mã đơn / khách hàng"
-                className="w-52 bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"
+                placeholder="Tìm mã đơn hoặc khách..."
+                className="w-48 bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"
               />
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
-              <thead className="bg-slate-50 text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
+              <thead className="bg-slate-50 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
                 <tr>
                   <th className="px-3 py-3">Mã đơn</th>
                   <th className="px-3 py-3">Khách hàng</th>
                   <th className="px-3 py-3">Ngày mua</th>
-                  <th className="px-3 py-3">Tổng tiền</th>
-                  <th className="px-3 py-3">Trạng thái</th>
+                  <th className="px-3 py-3 text-right">Tổng tiền</th>
+                  <th className="px-3 py-3 text-center">Trạng thái</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-slate-400">Đang tải dữ liệu...</td>
+                    <td colSpan={5} className="px-3 py-8 text-center text-slate-400 font-medium">
+                      Đang tải dữ liệu...
+                    </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-slate-400">Không có đơn hàng phù hợp.</td>
+                    <td colSpan={5} className="px-3 py-8 text-center text-slate-400 font-medium">
+                      Không có đơn hàng phù hợp.
+                    </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => (
-                    <tr key={order.maDonHang} className="border-t border-slate-100 hover:bg-slate-50">
-                      <td className="px-3 py-3 font-bold text-slate-900">{order.maDonHang}</td>
-                      <td className="px-3 py-3 text-slate-700">{order.tenKhachHang || '—'}</td>
-                      <td className="px-3 py-3 text-slate-600">{formatDate(order.ngayMua)}</td>
-                      <td className="px-3 py-3 font-bold text-slate-900">{currency(order.tongTien)}</td>
-                      <td className="px-3 py-3">
-                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">
+                  filteredOrders.slice(0, 6).map((order) => (
+                    <tr
+                      key={order.maDonHang}
+                      onClick={() => navigate('/sales/orders')}
+                      className="hover:bg-blue-50/50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-3 py-3 font-bold text-[#002795]">{order.maDonHang}</td>
+                      <td className="px-3 py-3 text-slate-800 font-medium">{order.tenKhachHang || '—'}</td>
+                      <td className="px-3 py-3 text-slate-500">{formatDate(order.ngayMua)}</td>
+                      <td className="px-3 py-3 text-right font-black text-slate-900">{currency(order.tongTien)}</td>
+                      <td className="px-3 py-3 text-center">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            order.trangThai === 'Hoàn tất' || order.trangThai === 'Đã giao'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : order.trangThai === 'Đã xác nhận'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
                           {order.trangThai || 'Chờ xác nhận'}
                         </span>
                       </td>
@@ -234,108 +278,75 @@ export default function SalesDashboard() {
           </div>
         </div>
 
+        {/* Deliveries & Receivables Side Panel */}
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-base font-black text-slate-900">Khách hàng mới</h2>
-                <p className="text-[11px] text-slate-500">Danh mục đối tác</p>
+                <h2 className="text-sm font-black text-slate-900">Tiến độ giao vận gần nhất</h2>
+                <p className="text-[11px] text-slate-500">Các chuyến vận chuyển hàng</p>
               </div>
-              <button className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-600">
-                <Filter className="h-3.5 w-3.5" />
-                Lọc
+              <button
+                onClick={() => navigate('/sales/deliveries')}
+                className="text-xs font-bold text-[#002795] hover:underline"
+              >
+                Tất cả
               </button>
             </div>
-            <div className="space-y-3">
-              {(data.customers || []).slice(0, 4).map((customer) => (
-                <div key={customer.maKhachHang} className="flex items-center justify-between rounded-2xl bg-slate-50 p-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{customer.tenKhachHang}</p>
-                    <p className="text-[11px] text-slate-500">{customer.soDienThoai || 'Không có SĐT'}</p>
-                  </div>
-                  <span className="text-[10px] font-bold text-sky-700">{customer.maKhachHang}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-black text-slate-900">Tình trạng giao hàng</h2>
-                <p className="text-[11px] text-slate-500">Theo dõi trạng thái vận chuyển</p>
-              </div>
-              <PackageCheck className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div className="mt-4 space-y-3">
+            <div className="space-y-2.5">
               {(data.deliveries || []).slice(0, 4).map((delivery) => (
-                <div key={delivery.maGiaoHang} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div
+                  key={delivery.maGiaoHang}
+                  onClick={() => navigate('/sales/deliveries')}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 hover:bg-blue-50/40 cursor-pointer transition-all"
+                >
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-800">{delivery.maGiaoHang}</p>
-                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700">
+                    <p className="text-xs font-bold text-[#002795]">{delivery.maGiaoHang}</p>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                       {delivery.trangThai || 'Đang giao'}
                     </span>
                   </div>
-                  <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
-                    <MapPin className="h-3.5 w-3.5" />
-                    <span>{delivery.diaChiGiao || 'Chưa cập nhật địa chỉ'}</span>
-                  </div>
+                  <p className="text-xs font-bold text-slate-800 mt-1">{delivery.tenKhachHang}</p>
+                  <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5 truncate">
+                    <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                    {delivery.diaChiGiao || 'Trụ sở khách hàng'}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-black text-slate-900">Hóa đơn mới</h2>
-              <p className="text-[11px] text-slate-500">Danh sách hóa đơn gần đây</p>
-            </div>
-            <ReceiptText className="h-5 w-5 text-violet-600" />
-          </div>
-          <div className="space-y-3">
-            {(data.invoices || []).slice(0, 5).map((invoice) => (
-              <div key={invoice.maHoaDon} className="flex items-center justify-between rounded-2xl border border-slate-100 p-3">
-                <div>
-                  <p className="text-sm font-bold text-slate-800">{invoice.maHoaDon}</p>
-                  <p className="text-[11px] text-slate-500">{formatDate(invoice.ngayLap)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-black text-slate-900">{currency(invoice.tongTien)}</p>
-                  <p className="text-[10px] text-slate-500">{invoice.maGiaoHang || '—'}</p>
-                </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-black text-slate-900">Công nợ đến hạn</h2>
+                <p className="text-[11px] text-slate-500">Đối tác cần thu hồi tiền</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-black text-slate-900">Công nợ phải thu</h2>
-              <p className="text-[11px] text-slate-500">Theo dõi khoản nợ và hạn thanh toán</p>
+              <button
+                onClick={() => navigate('/sales/receivables')}
+                className="text-xs font-bold text-[#002795] hover:underline"
+              >
+                Tất cả
+              </button>
             </div>
-            <Clock3 className="h-5 w-5 text-rose-500" />
-          </div>
-          <div className="space-y-3">
-            {(data.receivables || []).slice(0, 5).map((item) => (
-              <div key={item.maCongNo} className="rounded-2xl border border-slate-100 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-slate-800">{item.maCongNo}</p>
-                  <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-700">
-                    {item.trangThai || 'Còn nợ'}
-                  </span>
+            <div className="space-y-2.5">
+              {(data.receivables || []).slice(0, 4).map((item) => (
+                <div
+                  key={item.maCongNo}
+                  onClick={() => navigate('/sales/receivables')}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 hover:bg-rose-50/40 cursor-pointer transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-800">{item.tenKhachHang}</p>
+                    <span className="text-xs font-black text-rose-600">{currency(item.soTienConLai)}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Hạn TT: {formatDate(item.hanThanhToan)}</span>
+                    <span className="text-amber-700 font-bold">{item.trangThai}</span>
+                  </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>{item.tenKhachHang || '—'}</span>
-                  <span>{formatDate(item.hanThanhToan)}</span>
-                </div>
-                <p className="mt-2 text-sm font-black text-slate-900">{currency(item.soTienConLai)}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

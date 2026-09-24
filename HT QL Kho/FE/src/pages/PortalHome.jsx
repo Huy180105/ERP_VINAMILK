@@ -89,10 +89,10 @@ export default function PortalHome() {
       subtitle: 'Mạng lưới 250.000 điểm bán',
       desc: 'Quản lý Đơn hàng từ mạng lưới đại lý và siêu thị, Điều phối Xuất bán thành phẩm liên thông Kho hàng, Lập Hóa đơn bán lẻ & Hóa đơn GTGT, Quản lý công nợ khách hàng.',
       icon: ShoppingCart,
-      badge: 'TÍCH HỢP THAM CHIẾU',
-      badgeColor: 'bg-blue-100 text-[#002795]',
+      badge: 'ĐANG HOẠT ĐỘNG',
+      badgeColor: 'bg-emerald-500 text-white',
       path: '/sales',
-      active: false,
+      active: true,
       stats: '8 Bảng CSDL · Kênh phân phối',
       highlights: ['Đơn đặt hàng đại lý', 'Giao hàng liên thông Kho', 'Hóa đơn & Đối soát công nợ']
     }
