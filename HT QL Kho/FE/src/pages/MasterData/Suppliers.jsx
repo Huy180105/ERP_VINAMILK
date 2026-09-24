@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
 import { Building2, Plus, Mail, Phone, MapPin } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
+import { isValidPhone, isValidEmail } from '../../utils/validateInput';
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([]);
@@ -47,6 +48,14 @@ export default function Suppliers() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (formData.soDienThoai && !isValidPhone(formData.soDienThoai)) {
+      alert('Số điện thoại không đúng định dạng! Vui lòng nhập số điện thoại Việt Nam (10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc 02x).');
+      return;
+    }
+    if (formData.email && !isValidEmail(formData.email)) {
+      alert('Email liên hệ không đúng định dạng! Ví dụ hợp lệ: contact@vinamilk.com.vn');
+      return;
+    }
     try {
       await MasterDataAPI.createSupplier(formData);
       setShowModal(false);

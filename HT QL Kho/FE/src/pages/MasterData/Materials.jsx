@@ -50,8 +50,18 @@ export default function Materials() {
     fetchMaterials();
   };
 
-  const handleOpenModal = () => {
-    const autoCode = generateAutoCode(materials, 'maNVL', 'NVL', 3, false);
+  const handleOpenModal = async () => {
+    let list = materials;
+    if (searchKey || selectedType || !list.length) {
+      try {
+        const res = await MasterDataAPI.getMaterials();
+        list = res.data.data || [];
+        setMaterials(list);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    const autoCode = generateAutoCode(list, 'maNVL', 'NVL', 3, false);
     setFormData({
       maNVL: autoCode,
       maLoaiNVL: materialTypes[0]?.maLoaiNVL || '',

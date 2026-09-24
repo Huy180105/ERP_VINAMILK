@@ -7,6 +7,7 @@ use App\Http\Controllers\Production\MaterialRequestController;
 use App\Http\Controllers\Production\SemiFinishedGoodsController;
 use App\Http\Controllers\Production\QualityControlController;
 use App\Http\Controllers\Production\ProductionReportController;
+use App\Http\Controllers\Production\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,6 +16,13 @@ use App\Http\Controllers\Production\ProductionReportController;
 */
 
 Route::prefix('production')->group(function () {
+    // 0. Quản Lý Sản Phẩm (PR-FR01 -> PR-FR06)
+    Route::get('/products', [ProductController::class, 'getProducts']);
+    Route::post('/products', [ProductController::class, 'createProduct']);
+    Route::put('/products/{id}', [ProductController::class, 'updateProduct']);
+    Route::delete('/products/{id}', [ProductController::class, 'deleteProduct']);
+    Route::put('/products/{id}/status', [ProductController::class, 'updateStatus']);
+
     // 1. Dashboard & Reports (PR-FR32 -> PR-FR37)
     Route::get('/dashboard', [ProductionReportController::class, 'getDashboardSummary']);
     Route::get('/reports/volume', [ProductionReportController::class, 'getVolumeReport']);

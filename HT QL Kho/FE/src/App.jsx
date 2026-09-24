@@ -38,6 +38,7 @@ import MaterialRequests from './pages/Production/MaterialRequests';
 import SemiFinishedGoods from './pages/Production/SemiFinishedGoods';
 import QualityControl from './pages/Production/QualityControl';
 import ProductionReports from './pages/Production/ProductionReports';
+import ProductionProducts from './pages/Production/ProductionProducts';
 
 import SalesSidebar from './components/SalesSidebar';
 import HRSidebar from './components/HRSidebar';
@@ -179,6 +180,7 @@ export default function App() {
 
         {/* Route 6: Production Subsystem (Phân Hệ Quản Lý Sản Xuất) */}
         <Route path="/production" element={<ProductionLayout><ProductionDashboard /></ProductionLayout>} />
+        <Route path="/production/products" element={<ProductionLayout><ProductionProducts /></ProductionLayout>} />
         <Route path="/production/orders" element={<ProductionLayout><ProductionOrders /></ProductionLayout>} />
         <Route path="/production/stages" element={<ProductionLayout><ProductionStages /></ProductionLayout>} />
         <Route path="/production/material-requests" element={<ProductionLayout><MaterialRequests /></ProductionLayout>} />

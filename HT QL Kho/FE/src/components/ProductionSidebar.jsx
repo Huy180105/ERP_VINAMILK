@@ -10,7 +10,9 @@ import {
   RotateCcw, 
   BarChart3, 
   Factory,
-  Sparkles
+  Sparkles,
+  Package,
+  Truck
 } from 'lucide-react';
 
 export default function ProductionSidebar() {
@@ -19,12 +21,13 @@ export default function ProductionSidebar() {
       title: 'TỔNG QUAN',
       items: [
         { name: 'Dashboard Sản Xuất', path: '/production', icon: LayoutDashboard },
+        { name: 'Quản Lý Sản Phẩm (PR-FR01)', path: '/production/products', icon: Package, highlight: true },
       ]
     },
     {
       title: 'KẾ HOẠCH & ĐIỀU ĐỘ',
       items: [
-        { name: 'Lệnh Sản Xuất (LSX)', path: '/production/orders', icon: ClipboardList, highlight: true },
+        { name: 'Lệnh Sản Xuất (LSX)', path: '/production/orders', icon: ClipboardList },
       ]
     },
     {
@@ -43,7 +46,7 @@ export default function ProductionSidebar() {
     {
       title: 'CHẤT LƯỢNG & NGHIỆM THU',
       items: [
-        { name: 'Kiểm Tra QC & Bàn Giao Kho', path: '/production/quality-control', icon: ShieldCheck },
+        { name: 'Kiểm Tra QC Nghiệm Thu', path: '/production/quality-control', icon: ShieldCheck },
         { name: 'Yêu Cầu Xuất Kho SP', path: '/production/handovers', icon: Truck },
         { name: 'Lệnh Sản Xuất Bù (Phế phẩm)', path: '/production/compensations', icon: RotateCcw },
       ]

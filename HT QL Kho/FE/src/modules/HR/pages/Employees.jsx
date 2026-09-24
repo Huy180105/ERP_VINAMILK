@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { HRApi } from '../../../services/hrApi';
 import { generateAutoCode } from '../../../utils/codeGenerator';
+import { isValidPhone, isValidEmail } from '../../../utils/validateInput';
 import {
   Users,
   Search,
@@ -124,6 +125,14 @@ export default function HREmployees() {
   // Submit Add
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (formData.soDienThoai && !isValidPhone(formData.soDienThoai)) {
+      notify('error', 'Số điện thoại không đúng định dạng (10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc 02x).');
+      return;
+    }
+    if (formData.email && !isValidEmail(formData.email)) {
+      notify('error', 'Email nhân viên không đúng định dạng (VD: example@vinamilk.com.vn).');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const res = await HRApi.createEmployee(formData);
@@ -162,6 +171,14 @@ export default function HREmployees() {
   // Submit Edit
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (formData.soDienThoai && !isValidPhone(formData.soDienThoai)) {
+      notify('error', 'Số điện thoại không đúng định dạng (10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc 02x).');
+      return;
+    }
+    if (formData.email && !isValidEmail(formData.email)) {
+      notify('error', 'Email nhân viên không đúng định dạng (VD: example@vinamilk.com.vn).');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const res = await HRApi.updateEmployee(selectedEmp.maNV, formData);

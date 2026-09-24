@@ -139,6 +139,13 @@ export const ReportAPI = {
 // 2. PHÂN HỆ QUẢN LÝ SẢN XUẤT (PRODUCTION APIs)
 // ==========================================
 export const ProductionAPI = {
+  // Quản Lý Sản Phẩm (PR-FR01 -> PR-FR06)
+  getProducts: (params) => productionApi.get('/products', { params }),
+  createProduct: (data) => productionApi.post('/products', data),
+  updateProduct: (id, data) => productionApi.put(`/products/${id}`, data),
+  deleteProduct: (id) => productionApi.delete(`/products/${id}`),
+  updateProductStatus: (id, data) => productionApi.put(`/products/${id}/status`, data),
+
   // Dashboard & Reports (PR-FR32 -> PR-FR37)
   getDashboardSummary: () => productionApi.get('/dashboard'),
   getVolumeReport: (params) => productionApi.get('/reports/volume', { params }),

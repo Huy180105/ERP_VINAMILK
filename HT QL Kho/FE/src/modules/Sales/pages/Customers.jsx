@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { SalesAPI } from '../../../services/api';
 import { generateAutoCode } from '../../../utils/codeGenerator';
+import { isValidPhone } from '../../../utils/validateInput';
 import {
   Users,
   Plus,
@@ -106,6 +107,10 @@ export default function SalesCustomers() {
     e.preventDefault();
     if (!formData.tenKhachHang.trim()) {
       notify('error', 'Vui lòng nhập tên khách hàng / đại lý.');
+      return;
+    }
+    if (formData.soDienThoai && !isValidPhone(formData.soDienThoai)) {
+      notify('error', 'Số điện thoại không đúng định dạng (10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc 02x).');
       return;
     }
 

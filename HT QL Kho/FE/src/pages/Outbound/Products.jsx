@@ -8,6 +8,7 @@ export default function OutboundProducts() {
   const [dispatches, setDispatches] = useState([]);
   const [fefoSuggestions, setFefoSuggestions] = useState([]);
   const [productsList, setProductsList] = useState([]);
+  const [customersMap, setCustomersMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [showFefoModal, setShowFefoModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('SP001');
@@ -16,6 +17,13 @@ export default function OutboundProducts() {
     fetchDispatches();
     fetchFefoSuggestions('SP001');
     MasterDataAPI.getProducts().then(res => setProductsList(res.data.data || [])).catch(console.error);
+    MasterDataAPI.getCustomers().then(res => {
+      const map = {};
+      (res.data?.data || []).forEach(c => {
+        map[c.maKhachHang] = c.tenKhachHang;
+      });
+      setCustomersMap(map);
+    }).catch(console.error);
   }, []);
 
   const fetchDispatches = async () => {
@@ -127,7 +135,19 @@ export default function OutboundProducts() {
                 dispatches.map((d) => (
                   <tr key={d.maPhieuXuatSP} className="hover:bg-slate-50 transition">
                     <td className="p-3 font-mono font-bold text-[#0B2341]">{d.maPhieuXuatSP}</td>
-                    <td className="p-3 font-semibold text-slate-800">{d.khachHang?.tenKhachHang || d.maKhachHang || 'Đại Lý Phân Phối'}</td>
+                    <td className="p-3">
+                      <div className="font-semibold text-slate-800">
+                        {d.khach_hang?.tenKhachHang || 
+                         d.khachHang?.tenKhachHang || 
+                         d.don_hang?.khach_hang?.tenKhachHang || 
+                         customersMap[d.maKhachHang] || 
+                         customersMap[d.don_hang?.maKhachHang] || 
+                         'Đại Lý Phân Phối Vinamilk'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        Mã KH: {d.maKhachHang || d.don_hang?.maKhachHang || d.maDonHang || '-'}
+                      </div>
+                    </td>
                     <td className="p-3 text-slate-600 font-mono">{d.ngayXuat}</td>
                     <td className="p-3 space-y-1">
                       {d.chi_tiets?.map((item, idx) => (
