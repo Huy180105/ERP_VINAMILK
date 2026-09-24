@@ -405,7 +405,7 @@ export default function InboundProducts() {
         {/* Filter Tabs & Search Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Từ chối'].map(status => (
+          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Đã nhập kho', 'Từ chối'].map(status => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
@@ -545,7 +545,7 @@ export default function InboundProducts() {
                           </>
                         )}
 
-                        {['Thành công', 'Đã hoàn thành'].includes(r.trangThai) && (
+                        {['Thành công', 'Đã nhập kho', 'Đã hoàn thành'].includes(r.trangThai) && (
                           <>
                             <button onClick={() => { setSelectedReceipt(r); setIsDetailModalOpen(true); }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center space-x-1 cursor-pointer">
                               <Eye className="w-3.5 h-3.5 text-slate-500" /><span>Chi tiết</span>

@@ -346,7 +346,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV001',
                 'maNVNhan' => 'NV001',
                 'ngayNhap' => Carbon::now()->subDays(10)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã nhập kho',
                 'ghiChu' => 'Nhập 20,000 lít sữa tươi thô Mộc Châu kiểm nghiệm đạt ISO',
             ],
             [
@@ -355,7 +355,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV001',
                 'maNVNhan' => 'NV001',
                 'ngayNhap' => Carbon::now()->subDays(5)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã nhập kho',
                 'ghiChu' => 'Nhập 10,000 kg đường tinh luyện Biên Hòa Grade A',
             ],
             [
@@ -410,7 +410,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV003',
                 'maNVNhan' => 'NV001',
                 'ngayNhap' => Carbon::now()->subDays(45)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã nhập kho',
                 'ghiChu' => 'Nhập 5,000 thùng Sữa tươi tiệt trùng 100% 180ml',
             ],
             [
@@ -419,7 +419,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV003',
                 'maNVNhan' => 'NV001',
                 'ngayNhap' => Carbon::now()->subDays(22)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã nhập kho',
                 'ghiChu' => 'Nhập 3,000 lốc Sữa chua ăn có đường 100g',
             ],
             [
@@ -428,7 +428,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV003',
                 'maNVNhan' => 'NV001',
                 'ngayNhap' => Carbon::now()->subDays(5)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã nhập kho',
                 'ghiChu' => 'Nhập 15,000 thùng Sữa tươi tiệt trùng 100% 180ml (Batch FEFO-2)',
             ],
         ]);
@@ -468,7 +468,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV001',
                 'maNVNhan' => 'NV003',
                 'ngayXuat' => Carbon::now()->subDays(4)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã xuất kho',
                 'ghiChu' => 'Xuất 4,500 lít sữa tươi thô cấp phát cho dây chuyền tiệt trùng UHT',
                 'maPhieuYeuCauNVL' => 'YCNVL20260901',
             ],
@@ -478,7 +478,7 @@ class WarehouseSeeder extends Seeder
                 'maNVTao' => 'NV001',
                 'maNVNhan' => 'NV003',
                 'ngayXuat' => Carbon::now()->subDays(2)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã xuất kho',
                 'ghiChu' => 'Xuất 1,500 kg đường Biên Hòa phục vụ nấu mẻ sữa chua ăn',
                 'maPhieuYeuCauNVL' => 'YCNVL20260908',
             ],
@@ -506,7 +506,7 @@ class WarehouseSeeder extends Seeder
                 'maKhachHang' => 'KH001', // Co.opmart
                 'maNVTao' => 'NV001',
                 'ngayXuat' => Carbon::now()->subDays(3)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã xuất kho',
                 'ghiChu' => 'Xuất 3,800 thùng Sữa tươi 180ml ưu tiên thuật toán FEFO lô HSD gần nhất',
                 'maDonHang' => 'DH20260901',
             ],
@@ -515,7 +515,7 @@ class WarehouseSeeder extends Seeder
                 'maKhachHang' => 'KH003', // WinMart
                 'maNVTao' => 'NV001',
                 'ngayXuat' => Carbon::now()->subDays(1)->toDateString(),
-                'trangThai' => 'Đã hoàn thành',
+                'trangThai' => 'Đã xuất kho',
                 'ghiChu' => 'Xuất 2,150 lốc Sữa chua ăn Vinamilk cho siêu thị WinMart',
                 'maDonHang' => 'DH20260905',
             ],

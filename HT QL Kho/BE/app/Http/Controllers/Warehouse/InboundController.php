@@ -327,8 +327,8 @@ class InboundController extends Controller
     {
         $receipt = PhieuNhapNVL::with('chiTiets')->findOrFail($id);
 
-        if ($receipt->trangThai === 'Hoàn thành') {
-            return response()->json(['success' => false, 'message' => 'Phiếu nhập đã được xác nhận hoàn thành trước đó'], 400);
+        if ($receipt->trangThai === 'Đã nhập kho' || $receipt->trangThai === 'Hoàn thành') {
+            return response()->json(['success' => false, 'message' => 'Phiếu nhập đã được nhập kho trước đó'], 400);
         }
 
         DB::beginTransaction();
@@ -337,7 +337,7 @@ class InboundController extends Controller
                 TonKho::where('maTonKho', $detail->maTonKho)->increment('soLuongTonHienTai', $detail->soLuong);
             }
 
-            $receipt->update(['trangThai' => 'Hoàn thành']);
+            $receipt->update(['trangThai' => 'Đã nhập kho']);
 
             // Đảm bảo Phiếu Chi đã tồn tại
             if (!PhieuChi::where('maPhieuNhapNVL', $receipt->maPhieuNhapNVL)->exists()) {
@@ -348,7 +348,7 @@ class InboundController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Xác nhận hoàn thành nhập kho NVL thành công! Tồn kho đã được tự động cộng.',
+                'message' => 'Xác nhận nhập kho NVL thành công! Tồn kho đã được tự động cộng.',
                 'data'    => $receipt,
             ]);
         } catch (\Exception $e) {

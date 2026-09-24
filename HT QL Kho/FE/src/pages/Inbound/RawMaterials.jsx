@@ -176,12 +176,12 @@ export default function InboundRawMaterials() {
   };
 
   const handleComplete = async (id) => {
-    if (window.confirm(`Xác nhận hoàn thành phiếu ${id}? Tồn kho sẽ được tự động cộng theo lô.`)) {
+    if (window.confirm(`Xác nhận nhập kho thực tế cho phiếu ${id}? Tồn kho sẽ được tự động cộng theo lô.`)) {
       try {
         await InboundAPI.completeRawMaterialReceipt(id);
         fetchReceipts();
       } catch (err) {
-        alert('Lỗi xác nhận hoàn thành: ' + (err.response?.data?.message || err.message));
+        alert('Lỗi xác nhận nhập kho: ' + (err.response?.data?.message || err.message));
       }
     }
   };
@@ -228,7 +228,7 @@ export default function InboundRawMaterials() {
           <option value="">Tất cả trạng thái</option>
           <option value="Chờ duyệt">Chờ duyệt</option>
           <option value="Đã duyệt">Đã duyệt</option>
-          <option value="Hoàn thành">Hoàn thành</option>
+          <option value="Đã nhập kho">Đã nhập kho</option>
           <option value="Từ chối">Từ chối</option>
         </select>
         <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition cursor-pointer">
