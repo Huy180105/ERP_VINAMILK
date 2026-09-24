@@ -247,7 +247,7 @@ INSERT INTO `chitietphieuchi` (`maChiTietChi`, `maPhieuChi`, `maDanhMucChi`, `di
 --
 DROP TABLE IF EXISTS `chitietphieunhapnvl`;
 CREATE TABLE `chitietphieunhapnvl` (
-  `maPhieuNhapNVL` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `maPhieuNhapNVL` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `maTonKho` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `soLuong` int DEFAULT '0',
   `donGia` float DEFAULT '0',
@@ -1180,7 +1180,7 @@ INSERT INTO `phieunghiemthu` (`maPhieuNghiemThu`, `maCongDoan`, `maLenh`, `maNha
 --
 DROP TABLE IF EXISTS `phieunhapnvl`;
 CREATE TABLE `phieunhapnvl` (
-  `maPhieuNhapNVL` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `maPhieuNhapNVL` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `maNCC` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `maNVTao` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nhân viên lập phiếu',
   `maNVNhan` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nhân viên tiếp nhận kho',

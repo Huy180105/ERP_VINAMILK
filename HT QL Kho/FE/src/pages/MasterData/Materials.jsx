@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
-import { Boxes, Plus, Search, Trash2 } from 'lucide-react';
+import { Boxes, Plus, Search, Trash2, Edit3 } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 
 export default function Materials() {
@@ -50,7 +50,10 @@ export default function Materials() {
     fetchMaterials();
   };
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const handleOpenModal = async () => {
+    setIsEditing(false);
     let list = materials;
     if (searchKey || selectedType || !list.length) {
       try {
@@ -72,15 +75,33 @@ export default function Materials() {
     setShowModal(true);
   };
 
+  const handleOpenEditModal = (item) => {
+    setIsEditing(true);
+    setFormData({
+      maNVL: item.maNVL,
+      maLoaiNVL: item.maLoaiNVL || '',
+      tenNVL: item.tenNVL,
+      donVi: item.donVi || 'Kg',
+      ghiChu: item.ghiChu || '',
+    });
+    setShowModal(true);
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await MasterDataAPI.createMaterial(formData);
+      if (isEditing) {
+        await MasterDataAPI.updateMaterial(formData.maNVL, formData);
+        alert('Cập nhật nguyên vật liệu thành công!');
+      } else {
+        await MasterDataAPI.createMaterial(formData);
+        alert('Thêm nguyên vật liệu mới thành công!');
+      }
       setShowModal(false);
       setFormData({ maNVL: '', maLoaiNVL: '', tenNVL: '', donVi: 'Kg', ghiChu: '' });
       fetchMaterials();
     } catch (err) {
-      alert('Lỗi tạo nguyên vật liệu: ' + (err.response?.data?.message || err.message));
+      alert('Lỗi thao tác NVL: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -173,8 +194,19 @@ export default function Materials() {
                     <td className="p-3 text-slate-600">{m.loai_n_v_l?.tenLoaiNVL || m.maLoaiNVL || 'Khác'}</td>
                     <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50 rounded-lg">{m.donVi || 'Kg'}</td>
                     <td className="p-3 text-slate-500">{m.ghiChu || '-'}</td>
-                    <td className="p-3 text-center space-x-2">
-                      <button onClick={() => handleDelete(m.maNVL)} className="p-1 text-rose-600 hover:bg-rose-50 rounded cursor-pointer">
+                    <td className="p-3 text-center space-x-1.5">
+                      <button 
+                        onClick={() => handleOpenEditModal(m)} 
+                        title="Sửa NVL (CF-FR02)"
+                        className="p-1 text-amber-600 hover:bg-amber-50 rounded cursor-pointer"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(m.maNVL)} 
+                        title="Xóa NVL (CF-FR03)"
+                        className="p-1 text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
@@ -190,7 +222,9 @@ export default function Materials() {
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nguyên Vật Liệu Mới</h3>
+            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">
+              {isEditing ? `Cập Nhật Nguyên Vật Liệu (${formData.maNVL})` : 'Thêm Nguyên Vật Liệu Mới (CF-FR01)'}
+            </h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Mã NVL (Tự động) *</label>
@@ -248,7 +282,7 @@ export default function Materials() {
                   type="submit"
                   className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium cursor-pointer"
                 >
-                  Lưu NVL
+                  {isEditing ? 'Lưu Thay Đổi' : 'Lưu NVL'}
                 </button>
               </div>
             </form>

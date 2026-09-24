@@ -45,6 +45,12 @@ export const MasterDataAPI = {
   getProducts: (params) => api.get('/master-data/products', { params }),
   getSuppliers: (params) => api.get('/master-data/suppliers', { params }),
   createSupplier: (data) => api.post('/master-data/suppliers', data),
+  updateSupplier: (id, data) => api.put(`/master-data/suppliers/${id}`, data),
+  deleteSupplier: (id) => api.delete(`/master-data/suppliers/${id}`),
+  getWarehouses: (params) => api.get('/master-data/warehouses', { params }),
+  createWarehouse: (data) => api.post('/master-data/warehouses', data),
+  updateWarehouse: (id, data) => api.put(`/master-data/warehouses/${id}`, data),
+  deleteWarehouse: (id) => api.delete(`/master-data/warehouses/${id}`),
   getCustomers: (params) => api.get('/master-data/customers', { params }),
   getStaff: () => api.get('/master-data/staff'),
 };
@@ -57,14 +63,20 @@ export const InventoryAPI = {
   getProductLocations: () => api.get('/inventory/locations/products'),
   getMaterialLocations: () => api.get('/inventory/locations/materials'),
   getReplenishments: (params) => api.get('/inventory/replenishments', { params }),
+  getNextReplenishmentCode: () => api.get('/inventory/replenishments/next-code'),
   createReplenishment: (data) => api.post('/inventory/replenishments', data),
-  updateReplenishmentStatus: (id, data) => api.patch(`/inventory/replenishments/${id}/status`, data),
+  updateReplenishmentStatus: (id, data) => api.put(`/inventory/replenishments/${id}/status`, data),
 };
 
 export const InboundAPI = {
+  getNextRawMaterialReceiptCode: () => api.get('/inbound/raw-materials/next-code'),
   getRawMaterialReceipts: (params) => api.get('/inbound/raw-materials', { params }),
+  getRawMaterialReceiptDetail: (id) => api.get(`/inbound/raw-materials/${id}`),
   createRawMaterialReceipt: (data) => api.post('/inbound/raw-materials', data),
+  updateRawMaterialReceipt: (id, data) => api.put(`/inbound/raw-materials/${id}`, data),
+  deleteRawMaterialReceipt: (id) => api.delete(`/inbound/raw-materials/${id}`),
   approveRawMaterialReceipt: (id) => api.put(`/inbound/raw-materials/${id}/approve`),
+  rejectRawMaterialReceipt: (id, data) => api.put(`/inbound/raw-materials/${id}/reject`, data),
   completeRawMaterialReceipt: (id) => api.put(`/inbound/raw-materials/${id}/complete`),
   
   // Product Inbound Receipts (PhieuNhapSP)
@@ -84,8 +96,12 @@ export const OutboundAPI = {
   getRawMaterialDispatches: (params) => api.get('/outbound/raw-materials', { params }),
   getPendingMaterialRequests: (params) => api.get('/outbound/raw-materials/pending-requests', { params }),
   createRawMaterialDispatch: (data) => api.post('/outbound/raw-materials', data),
+  approveRawMaterialDispatch: (id) => api.put(`/outbound/raw-materials/${id}/approve`),
+  rejectRawMaterialDispatch: (id, data) => api.put(`/outbound/raw-materials/${id}/reject`, data),
   completeRawMaterialDispatch: (id) => api.put(`/outbound/raw-materials/${id}/complete`),
   getProductDispatches: (params) => api.get('/outbound/products', { params }),
+  approveProductDispatch: (id) => api.put(`/outbound/products/${id}/approve`),
+  rejectProductDispatch: (id, data) => api.put(`/outbound/products/${id}/reject`, data),
   completeProductDispatch: (id) => api.put(`/outbound/products/${id}/complete`),
 };
 

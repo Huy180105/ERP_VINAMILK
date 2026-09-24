@@ -4,10 +4,12 @@
 
 export function generateAutoCode(list = [], codeProp = 'id', prefix = 'CODE', digitCount = 3, includeDate = false) {
   const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const fullPrefix = includeDate ? `${prefix}${todayStr}` : prefix;
+  const fullPrefix = includeDate 
+    ? (prefix.endsWith('-') ? `${prefix}${todayStr}-` : `${prefix}${todayStr}`)
+    : prefix;
 
   let maxNum = 0;
-  // If includeDate is true: match only codes starting with fullPrefix (e.g. PNNVL20260924...)
+  // If includeDate is true: match only codes starting with fullPrefix (e.g. PNNVL20260924... or LOT-NVL-20260924-...)
   // If includeDate is false: match codes starting with prefix (e.g. NVL001, NVL-001)
   const regex = new RegExp(`^${fullPrefix}[-_]?(\\d+)`, 'i');
 

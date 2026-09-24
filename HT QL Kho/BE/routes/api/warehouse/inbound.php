@@ -11,9 +11,14 @@ use App\Http\Controllers\Warehouse\InboundController;
 
 Route::prefix('warehouse/inbound')->group(function () {
     // Nhập kho NVL từ NCC (CF-FR11 -> CF-FR19)
+    Route::get('/raw-materials/next-code', [InboundController::class, 'getNextRawMaterialReceiptCode']);
     Route::get('/raw-materials', [InboundController::class, 'getRawMaterialReceipts']);
+    Route::get('/raw-materials/{id}', [InboundController::class, 'getRawMaterialReceiptDetail']);
     Route::post('/raw-materials', [InboundController::class, 'createRawMaterialReceipt']);
+    Route::put('/raw-materials/{id}', [InboundController::class, 'updateRawMaterialReceipt']);
+    Route::delete('/raw-materials/{id}', [InboundController::class, 'deleteRawMaterialReceipt']);
     Route::put('/raw-materials/{id}/approve', [InboundController::class, 'approveRawMaterialReceipt']);
+    Route::put('/raw-materials/{id}/reject', [InboundController::class, 'rejectRawMaterialReceipt']);
     Route::put('/raw-materials/{id}/complete', [InboundController::class, 'completeRawMaterialReceipt']);
 
     // Nhập kho Sản phẩm từ Xưởng sản xuất (CF-FR20 -> CF-FR29)

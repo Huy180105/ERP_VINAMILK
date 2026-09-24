@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { MasterDataAPI } from '../../services/api';
-import { Building2, Plus, Mail, Phone, MapPin } from 'lucide-react';
+import { Building2, Plus, Mail, Phone, MapPin, Edit3, Trash2, Search, RefreshCw } from 'lucide-react';
 import { generateAutoCode } from '../../utils/codeGenerator';
 import { isValidPhone, isValidEmail } from '../../utils/validateInput';
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchKey, setSearchKey] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     maNCC: '',
@@ -21,10 +22,10 @@ export default function Suppliers() {
     fetchSuppliers();
   }, []);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = async (keyword = searchKey) => {
     setLoading(true);
     try {
-      const res = await MasterDataAPI.getSuppliers();
+      const res = await MasterDataAPI.getSuppliers({ keyword });
       setSuppliers(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -33,7 +34,20 @@ export default function Suppliers() {
     }
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchSuppliers(searchKey);
+  };
+
+  const handleReset = () => {
+    setSearchKey('');
+    fetchSuppliers('');
+  };
+
+  const [isEditing, setIsEditing] = useState(false);
+
   const handleOpenModal = () => {
+    setIsEditing(false);
     const autoCode = generateAutoCode(suppliers, 'maNCC', 'NCC', 3, false);
     setFormData({
       maNCC: autoCode,
@@ -44,6 +58,31 @@ export default function Suppliers() {
       email: '',
     });
     setShowModal(true);
+  };
+
+  const handleOpenEditModal = (s) => {
+    setIsEditing(true);
+    setFormData({
+      maNCC: s.maNCC,
+      tenNCC: s.tenNCC,
+      maSoThue: s.maSoThue || '',
+      diaChi: s.diaChi || '',
+      soDienThoai: s.soDienThoai || '',
+      email: s.email || '',
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm(`Bạn có chắc muốn xóa nhà cung cấp ${id}? (Chỉ xóa được khi chưa có giao dịch nhập kho)`)) {
+      try {
+        await MasterDataAPI.deleteSupplier(id);
+        alert('Đã xóa nhà cung cấp thành công!');
+        fetchSuppliers();
+      } catch (err) {
+        alert('Lỗi xóa NCC: ' + (err.response?.data?.message || err.message));
+      }
+    }
   };
 
   const handleCreate = async (e) => {
@@ -57,12 +96,18 @@ export default function Suppliers() {
       return;
     }
     try {
-      await MasterDataAPI.createSupplier(formData);
+      if (isEditing) {
+        await MasterDataAPI.updateSupplier(formData.maNCC, formData);
+        alert('Cập nhật nhà cung cấp thành công!');
+      } else {
+        await MasterDataAPI.createSupplier(formData);
+        alert('Thêm nhà cung cấp mới thành công!');
+      }
       setShowModal(false);
       setFormData({ maNCC: '', tenNCC: '', maSoThue: '', diaChi: '', soDienThoai: '', email: '' });
       fetchSuppliers();
     } catch (err) {
-      alert('Lỗi thêm Nhà cung cấp: ' + (err.response?.data?.message || err.message));
+      alert('Lỗi thao tác Nhà cung cấp: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -87,9 +132,45 @@ export default function Suppliers() {
         </button>
       </div>
 
+      {/* Thanh Tìm Kiếm Nhà Cung Cấp */}
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-xs">
+        <div className="flex-1 relative">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo mã NCC (NCC001...), tên nhà cung cấp, địa chỉ, SĐT, MST..."
+            value={searchKey}
+            onChange={(e) => setSearchKey(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+        </div>
+        <button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition cursor-pointer flex items-center justify-center space-x-1"
+        >
+          <Search className="w-3.5 h-3.5" />
+          <span>Tìm kiếm</span>
+        </button>
+        {searchKey && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-2 rounded-lg transition cursor-pointer flex items-center justify-center space-x-1"
+            title="Xóa lọc"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Đặt lại</span>
+          </button>
+        )}
+      </form>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
-          <p className="text-slate-400 text-xs">Đang tải danh sách...</p>
+          <div className="col-span-2 text-center p-8 text-slate-400 text-xs">Đang tải danh sách nhà cung cấp...</div>
+        ) : suppliers.length === 0 ? (
+          <div className="col-span-2 bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-xs">
+            Không tìm thấy nhà cung cấp nào phù hợp với từ khóa "{searchKey}".
+          </div>
         ) : (
           suppliers.map((s) => (
             <div key={s.maNCC} className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
@@ -100,9 +181,25 @@ export default function Suppliers() {
                   </span>
                   <h3 className="font-bold text-slate-800 text-sm mt-1.5">{s.tenNCC}</h3>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">MST: {s.maSoThue || 'Chưa cập nhật'}</span>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    onClick={() => handleOpenEditModal(s)}
+                    title="Sửa nhà cung cấp (CF-FR07)"
+                    className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(s.maNCC)}
+                    title="Xóa nhà cung cấp (CF-FR08)"
+                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <div className="space-y-1.5 text-xs text-slate-600">
+                <div className="text-[10px] text-slate-400 font-mono">MST: {s.maSoThue || 'Chưa cập nhật'}</div>
                 <div className="flex items-center space-x-2">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>{s.diaChi || 'Địa chỉ đang cập nhật'}</span>
@@ -124,7 +221,9 @@ export default function Suppliers() {
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-sm max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">Thêm Nhà Cung Cấp Mới</h3>
+            <h3 className="text-base font-bold text-[#0B2341] border-b pb-2">
+              {isEditing ? `Cập Nhật Nhà Cung Cấp (${formData.maNCC})` : 'Thêm Nhà Cung Cấp Mới (CF-FR06)'}
+            </h3>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Mã NCC (Tự động tạo) *</label>
@@ -202,7 +301,7 @@ export default function Suppliers() {
                   type="submit"
                   className="px-4 py-2 bg-[#0B2341] hover:bg-blue-900 text-white rounded-lg font-medium cursor-pointer"
                 >
-                  Thêm Nhà Cung Cấp
+                  {isEditing ? 'Lưu Thay Đổi' : 'Thêm Nhà Cung Cấp'}
                 </button>
               </div>
             </form>

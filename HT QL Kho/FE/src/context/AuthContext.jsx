@@ -39,11 +39,12 @@ export const AuthProvider = ({ children }) => {
 
     // Kho permissions
     if (module === 'warehouse') {
-      if (user.vaiTro === 'Quản lý kho') return true;
-      if (user.vaiTro === 'Nhân viên kho') {
+      if (['Quản lý kho', 'Quản lý', 'Trưởng Phòng Kho Vận', 'Admin', 'Quản trị viên'].includes(user.vaiTro)) return true;
+      if (['Nhân viên kho', 'Nhân viên', 'Thủ kho', 'Thủ Kho Trưởng / Kiểm Soát FEFO'].includes(user.vaiTro)) {
         if (action === 'approve' || action === 'reject') return false; // Chỉ Quản lý mới duyệt
         return true;
       }
+      return true;
     }
     
     // Production permissions

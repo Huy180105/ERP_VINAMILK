@@ -23,4 +23,9 @@ class NhaCungCap extends Model
         'soDienThoai',
         'email',
     ];
+
+    public function phieuNhapNVLs()
+    {
+        return $this->hasMany(PhieuNhapNVL::class, 'maNCC', 'maNCC');
+    }
 }

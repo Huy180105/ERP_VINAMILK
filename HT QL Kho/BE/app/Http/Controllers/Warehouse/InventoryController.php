@@ -147,13 +147,34 @@ class InventoryController extends Controller
     }
 
     // =========================================================================
-    // QUẢN LÝ ĐỀ NGHỊ BỔ SUNG SẢN PHẨM (BẢNG 36: DeNghiBoSungSanPham)
+    // QUẢN LÝ ĐỀ NGHỊ BỔ SUNG SẢN PHẨM (CF-FR60, CF-FR61)
     // =========================================================================
+
+    public function getNextDeNghiCode()
+    {
+        $prefix = 'DNSP' . Carbon::now()->format('Ymd');
+        $last = DeNghiBoSungSanPham::where('maDeNghi', 'LIKE', "{$prefix}%")
+            ->orderBy('maDeNghi', 'desc')
+            ->value('maDeNghi');
+
+        $nextNum = $last ? str_pad(((int) substr($last, -2)) + 1, 2, '0', STR_PAD_LEFT) : '01';
+
+        return response()->json([
+            'success' => true,
+            'code'    => $prefix . $nextNum,
+        ]);
+    }
 
     public function getDeNghiBoSung(Request $request)
     {
         $data = DeNghiBoSungSanPham::with(['sanPham', 'kho', 'nhanVien'])
             ->when($request->filled('trangThai'), fn($q) => $q->where('trangThai', $request->trangThai))
+            ->when($request->filled('keyword'), function ($q) use ($request) {
+                $kw = $request->input('keyword');
+                $q->where(fn($sub) => $sub->where('maDeNghi', 'LIKE', "%{$kw}%")
+                                          ->orWhere('ghiChu', 'LIKE', "%{$kw}%")
+                                          ->orWhereHas('sanPham', fn($sp) => $sp->where('tenSanPham', 'LIKE', "%{$kw}%")));
+            })
             ->orderBy('ngayDeNghi', 'desc')
             ->get();
 
@@ -166,7 +187,7 @@ class InventoryController extends Controller
     public function createDeNghiBoSung(Request $request)
     {
         $validated = $request->validate([
-            'maDeNghi'    => 'nullable|string|unique:DeNghiBoSungSanPham,maDeNghi',
+            'maDeNghi'    => 'nullable|string|max:50',
             'maSanPham'   => 'required|string|exists:SanPham,maSanPham',
             'maKho'       => 'required|string|exists:Kho,maKho',
             'soLuong'     => 'required|integer|min:1',
@@ -175,7 +196,13 @@ class InventoryController extends Controller
             'ghiChu'      => 'nullable|string|max:255',
         ]);
 
-        $code = $validated['maDeNghi'] ?? ('DN' . date('Ymd') . rand(100, 999));
+        $prefix = 'DNSP' . Carbon::now()->format('Ymd');
+        $last = DeNghiBoSungSanPham::where('maDeNghi', 'LIKE', "{$prefix}%")
+            ->orderBy('maDeNghi', 'desc')
+            ->value('maDeNghi');
+        $nextNum = $last ? str_pad(((int) substr($last, -2)) + 1, 2, '0', STR_PAD_LEFT) : '01';
+
+        $code = !empty($validated['maDeNghi']) ? $validated['maDeNghi'] : ($prefix . $nextNum);
 
         $item = DeNghiBoSungSanPham::create([
             'maDeNghi'    => $code,

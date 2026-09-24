@@ -26,7 +26,8 @@ Route::prefix('warehouse/inventory')->group(function () {
     Route::get('/locations/products', [InventoryController::class, 'getProductLocations']);
     Route::get('/locations/materials', [InventoryController::class, 'getMaterialLocations']);
 
-    // Đề nghị bổ sung sản phẩm (Bảng 36 Kho)
+    // Đề nghị bổ sung sản phẩm (CF-FR60, CF-FR61)
+    Route::get('/replenishments/next-code', [InventoryController::class, 'getNextDeNghiCode']);
     Route::get('/replenishments', [InventoryController::class, 'getDeNghiBoSung']);
     Route::post('/replenishments', [InventoryController::class, 'createDeNghiBoSung']);
     Route::put('/replenishments/{id}/status', [InventoryController::class, 'updateDeNghiBoSungStatus']);

@@ -13,11 +13,13 @@ import Dashboard from './pages/Dashboard';
 import Materials from './pages/MasterData/Materials';
 import Products from './pages/MasterData/Products';
 import Suppliers from './pages/MasterData/Suppliers';
+import Warehouses from './pages/MasterData/Warehouses';
 import InboundRawMaterials from './pages/Inbound/RawMaterials';
 import InboundProducts from './pages/Inbound/Products';
 import OutboundRawMaterials from './pages/Outbound/RawMaterials';
 import OutboundProducts from './pages/Outbound/Products';
 import InventoryLots from './pages/Inventory/Lots';
+import Alerts from './pages/Inventory/Alerts';
 import Reports from './pages/Reports';
 
 // Finance Layout & Pages
@@ -148,24 +150,26 @@ export default function App() {
         <Route path="/warehouse/master-data/materials" element={<WarehousePage><Materials /></WarehousePage>} />
         <Route path="/warehouse/master-data/products" element={<WarehousePage><Products /></WarehousePage>} />
         <Route path="/warehouse/master-data/suppliers" element={<WarehousePage><Suppliers /></WarehousePage>} />
+        <Route path="/warehouse/master-data/warehouses" element={<WarehousePage><Warehouses /></WarehousePage>} />
         <Route path="/warehouse/inbound/materials" element={<WarehousePage><InboundRawMaterials /></WarehousePage>} />
         <Route path="/warehouse/inbound/products" element={<WarehousePage><InboundProducts /></WarehousePage>} />
         <Route path="/warehouse/outbound/materials" element={<WarehousePage><OutboundRawMaterials /></WarehousePage>} />
         <Route path="/warehouse/outbound/products" element={<WarehousePage><OutboundProducts /></WarehousePage>} />
         <Route path="/warehouse/inventory/lots" element={<WarehousePage><InventoryLots /></WarehousePage>} />
-        <Route path="/warehouse/inventory/alerts" element={<WarehousePage><Dashboard /></WarehousePage>} />
+        <Route path="/warehouse/inventory/alerts" element={<WarehousePage><Alerts /></WarehousePage>} />
         <Route path="/warehouse/reports/summary" element={<WarehousePage><Reports /></WarehousePage>} />
 
         {/* Route 4: Warehouse Sub-pages WITHOUT /warehouse prefix */}
         <Route path="/master-data/materials" element={<WarehousePage><Materials /></WarehousePage>} />
         <Route path="/master-data/products" element={<WarehousePage><Products /></WarehousePage>} />
         <Route path="/master-data/suppliers" element={<WarehousePage><Suppliers /></WarehousePage>} />
+        <Route path="/master-data/warehouses" element={<WarehousePage><Warehouses /></WarehousePage>} />
         <Route path="/inbound/materials" element={<WarehousePage><InboundRawMaterials /></WarehousePage>} />
         <Route path="/inbound/products" element={<WarehousePage><InboundProducts /></WarehousePage>} />
         <Route path="/outbound/materials" element={<WarehousePage><OutboundRawMaterials /></WarehousePage>} />
         <Route path="/outbound/products" element={<WarehousePage><OutboundProducts /></WarehousePage>} />
         <Route path="/inventory/lots" element={<WarehousePage><InventoryLots /></WarehousePage>} />
-        <Route path="/inventory/alerts" element={<WarehousePage><Dashboard /></WarehousePage>} />
+        <Route path="/inventory/alerts" element={<WarehousePage><Alerts /></WarehousePage>} />
         <Route path="/reports/summary" element={<WarehousePage><Reports /></WarehousePage>} />
 
         {/* Route 5: Finance Subsystem (Phân Hệ Quản Lý Thu Chi) */}

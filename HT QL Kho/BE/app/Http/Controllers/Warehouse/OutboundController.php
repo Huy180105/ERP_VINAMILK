@@ -110,6 +110,44 @@ class OutboundController extends Controller
         }
     }
 
+    // Phê duyệt phiếu xuất kho NVL (CF-FR40)
+    public function approveRawMaterialDispatch($id)
+    {
+        $dispatch = PhieuXuatNVL::findOrFail($id);
+        $dispatch->update(['trangThai' => 'Đã duyệt']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quản lý kho đã duyệt phiếu xuất kho nguyên vật liệu!',
+            'data'    => $dispatch,
+        ]);
+    }
+
+    // Từ chối phiếu xuất kho NVL (CF-FR41)
+    public function rejectRawMaterialDispatch(Request $request, $id)
+    {
+        $dispatch = PhieuXuatNVL::findOrFail($id);
+
+        if ($dispatch->trangThai !== 'Chờ duyệt') {
+            return response()->json([
+                'success' => false,
+                'message' => "Chỉ được phép từ chối phiếu khi đang ở trạng thái 'Chờ duyệt'.",
+            ], 400);
+        }
+
+        $lyDo = $request->input('lyDo', 'Không đạt yêu cầu xuất cấp');
+        $dispatch->update([
+            'trangThai' => 'Từ chối',
+            'ghiChu'    => $dispatch->ghiChu ? ($dispatch->ghiChu . " | [Từ chối]: " . $lyDo) : ("[Từ chối]: " . $lyDo),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quản lý kho đã từ chối duyệt phiếu xuất kho NVL!',
+            'data'    => $dispatch,
+        ]);
+    }
+
     // Xác nhận hoàn thành phiếu xuất NVL -> Tự động trừ tồn kho theo lô (CF-FR39)
     public function completeRawMaterialDispatch($id)
     {
@@ -160,6 +198,44 @@ class OutboundController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $dispatches,
+        ]);
+    }
+
+    // Phê duyệt phiếu xuất SP (CF-FR48)
+    public function approveProductDispatch($id)
+    {
+        $dispatch = PhieuXuatSP::findOrFail($id);
+        $dispatch->update(['trangThai' => 'Đã duyệt']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quản lý kho đã duyệt phiếu xuất sản phẩm thành công!',
+            'data'    => $dispatch,
+        ]);
+    }
+
+    // Từ chối phiếu xuất SP (CF-FR49)
+    public function rejectProductDispatch(Request $request, $id)
+    {
+        $dispatch = PhieuXuatSP::findOrFail($id);
+
+        if ($dispatch->trangThai !== 'Chờ duyệt') {
+            return response()->json([
+                'success' => false,
+                'message' => "Chỉ được phép từ chối phiếu xuất khi đang ở trạng thái 'Chờ duyệt'.",
+            ], 400);
+        }
+
+        $lyDo = $request->input('lyDo', 'Chưa đủ điều kiện xuất kho');
+        $dispatch->update([
+            'trangThai' => 'Từ chối',
+            'ghiChu'    => $dispatch->ghiChu ? ($dispatch->ghiChu . " | [Từ chối]: " . $lyDo) : ("[Từ chối]: " . $lyDo),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quản lý kho đã từ chối phiếu xuất sản phẩm!',
+            'data'    => $dispatch,
         ]);
     }
 

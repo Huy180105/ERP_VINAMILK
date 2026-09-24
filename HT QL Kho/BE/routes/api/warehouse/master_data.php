@@ -23,8 +23,16 @@ Route::prefix('warehouse/master-data')->group(function () {
     // Nhà Cung Cấp (CF-FR06 -> CF-FR09)
     Route::get('/suppliers', [MasterDataController::class, 'getSuppliers']);
     Route::post('/suppliers', [MasterDataController::class, 'createSupplier']);
+    Route::put('/suppliers/{id}', [MasterDataController::class, 'updateSupplier']);
+    Route::delete('/suppliers/{id}', [MasterDataController::class, 'deleteSupplier']);
 
-    // Khách Hàng / Nhà Phân Phối (CF-FR10)
+    // Khu Vực Kho (CF-FR10 -> CF-FR13)
+    Route::get('/warehouses', [MasterDataController::class, 'getWarehouses']);
+    Route::post('/warehouses', [MasterDataController::class, 'createWarehouse']);
+    Route::put('/warehouses/{id}', [MasterDataController::class, 'updateWarehouse']);
+    Route::delete('/warehouses/{id}', [MasterDataController::class, 'deleteWarehouse']);
+
+    // Khách Hàng / Nhà Phân Phối
     Route::get('/customers', [MasterDataController::class, 'getCustomers']);
 
     // Nhân Viên / Thủ Kho

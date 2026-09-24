@@ -10,6 +10,7 @@ import {
   Clock, 
   FileText, 
   Building2, 
+  Building,
   Layers,
   AlertTriangle,
   Heart
@@ -29,6 +30,7 @@ export default function Sidebar() {
         { name: 'Nguyên Vật Liệu', path: '/warehouse/master-data/materials', icon: Boxes },
         { name: 'Sản Phẩm Vinamilk', path: '/warehouse/master-data/products', icon: Package },
         { name: 'Nhà Cung Cấp', path: '/warehouse/master-data/suppliers', icon: Building2 },
+        { name: 'Kho & Vị Trí', path: '/warehouse/master-data/warehouses', icon: Building },
       ]
     },
     {
@@ -49,7 +51,7 @@ export default function Sidebar() {
       title: 'TỒN KHO & LÔ HÀNG',
       items: [
         { name: 'Tra Cứu Lô & HSD', path: '/warehouse/inventory/lots', icon: Clock },
-        { name: 'Cảnh Báo HSD / FEFO', path: '/warehouse/inventory/alerts', icon: AlertTriangle },
+        { name: 'Cảnh Báo & Đề Nghị Hàng', path: '/warehouse/inventory/alerts', icon: AlertTriangle },
       ]
     },
     {
