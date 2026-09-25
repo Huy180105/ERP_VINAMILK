@@ -1,0 +1,71 @@
+# Node & Frontend dependencies
+node_modules/
+/HT QL Kho/FE/node_modules/
+/HT QL Kho/FE/dist/
+npm-debug.log*
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Extracted diagram images
+extracted_images/
+/extracted_images/
+
+# Database files
+*.sqlite
+*.sqlite-journal
+*.sqlite3
+
+# Laravel & Backend dependencies
+vendor/
+/HT QL Kho/BE/vendor/
+/HT QL Kho/BE/storage/*.key
+/HT QL Kho/BE/storage/framework/cache/data/*
+/HT QL Kho/BE/storage/framework/sessions/*
+/HT QL Kho/BE/storage/framework/testing/*
+/HT QL Kho/BE/storage/framework/views/*
+/HT QL Kho/BE/storage/logs/*.log
+/HT QL Kho/BE/bootstrap/cache/*.php
+
+# Environment files
+.env
+/HT QL Kho/BE/.env
+!.env.example
+!.env.docker
+!/HT QL Kho/BE/.env.docker
+
+# AI Assistants, Skills & MCP Plugins
+.agents/
+.agent/
+.skills/
+skills/
+.mcp/
+mcp/
+.mcp.json
+mcp.json
+claude_desktop_config.json
+.gemini/
+.antigravity/
+.claude/
+.cursor/
+.cursorrules
+.cline/
+.roo/
+.windsurf/
+.codeium/
+.plugins/
+
+# OS & IDE Junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.fleet/
+.phpunit.result.cache
+.phpunit.cache
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.playwright-mcp/

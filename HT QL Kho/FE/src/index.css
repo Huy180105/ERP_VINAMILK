@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vnm-primary: #002795;
+  --color-vnm-secondary: #001F7D;
+  --color-vnm-dark: #00153D;
+  --color-vnm-blue: #002795;
+  --color-vnm-navy: #001F7D;
+  --color-vnm-navy-light: #0D3268;
+  --color-vnm-blue-light: #EBF2FF;
+  --color-vnm-surface: #FFFFFF;
+  --color-vnm-cream: #FFFDF7;
+  --color-vnm-bg: #F8FAFC;
+  --color-vnm-border: #E2E8F0;
+  --color-vnm-text: #0F172A;
+  --color-vnm-muted: #64748B;
+  --color-vnm-green: #16A34A;
+  --color-vnm-amber: #D97706;
+  --color-vnm-red: #DC2626;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #F8FAFC;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #0F172A;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Vinamilk smooth scroll & styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}

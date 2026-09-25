@@ -1,0 +1,61 @@
+services:
+  # 1. Database Service (MySQL 8.0)
+  db:
+    image: mysql:8.0
+    container_name: erp_db
+    restart: always
+    command: >
+      --lower-case-table-names=1
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --character-set-client-handshake=FALSE
+      --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: quanly_erp
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database_erp.sql:/docker-entrypoint-initdb.d/01_database_erp.sql
+    networks:
+      - erp_network
+
+  # 2. Backend Service (Laravel API)
+  be:
+    build:
+      context: "./HT QL Kho/BE"
+      dockerfile: Dockerfile
+    container_name: erp_be
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./HT QL Kho/BE:/var/www/html"
+      - /var/www/html/vendor
+      - "./HT QL Kho/BE/.env.docker:/var/www/html/.env"
+    depends_on:
+      - db
+    networks:
+      - erp_network
+
+  # 3. Frontend Service (React + Nginx)
+  fe:
+    build:
+      context: "./HT QL Kho/FE"
+      dockerfile: Dockerfile
+    container_name: erp_fe
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - be
+    networks:
+      - erp_network
+
+networks:
+  erp_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
