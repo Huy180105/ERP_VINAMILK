@@ -164,11 +164,11 @@ class OutboundController extends Controller
                 return response()->json(['success' => false, 'message' => $err], 400);
             }
 
-            $dispatch->update(['trangThai' => 'Đã xuất kho']);
+            $dispatch->update(['trangThai' => 'Hoàn thành']);
 
             if ($dispatch->maPhieuYeuCauNVL) {
                 PhieuYeuCauNVL::where('maPhieuYCNVL', $dispatch->maPhieuYeuCauNVL)
-                    ->update(['trangThai' => 'Đã xuất kho']);
+                    ->update(['trangThai' => 'Hoàn thành']);
             }
 
             DB::commit();
@@ -254,7 +254,7 @@ class OutboundController extends Controller
                 return response()->json(['success' => false, 'message' => $err], 400);
             }
 
-            $dispatch->update(['trangThai' => 'Đã xuất kho']);
+            $dispatch->update(['trangThai' => 'Hoàn thành']);
             DB::commit();
 
             return response()->json([

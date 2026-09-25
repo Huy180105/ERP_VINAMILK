@@ -284,7 +284,7 @@ export default function InboundProducts() {
   };
 
   const filteredReceipts = receipts.filter(r => {
-    const matchStatus = filterStatus === 'ALL' || r.trangThai === filterStatus;
+    const matchStatus = filterStatus === 'ALL' || r.trangThai === filterStatus || (filterStatus === 'Hoàn thành' && (r.trangThai === 'Thành công' || r.trangThai === 'Hoàn thành'));
     const kw = keyword.toLowerCase();
     const matchKw = !kw || 
       r.maPhieuNhapSP.toLowerCase().includes(kw) || 
@@ -419,7 +419,7 @@ export default function InboundProducts() {
         {/* Filter Tabs & Search Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Thành công', 'Từ chối'].map(status => (
+          {['ALL', 'Chờ duyệt', 'Đã duyệt', 'Hoàn thành', 'Thành công', 'Từ chối'].map(status => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}

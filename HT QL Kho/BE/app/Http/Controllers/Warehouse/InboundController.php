@@ -327,8 +327,8 @@ class InboundController extends Controller
     {
         $receipt = PhieuNhapNVL::with('chiTiets')->findOrFail($id);
 
-        if ($receipt->trangThai === 'Đã nhập kho' || $receipt->trangThai === 'Hoàn thành') {
-            return response()->json(['success' => false, 'message' => 'Phiếu nhập đã được nhập kho trước đó'], 400);
+        if ($receipt->trangThai === 'Hoàn thành' || $receipt->trangThai === 'Đã nhập kho') {
+            return response()->json(['success' => false, 'message' => 'Phiếu nhập đã được hoàn thành nhập kho trước đó'], 400);
         }
 
         DB::beginTransaction();
@@ -337,7 +337,7 @@ class InboundController extends Controller
                 TonKho::where('maTonKho', $detail->maTonKho)->increment('soLuongTonHienTai', $detail->soLuong);
             }
 
-            $receipt->update(['trangThai' => 'Đã nhập kho']);
+            $receipt->update(['trangThai' => 'Hoàn thành']);
 
             // Đảm bảo Phiếu Chi đã tồn tại
             if (!PhieuChi::where('maPhieuNhapNVL', $receipt->maPhieuNhapNVL)->exists()) {
@@ -412,7 +412,7 @@ class InboundController extends Controller
 
             if (!empty($validated['maPhieuYCXSP'])) {
                 PhieuYeuCauXuatSP::where('maPhieuYCXSP', $validated['maPhieuYCXSP'])
-                    ->update(['trangThai' => 'Đã nhập kho']);
+                    ->update(['trangThai' => 'Hoàn thành']);
             }
 
             $today = Carbon::today();
@@ -660,12 +660,12 @@ class InboundController extends Controller
                 }
             }
 
-            $receipt->update(['trangThai' => 'Thành công']);
+            $receipt->update(['trangThai' => 'Hoàn thành']);
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Xác nhận lấy hàng thành công! Trạng thái phiếu chuyển thành Thành công và lô tồn kho mới đã được tạo.',
+                'message' => 'Xác nhận lấy hàng thành công! Trạng thái phiếu chuyển thành Hoàn thành và lô tồn kho mới đã được cập nhật.',
                 'data'    => $receipt,
             ]);
         } catch (\Exception $e) {

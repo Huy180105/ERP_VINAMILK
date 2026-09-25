@@ -3,14 +3,13 @@ import { CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
 
 export default function StatusBadge({ status }) {
   let displayStatus = status;
-  if (status === 'Hoàn thành' || status === 'Đã hoàn thành') {
-    displayStatus = 'Đã nhập kho';
-  }
 
   let style = 'bg-slate-100 text-slate-700 border-slate-200/80';
   let Icon = Clock;
 
   switch (displayStatus) {
+    case 'Hoàn thành':
+    case 'Đã hoàn thành':
     case 'Đã nhập kho':
     case 'Đã xuất kho':
     case 'Thành công':

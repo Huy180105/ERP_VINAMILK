@@ -137,7 +137,7 @@ class MaterialRequestController extends Controller
         $req = PhieuYeuCauNVL::where('maPhieuYCNVL', $id)->firstOrFail();
 
         $validated = $request->validate([
-            'trangThai' => 'required|in:Chưa xử lý,Đã xuất kho,Từ chối',
+            'trangThai' => 'required|in:Chưa xử lý,Đã xuất kho,Hoàn thành,Từ chối',
         ]);
 
         $req->trangThai = $validated['trangThai'];

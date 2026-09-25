@@ -133,7 +133,7 @@ class SalesStock
             foreach ($details as $detail) {
                 DB::table('TonKho')->where('maTonKho', $detail->maTonKho)->decrement('soLuongTonHienTai', $detail->soLuong);
             }
-            DB::table('PhieuXuatSP')->where('maPhieuXuatSP', $id)->update(['trangThai' => 'Đã xuất kho']);
+            DB::table('PhieuXuatSP')->where('maPhieuXuatSP', $id)->update(['trangThai' => 'Hoàn thành']);
             $dispatch = DB::table('PhieuXuatSP')->where('maPhieuXuatSP', $id)->first();
             if ($order) {
                 $this->confirmOrderAndCreateDelivery($dispatch, $order);

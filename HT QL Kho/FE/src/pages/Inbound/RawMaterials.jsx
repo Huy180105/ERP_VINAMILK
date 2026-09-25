@@ -191,7 +191,7 @@ export default function InboundRawMaterials() {
 
   const filteredReceipts = useMemo(() => {
     return receipts.filter(r => {
-      const matchStatus = !statusFilter || r.trangThai === statusFilter;
+      const matchStatus = !statusFilter || r.trangThai === statusFilter || (statusFilter === 'Hoàn thành' && (r.trangThai === 'Đã nhập kho' || r.trangThai === 'Hoàn thành'));
       const kw = searchKey.toLowerCase().trim();
       const matchKw = !kw || 
         r.maPhieuNhapNVL?.toLowerCase().includes(kw) ||
@@ -253,6 +253,7 @@ export default function InboundRawMaterials() {
           <option value="">Tất cả trạng thái</option>
           <option value="Chờ duyệt">Chờ duyệt</option>
           <option value="Đã duyệt">Đã duyệt</option>
+          <option value="Hoàn thành">Hoàn thành</option>
           <option value="Đã nhập kho">Đã nhập kho</option>
           <option value="Từ chối">Từ chối</option>
         </select>
