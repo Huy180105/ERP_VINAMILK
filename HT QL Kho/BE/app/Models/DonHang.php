@@ -35,8 +35,8 @@ class DonHang extends Model
         return $this->hasMany(ChiTietDonHang::class, 'maDonHang', 'maDonHang');
     }
 
-    public function giaoHangs()
+    public function hoaDon()
     {
-        return $this->hasMany(GiaoHang::class, 'maDonHang', 'maDonHang');
+        return $this->hasOne(HoaDon::class, 'maDonHang', 'maDonHang');
     }
 }

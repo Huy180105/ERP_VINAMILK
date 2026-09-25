@@ -24,7 +24,6 @@ export default function SalesSidebar() {
       title: 'NGHIỆP VỤ BÁN HÀNG',
       items: [
         { name: 'Quản Lý Đơn Hàng', path: '/sales/orders', icon: ShoppingCart },
-        { name: 'Quản Lý Giao Hàng', path: '/sales/deliveries', icon: Truck },
         { name: 'Hóa Đơn & Thanh Toán', path: '/sales/invoices', icon: ReceiptText },
         { name: 'Quản Lý Công Nợ', path: '/sales/receivables', icon: CircleDollarSign },
       ]

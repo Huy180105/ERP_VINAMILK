@@ -62,7 +62,6 @@ import HRAccounts from './modules/HR/pages/Accounts';
 // Sales Subsystem Pages
 import SalesDashboard from './modules/Sales/pages/Dashboard';
 import SalesOrders from './modules/Sales/pages/Orders';
-import SalesDeliveries from './modules/Sales/pages/Deliveries';
 import SalesInvoices from './modules/Sales/pages/Invoices';
 import SalesReceivables from './modules/Sales/pages/Receivables';
 import SalesCustomers from './modules/Sales/pages/Customers';
@@ -201,7 +200,6 @@ export default function App() {
         {/* Route 7: Sales Subsystem (Phân Hệ Quản Lý Bán Hàng) */}
         <Route path="/sales" element={<SalesPage><SalesDashboard /></SalesPage>} />
         <Route path="/sales/orders" element={<SalesPage><SalesOrders /></SalesPage>} />
-        <Route path="/sales/deliveries" element={<SalesPage><SalesDeliveries /></SalesPage>} />
         <Route path="/sales/invoices" element={<SalesPage><SalesInvoices /></SalesPage>} />
         <Route path="/sales/receivables" element={<SalesPage><SalesReceivables /></SalesPage>} />
         <Route path="/sales/customers" element={<SalesPage><SalesCustomers /></SalesPage>} />

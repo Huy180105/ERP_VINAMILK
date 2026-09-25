@@ -20,6 +20,9 @@ class HoaDon extends Model
         'ngayLap',
         'tongTien',
         'maGiaoHang',
+        'maDonHang',
+        'maKhachHang',
+        'trangThaiThanhToan',
     ];
 
     public function congNos()
@@ -27,8 +30,13 @@ class HoaDon extends Model
         return $this->hasMany(CongNo::class, 'maHoaDon', 'maHoaDon');
     }
 
-    public function giaoHang()
+    public function donHang()
     {
-        return $this->belongsTo(GiaoHang::class, 'maGiaoHang', 'maGiaoHang');
+        return $this->belongsTo(DonHang::class, 'maDonHang', 'maDonHang');
+    }
+
+    public function khachHang()
+    {
+        return $this->belongsTo(KhachHang::class, 'maKhachHang', 'maKhachHang');
     }
 }

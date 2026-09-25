@@ -125,12 +125,6 @@ export const SalesAPI = {
   updateCustomer: (id, data) => api.put(`/sales/customers/${id}`, data),
   deleteCustomer: (id) => api.delete(`/sales/customers/${id}`),
 
-  // Giao hàng (SA-FR04)
-  getDeliveries: (params) => api.get('/sales/deliveries', { params }),
-  getDeliveryDetail: (id) => api.get(`/sales/deliveries/${id}`),
-  createDelivery: (data) => api.post('/sales/deliveries', data),
-  updateDeliveryStatus: (id, status) => api.put(`/sales/deliveries/${id}/status`, { trangThai: status }),
-
   // Hóa đơn & Thanh toán (SA-FR03)
   getInvoices: (params) => api.get('/sales/invoices', { params }),
   getInvoiceDetail: (id) => api.get(`/sales/invoices/${id}`),

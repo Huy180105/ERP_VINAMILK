@@ -184,7 +184,7 @@ export default function SalesOrders() {
       maDonHang: makeOrderCode(),
       maKhachHang: '',
       maNhanVien: 'NV001',
-      trangThai: 'Chờ xác nhận',
+      trangThai: 'Chờ duyệt',
       items: [makeEmptyItem()],
     });
     setFormError('');
@@ -192,8 +192,8 @@ export default function SalesOrders() {
   };
 
   const openEditModal = (order) => {
-    if (!['Chờ xác nhận', 'Chờ kho xác nhận'].includes(order.trangThai)) {
-      notify('error', 'Chỉ đơn hàng "Chờ xác nhận" hoặc "Chờ kho xác nhận" mới được phép chỉnh sửa.');
+    if (!['Chờ duyệt', 'Chờ xác nhận', 'Chờ kho xác nhận'].includes(order.trangThai)) {
+      notify('error', 'Chỉ đơn hàng chưa được bên kho duyệt mới được phép chỉnh sửa.');
       return;
     }
 
@@ -421,31 +421,20 @@ export default function SalesOrders() {
                     <td className="px-5 py-3.5 text-center">
                       <span
                         className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          o.trangThai === 'Hoàn tất' || o.trangThai === 'Đã giao'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : o.trangThai === 'Đã xác nhận'
-                            ? 'bg-blue-100 text-blue-700'
-                            : o.trangThai === 'Đang giao'
-                            ? 'bg-indigo-100 text-indigo-700'
+                          o.trangThai === 'Hoàn tất' || o.trangThai === 'Đã duyệt' || o.trangThai === 'Đã xác nhận'
+                            ? 'bg-emerald-100 text-emerald-800'
                             : o.trangThai === 'Đã hủy'
                             ? 'bg-rose-100 text-rose-700'
-                            : 'bg-amber-100 text-amber-700'
+                            : 'bg-amber-100 text-amber-800'
                         }`}
                       >
-                        {o.trangThai}
+                        {o.trangThai === 'Chờ xác nhận' ? 'Chờ kho duyệt' : o.trangThai}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        {o.trangThai === 'Chờ xác nhận' && (
+                        {['Chờ duyệt', 'Chờ xác nhận', 'Chờ kho xác nhận'].includes(o.trangThai) ? (
                           <>
-                            <button
-                              onClick={() => handleConfirmOrder(o)}
-                              className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
-                              title="Duyệt đơn hàng"
-                            >
-                              Duyệt Đơn
-                            </button>
                             <button
                               onClick={() => openEditModal(o)}
                               className="p-1.5 text-slate-500 hover:bg-slate-100 hover:text-amber-700 rounded-lg cursor-pointer"
@@ -455,12 +444,16 @@ export default function SalesOrders() {
                             </button>
                             <button
                               onClick={() => handleDeleteOrder(o)}
-                              className="p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-lg cursor-pointer"
-                              title="Hủy đơn"
+                              className="bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
+                              title="Hủy đơn hàng"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              Hủy Đơn
                             </button>
                           </>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-semibold italic">
+                            Kho đã duyệt
+                          </span>
                         )}
                         <button
                           onClick={() => viewOrderDetail(o)}
