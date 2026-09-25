@@ -32,17 +32,23 @@ Route::prefix('warehouse/sales')->group(function () {
     Route::put('/customers/{id}', [SalesController::class, 'updateCustomer']);
     Route::delete('/customers/{id}', [SalesController::class, 'deleteCustomer']);
 
-    // 5. Quản lý Hóa đơn & Thanh toán (SA-FR03 - Tự động phát sinh từ Đơn hàng)
+    // 5. Quản lý Giao hàng (SA-FR04)
+    Route::get('/deliveries', [SalesController::class, 'deliveries']);
+    Route::get('/deliveries/{id}', [SalesController::class, 'deliveryDetail']);
+    Route::post('/deliveries', [SalesController::class, 'storeDelivery']);
+    Route::put('/deliveries/{id}/status', [SalesController::class, 'updateDeliveryStatus']);
+
+    // 6. Quản lý Hóa đơn & Thanh toán (SA-FR03)
     Route::get('/invoices', [SalesController::class, 'invoices']);
     Route::get('/invoices/{id}', [SalesController::class, 'invoiceDetail']);
     Route::post('/invoices', [SalesController::class, 'storeInvoice']);
     Route::post('/payments', [SalesController::class, 'recordPayment']);
 
-    // 6. Quản lý Công nợ (SA-FR05)
+    // 7. Quản lý Công nợ (SA-FR05)
     Route::get('/receivables', [SalesController::class, 'receivables']);
     Route::get('/receivables/{id}', [SalesController::class, 'receivableDetail']);
 
-    // 7. Quản lý Bảng giá sản phẩm (SA-FR06)
+    // 8. Quản lý Bảng giá sản phẩm (SA-FR06)
     Route::get('/pricing', [SalesController::class, 'pricing']);
     Route::put('/pricing/{id}', [SalesController::class, 'updatePrice']);
 });

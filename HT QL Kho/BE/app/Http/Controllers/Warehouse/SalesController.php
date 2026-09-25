@@ -11,6 +11,7 @@ use App\Models\ChiTietDonHang;
 use App\Models\KhachHang;
 use App\Models\SanPham;
 use App\Models\TonKho;
+use App\Models\GiaoHang;
 use App\Models\HoaDon;
 use App\Models\CongNo;
 use App\Models\ThanhToan;
@@ -25,14 +26,16 @@ class SalesController extends Controller
     public function dashboard()
     {
         $totalRevenue = (float) DB::table('DonHang')
-            ->whereIn('trangThai', ['Đã duyệt', 'Đã xác nhận', 'Hoàn tất', 'Đã giao'])
+            ->whereIn('trangThai', ['Đã duyệt', 'Đã xác nhận', 'Đang giao', 'Hoàn tất', 'Đã giao'])
             ->sum('thanhTien');
 
         $summary = [
             'orders' => (int) DB::table('DonHang')->count(),
             'pendingOrders' => (int) DB::table('DonHang')->whereIn('trangThai', ['Chờ duyệt', 'Chờ xác nhận'])->count(),
-            'completedOrders' => (int) DB::table('DonHang')->whereIn('trangThai', ['Hoàn tất', 'Đã duyệt'])->count(),
+            'completedOrders' => (int) DB::table('DonHang')->whereIn('trangThai', ['Hoàn tất', 'Đã giao', 'Đã duyệt'])->count(),
             'customers' => (int) DB::table('KhachHang')->count(),
+            'deliveries' => (int) DB::table('GiaoHang')->count(),
+            'activeDeliveries' => (int) DB::table('GiaoHang')->where('trangThai', 'Đang giao')->count(),
             'invoices' => (int) DB::table('HoaDon')->count(),
             'totalRevenue' => $totalRevenue,
             'receivables' => (float) DB::table('CongNo')->where('trangThai', '!=', 'Đã tất toán')->sum('soTienConLai'),
@@ -51,6 +54,22 @@ class SalesController extends Controller
                 'kh.maKhachHang'
             )
             ->orderByDesc('dh.ngayMua')
+            ->limit(6)
+            ->get();
+
+        // Giao hàng gần nhất
+        $deliveries = DB::table('GiaoHang as gh')
+            ->leftJoin('KhachHang as kh', 'kh.maKhachHang', '=', 'gh.maKhachHang')
+            ->leftJoin('DonHang as dh', 'dh.maDonHang', '=', 'gh.maDonHang')
+            ->select(
+                'gh.maGiaoHang',
+                'gh.ngayGiao',
+                'gh.trangThai',
+                'gh.diaChiGiao',
+                'kh.tenKhachHang',
+                'dh.maDonHang'
+            )
+            ->orderByDesc('gh.ngayGiao')
             ->limit(6)
             ->get();
 
@@ -94,6 +113,7 @@ class SalesController extends Controller
             'data' => [
                 'summary' => $summary,
                 'orders' => $orders,
+                'deliveries' => $deliveries,
                 'invoices' => $invoices,
                 'receivables' => $receivables,
             ],
@@ -204,10 +224,12 @@ class SalesController extends Controller
             ->get()
             ->groupBy('maDonHang');
 
+        $deliveryOrders = DB::table('GiaoHang')->whereIn('maDonHang', $orderIds)->pluck('maDonHang')->toArray();
         $invoicesMap = DB::table('HoaDon')->whereIn('maDonHang', $orderIds)->pluck('maHoaDon', 'maDonHang')->toArray();
 
-        $orders->each(function ($order) use ($items, $invoicesMap) {
+        $orders->each(function ($order) use ($items, $deliveryOrders, $invoicesMap) {
             $order->items = $items->get($order->maDonHang, collect())->values();
+            $order->hasDelivery = in_array($order->maDonHang, $deliveryOrders);
             $order->maHoaDon = $invoicesMap[$order->maDonHang] ?? null;
         });
 
@@ -257,9 +279,16 @@ class SalesController extends Controller
             )
             ->get();
 
+        $deliveries = DB::table('GiaoHang as gh')
+            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNV')
+            ->where('gh.maDonHang', $id)
+            ->select('gh.*', 'nv.hoTen as tenNhanVienGiao')
+            ->get();
+
         $invoice = DB::table('HoaDon')->where('maDonHang', $id)->first();
 
         $order->items = $items;
+        $order->deliveries = $deliveries;
         $order->invoice = $invoice;
 
         return response()->json([
@@ -318,7 +347,6 @@ class SalesController extends Controller
 
         DB::beginTransaction();
         try {
-            // Bên bán hàng chỉ tạo đơn hàng -> trạng thái mặc định: 'Chờ duyệt' (Kho duyệt sau)
             $order = DonHang::create([
                 'maDonHang' => $validated['maDonHang'],
                 'ngayMua' => Carbon::parse($validated['ngayMua'] ?? now())->format('Y-m-d H:i:s'),
@@ -413,7 +441,6 @@ class SalesController extends Controller
                 ]);
             }
 
-            // Cập nhật lại số tiền trên hóa đơn tương ứng
             HoaDon::where('maDonHang', $order->maDonHang)->update(['tongTien' => $totalAmount]);
 
             DB::commit();
@@ -481,7 +508,7 @@ class SalesController extends Controller
 
         $order = DonHang::where('maDonHang', $id)->firstOrFail();
 
-        // RÀNG BUỘC 4: Bên bán hàng chỉ được phép hủy đơn hàng khi bên kho chưa duyệt
+        // RÀNG BUỘC: Bên bán hàng chỉ được phép hủy đơn hàng khi bên kho chưa duyệt
         if ($validated['trangThai'] === 'Đã hủy') {
             if (!in_array($order->trangThai, ['Chờ duyệt', 'Chờ xác nhận'])) {
                 return response()->json([
@@ -497,7 +524,7 @@ class SalesController extends Controller
             ]);
         }
 
-        // RÀNG BUỘC 3: Bên kho duyệt đơn hàng -> Đổi trạng thái sang 'Đã duyệt'
+        // RÀNG BUỘC: Bên kho duyệt đơn hàng -> Đổi trạng thái sang 'Đã duyệt'
         if (in_array($validated['trangThai'], ['Đã duyệt', 'Đã xác nhận'])) {
             $items = ChiTietDonHang::where('maDonHang', $id)->get();
             $stockErrors = [];
@@ -517,7 +544,6 @@ class SalesController extends Controller
                 ], 422);
             }
 
-            // Phê duyệt bởi Bên Kho -> Cập nhật trạng thái đơn hàng
             $order->update(['trangThai' => 'Đã duyệt']);
 
             return response()->json([
@@ -637,7 +663,149 @@ class SalesController extends Controller
     }
 
     /**
-     * 5. Quản lý Hóa Đơn & Thanh Toán (SA-FR03 & SA-BR03) - Kết nối trực tiếp DonHang & KhachHang
+     * 5. Quản lý Giao Hàng (SA-FR04 & SA-BR02)
+     */
+    public function deliveries(Request $request = null)
+    {
+        $request = $request ?? request();
+        $query = DB::table('GiaoHang as gh')
+            ->leftJoin('KhachHang as kh', 'kh.maKhachHang', '=', 'gh.maKhachHang')
+            ->leftJoin('DonHang as dh', 'dh.maDonHang', '=', 'gh.maDonHang')
+            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNV')
+            ->select(
+                'gh.*',
+                'kh.tenKhachHang',
+                'kh.soDienThoai as soDienThoaiKH',
+                'dh.tongTien',
+                'dh.thanhTien',
+                'nv.hoTen as tenNhanVienGiao'
+            );
+
+        if ($request->filled('keyword')) {
+            $kw = trim($request->input('keyword'));
+            $query->where(function ($q) use ($kw) {
+                $q->where('gh.maGiaoHang', 'like', "%{$kw}%")
+                  ->orWhere('gh.maDonHang', 'like', "%{$kw}%")
+                  ->orWhere('kh.tenKhachHang', 'like', "%{$kw}%");
+            });
+        }
+
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('gh.trangThai', $request->input('status'));
+        }
+
+        $deliveries = $query->orderByDesc('gh.ngayGiao')->get();
+        $deliveryIds = $deliveries->pluck('maGiaoHang');
+        $invoiceMap = DB::table('HoaDon')->whereIn('maGiaoHang', $deliveryIds)->pluck('maHoaDon', 'maGiaoHang');
+
+        $deliveries->each(function ($d) use ($invoiceMap) {
+            $d->maHoaDon = $invoiceMap[$d->maGiaoHang] ?? null;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $deliveries,
+        ]);
+    }
+
+    public function deliveryDetail($id)
+    {
+        $delivery = DB::table('GiaoHang as gh')
+            ->leftJoin('KhachHang as kh', 'kh.maKhachHang', '=', 'gh.maKhachHang')
+            ->leftJoin('DonHang as dh', 'dh.maDonHang', '=', 'gh.maDonHang')
+            ->leftJoin('NhanVien as nv', 'nv.maNV', '=', 'gh.maNV')
+            ->where('gh.maGiaoHang', $id)
+            ->select('gh.*', 'kh.tenKhachHang', 'kh.soDienThoai as soDienThoaiKH', 'dh.tongTien', 'dh.thanhTien', 'nv.hoTen as tenNhanVienGiao')
+            ->first();
+
+        if (!$delivery) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy phiếu giao hàng.'], 404);
+        }
+
+        $items = DB::table('ChiTietDonHang as ct')
+            ->leftJoin('SanPham as sp', 'sp.maSanPham', '=', 'ct.maSanPham')
+            ->where('ct.maDonHang', $delivery->maDonHang)
+            ->select('ct.*', 'sp.tenSanPham', 'sp.donViTinh')
+            ->get();
+
+        $invoice = DB::table('HoaDon')->where('maGiaoHang', $id)->first();
+
+        $delivery->items = $items;
+        $delivery->invoice = $invoice;
+
+        return response()->json([
+            'success' => true,
+            'data' => $delivery,
+        ]);
+    }
+
+    public function storeDelivery(Request $request)
+    {
+        $validated = $request->validate([
+            'maGiaoHang' => 'required|string|max:20|unique:GiaoHang,maGiaoHang',
+            'maDonHang' => 'required|string|exists:DonHang,maDonHang',
+            'maPhieuXuatSP' => 'nullable|string',
+            'maNV' => 'nullable|string',
+            'diaChiGiao' => 'required|string|max:255',
+            'ngayGiao' => 'nullable|date',
+            'trangThai' => 'nullable|string|max:30',
+        ]);
+
+        $order = DonHang::where('maDonHang', $validated['maDonHang'])->firstOrFail();
+
+        DB::beginTransaction();
+        try {
+            $delivery = GiaoHang::create([
+                'maGiaoHang' => $validated['maGiaoHang'],
+                'maDonHang' => $order->maDonHang,
+                'maPhieuXuatSP' => $validated['maPhieuXuatSP'] ?? null,
+                'maKhachHang' => $order->maKhachHang,
+                'maNV' => $validated['maNV'] ?? 'NV004',
+                'ngayGiao' => Carbon::parse($validated['ngayGiao'] ?? now())->format('Y-m-d H:i:s'),
+                'diaChiGiao' => $validated['diaChiGiao'],
+                'trangThai' => $validated['trangThai'] ?? 'Đang giao',
+            ]);
+
+            $order->update(['trangThai' => 'Đang giao']);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tạo phiếu giao hàng thành công',
+                'data' => $delivery,
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi tạo phiếu giao hàng: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateDeliveryStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'trangThai' => 'required|string|max:30',
+        ]);
+
+        $delivery = GiaoHang::where('maGiaoHang', $id)->firstOrFail();
+        $delivery->update(['trangThai' => $validated['trangThai']]);
+
+        if ($validated['trangThai'] === 'Đã giao') {
+            DonHang::where('maDonHang', $delivery->maDonHang)->update(['trangThai' => 'Đã giao']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái giao hàng thành công',
+            'data' => $delivery,
+        ]);
+    }
+
+    /**
+     * 6. Quản lý Hóa Đơn & Thanh Toán (SA-FR03 & SA-BR03)
      */
     public function invoices(Request $request = null)
     {
@@ -857,7 +1025,7 @@ class SalesController extends Controller
     }
 
     /**
-     * 6. Quản lý Công Nợ (SA-FR05)
+     * 7. Quản lý Công Nợ (SA-FR05)
      */
     public function receivables(Request $request = null)
     {
@@ -922,7 +1090,7 @@ class SalesController extends Controller
     }
 
     /**
-     * 7. Quản lý Bảng Giá Sản Phẩm (SA-FR06)
+     * 8. Quản lý Bảng Giá Sản Phẩm (SA-FR06)
      */
     public function pricing(Request $request = null)
     {

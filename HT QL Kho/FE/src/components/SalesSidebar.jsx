@@ -8,7 +8,6 @@ import {
   CircleDollarSign,
   Users,
   Tag,
-  ShieldCheck,
   PackageCheck
 } from 'lucide-react';
 
@@ -24,6 +23,7 @@ export default function SalesSidebar() {
       title: 'NGHIỆP VỤ BÁN HÀNG',
       items: [
         { name: 'Quản Lý Đơn Hàng', path: '/sales/orders', icon: ShoppingCart },
+        { name: 'Quản Lý Giao Hàng', path: '/sales/deliveries', icon: Truck },
         { name: 'Hóa Đơn & Thanh Toán', path: '/sales/invoices', icon: ReceiptText },
         { name: 'Quản Lý Công Nợ', path: '/sales/receivables', icon: CircleDollarSign },
       ]
@@ -71,7 +71,6 @@ export default function SalesSidebar() {
         ))}
       </div>
 
-      {/* Sales Assurance Card */}
       <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 rounded-lg text-[#0B2341] text-xs shadow-sm space-y-1.5">
         <div className="font-bold flex items-center space-x-1.5 text-[#002795]">
           <PackageCheck className="w-4 h-4 text-[#002795]" />
@@ -84,4 +83,3 @@ export default function SalesSidebar() {
     </aside>
   );
 }
-
