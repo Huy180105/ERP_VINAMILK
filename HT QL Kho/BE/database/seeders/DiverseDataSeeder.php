@@ -67,13 +67,20 @@ class DiverseDataSeeder extends Seeder
         $lots = [];
         for ($i = 10; $i <= 17; $i++) {
             $spId = sprintf('SP%03d', $i + 6);
+            $qty = 1500 + ($i * 200);
+            $pack = 48;
+            $vol = 180.00;
             $lots[] = [
                 'maTonKho' => "LOT-SP-{$dateStr}-{$i}",
                 'maSanPham' => $spId,
                 'maNVL' => null,
                 'tenTonKho' => "Lô Sản Phẩm Vinamilk Đợt {$i} - Tiêu chuẩn ISO",
                 'maKho' => 'K004',
-                'soLuongTonHienTai' => 1500 + ($i * 200),
+                'soLuongTonHienTai' => $qty,
+                'dungTichDonVi' => $vol,
+                'donViDoLuong' => 'ml',
+                'soLuongDongGoi' => $pack,
+                'tongDungTichQuyDoi' => $qty * $pack * $vol,
                 'ngaySanXuat' => $today,
                 'hanSuDung' => Carbon::today()->addMonths(6)->toDateString(),
                 'trangThai' => 'Còn hạn',
@@ -81,13 +88,20 @@ class DiverseDataSeeder extends Seeder
         }
         for ($i = 10; $i <= 16; $i++) {
             $nvlId = sprintf('NVL%03d', $i + 6);
+            $qty = 800 + ($i * 100);
+            $pack = 1;
+            $vol = 25.00;
             $lots[] = [
                 'maTonKho' => "LOT-NVL-{$dateStr}-{$i}",
                 'maSanPham' => null,
                 'maNVL' => $nvlId,
                 'tenTonKho' => "Lô Nguyên Vật Liệu Nhập Kho Đợt {$i}",
                 'maKho' => 'K001',
-                'soLuongTonHienTai' => 800 + ($i * 100),
+                'soLuongTonHienTai' => $qty,
+                'dungTichDonVi' => $vol,
+                'donViDoLuong' => 'kg',
+                'soLuongDongGoi' => $pack,
+                'tongDungTichQuyDoi' => $qty * $pack * $vol,
                 'ngaySanXuat' => $today,
                 'hanSuDung' => Carbon::today()->addYear()->toDateString(),
                 'trangThai' => 'Còn hạn',

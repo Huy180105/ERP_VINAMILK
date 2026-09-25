@@ -412,7 +412,7 @@ class InboundController extends Controller
 
             if (!empty($validated['maPhieuYCXSP'])) {
                 PhieuYeuCauXuatSP::where('maPhieuYCXSP', $validated['maPhieuYCXSP'])
-                    ->update(['trangThai' => 'Hoàn thành']);
+                    ->update(['trangThai' => 'Chờ xác nhận']);
             }
 
             $today = Carbon::today();
@@ -605,6 +605,10 @@ class InboundController extends Controller
         }
 
         $receipt->update(['trangThai' => 'Đã duyệt']);
+        
+        if ($receipt->maPhieuYCXSP) {
+            PhieuYeuCauXuatSP::where('maPhieuYCXSP', $receipt->maPhieuYCXSP)->update(['trangThai' => 'Đã duyệt']);
+        }
 
         return response()->json([
             'success' => true,
@@ -625,6 +629,10 @@ class InboundController extends Controller
         }
 
         $receipt->update(['trangThai' => 'Từ chối']);
+        
+        if ($receipt->maPhieuYCXSP) {
+            PhieuYeuCauXuatSP::where('maPhieuYCXSP', $receipt->maPhieuYCXSP)->update(['trangThai' => 'Không duyệt']);
+        }
 
         return response()->json([
             'success' => true,
@@ -661,6 +669,10 @@ class InboundController extends Controller
             }
 
             $receipt->update(['trangThai' => 'Hoàn thành']);
+            
+            if ($receipt->maPhieuYCXSP) {
+                PhieuYeuCauXuatSP::where('maPhieuYCXSP', $receipt->maPhieuYCXSP)->update(['trangThai' => 'Thành công']);
+            }
             DB::commit();
 
             return response()->json([

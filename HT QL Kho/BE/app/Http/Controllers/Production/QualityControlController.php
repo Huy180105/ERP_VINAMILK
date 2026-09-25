@@ -115,7 +115,7 @@ class QualityControlController extends Controller
                     'maPhieuNghiemThu' => $pntCode,
                     'maNhanVien' => $validated['maNhanVien'] ?? 'NV001',
                     'ngayYeuCau' => $validated['ngayNghiemThu'],
-                    'trangThai' => 'Chưa xử lý',
+                    'trangThai' => 'Chưa xác nhận',
                     'ghiChu' => "Tự động bàn giao thành phẩm đạt từ biên bản QC {$pntCode}",
                 ]);
 
@@ -200,7 +200,7 @@ class QualityControlController extends Controller
                 'maPhieuNghiemThu' => $validated['maPhieuNghiemThu'],
                 'maNhanVien' => $validated['maNhanVien'] ?? 'NV001',
                 'ngayYeuCau' => $validated['ngayYeuCau'],
-                'trangThai' => 'Chưa xử lý',
+                'trangThai' => 'Chưa xác nhận',
                 'ghiChu' => $validated['ghiChu'] ?? 'Bàn giao thành phẩm đạt chất lượng sang Kho Vinamilk',
             ]);
 

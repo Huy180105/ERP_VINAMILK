@@ -115,6 +115,10 @@ class OutboundController extends Controller
     {
         $dispatch = PhieuXuatNVL::findOrFail($id);
         $dispatch->update(['trangThai' => 'Đã duyệt']);
+        
+        if ($dispatch->maPhieuYeuCauNVL) {
+            PhieuYeuCauNVL::where('maPhieuYCNVL', $dispatch->maPhieuYeuCauNVL)->update(['trangThai' => 'Đã duyệt']);
+        }
 
         return response()->json([
             'success' => true,
@@ -140,6 +144,10 @@ class OutboundController extends Controller
             'trangThai' => 'Từ chối',
             'ghiChu'    => $dispatch->ghiChu ? ($dispatch->ghiChu . " | [Từ chối]: " . $lyDo) : ("[Từ chối]: " . $lyDo),
         ]);
+        
+        if ($dispatch->maPhieuYeuCauNVL) {
+            PhieuYeuCauNVL::where('maPhieuYCNVL', $dispatch->maPhieuYeuCauNVL)->update(['trangThai' => 'Không duyệt']);
+        }
 
         return response()->json([
             'success' => true,
@@ -168,7 +176,7 @@ class OutboundController extends Controller
 
             if ($dispatch->maPhieuYeuCauNVL) {
                 PhieuYeuCauNVL::where('maPhieuYCNVL', $dispatch->maPhieuYeuCauNVL)
-                    ->update(['trangThai' => 'Hoàn thành']);
+                    ->update(['trangThai' => 'Đã xuất kho']);
             }
 
             DB::commit();

@@ -91,19 +91,21 @@ export default function InventoryLots() {
                 <th className="p-3">Mã Lô (Batch ID)</th>
                 <th className="p-3">Tên Lô / Mô Tả</th>
                 <th className="p-3">Mặt Hàng Tham Chiếu</th>
+                <th className="p-3">Quy Cách Đóng Gói</th>
                 <th className="p-3">Kho Lưu Trữ</th>
                 <th className="p-3">Ngày Sản Xuất</th>
                 <th className="p-3">Hạn Sử Dụng</th>
                 <th className="p-3 text-center">Chất Lượng</th>
                 <th className="p-3 text-right">Tồn Khả Dụng</th>
+                <th className="p-3 text-right">Tổng Quy Đổi (ĐV Base)</th>
                 <th className="p-3 text-center">FEFO Priority</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="9" className="p-4 text-center text-slate-400">Đang tải lô tồn kho...</td></tr>
+                <tr><td colSpan="11" className="p-4 text-center text-slate-400">Đang tải lô tồn kho...</td></tr>
               ) : lots.length === 0 ? (
-                <tr><td colSpan="9" className="p-4 text-center text-slate-400">Không có lô tồn kho nào.</td></tr>
+                <tr><td colSpan="11" className="p-4 text-center text-slate-400">Không có lô tồn kho nào.</td></tr>
               ) : (
                 paginatedLots.map((l) => {
                   const daysLeft = Math.ceil((new Date(l.hanSuDung) - new Date()) / (1000 * 60 * 60 * 24));
@@ -114,11 +116,30 @@ export default function InventoryLots() {
                     : (rawQ.includes('không') || rawQ.includes('khong') || rawQ.includes('hỏng') || rawQ.includes('hong'))
                     ? 'Không đạt'
                     : 'Đạt';
+                  
+                  const packQty = l.soLuongDongGoi || 1;
+                  const unitVol = l.dungTichDonVi || 1;
+                  const measureUnit = l.donViDoLuong || (l.maSanPham ? 'ml' : 'kg');
+                  const primaryUnit = l.donViLoai || (l.maSanPham ? (l.sanPham?.donViTinh || 'Thùng') : (l.nguyenVatLieu?.donVi || 'Đơn vị'));
+                  const totalConverted = l.tongDungTichQuyDoi ?? (l.soLuongTonHienTai * packQty * unitVol);
+
                   return (
                     <tr key={l.maTonKho} className="hover:bg-slate-50 transition">
                       <td className="p-3 font-mono font-bold text-[#0B2341]">{l.maTonKho}</td>
                       <td className="p-3 font-semibold text-slate-800">{l.tenTonKho}</td>
-                      <td className="p-3 text-slate-600 font-medium">{itemName}</td>
+                      <td className="p-3 text-slate-600 font-medium">
+                        <div>{itemName}</div>
+                        <span className="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 text-slate-600">
+                          {l.maSanPham ? 'Sản Phẩm' : 'Nguyên Vật Liệu'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-600 font-medium">
+                        {packQty > 1 ? (
+                          <span>{packQty} đơn vị x {unitVol} {measureUnit}</span>
+                        ) : (
+                          <span>1 x {unitVol} {measureUnit}</span>
+                        )}
+                      </td>
                       <td className="p-3 text-slate-600 font-medium">{l.kho?.tenKho || l.maKho || 'Kho Tổng'}</td>
                       <td className="p-3 text-slate-500 font-mono">{l.ngaySanXuat}</td>
                       <td className="p-3 font-mono font-bold text-slate-900">{l.hanSuDung}</td>
@@ -133,8 +154,11 @@ export default function InventoryLots() {
                           {qualityStatus}
                         </span>
                       </td>
-                      <td className="p-3 text-right font-semibold text-emerald-700">
-                        {l.soLuongTonHienTai?.toLocaleString()}
+                      <td className="p-3 text-right font-semibold text-slate-800">
+                        {l.soLuongTonHienTai?.toLocaleString()} <span className="text-[10px] text-slate-500">{primaryUnit}</span>
+                      </td>
+                      <td className="p-3 text-right font-bold text-blue-900 bg-blue-50/50">
+                        {Number(totalConverted).toLocaleString()} <span className="text-[10px] font-medium text-blue-700">{measureUnit}</span>
                       </td>
                       <td className="p-3 text-center">
                         <FefoBadge daysLeft={daysLeft} />

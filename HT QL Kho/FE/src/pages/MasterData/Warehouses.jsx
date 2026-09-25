@@ -391,6 +391,9 @@ export default function Warehouses() {
                         <td className="p-3.5 text-right font-mono font-bold text-slate-900">
                           <span className="text-sm">{(tk.soLuongTonHienTai || 0).toLocaleString()}</span>
                           <span className="text-[10px] text-slate-500 font-normal ml-1">{unit}</span>
+                          <div className="text-[10px] font-semibold text-blue-700 font-sans mt-0.5">
+                            = {Number(tk.tongDungTichQuyDoi ?? ((tk.soLuongTonHienTai || 0) * (tk.soLuongDongGoi || 1) * (tk.dungTichDonVi || 1))).toLocaleString()} {tk.donViDoLuong || (tk.maSanPham ? 'ml' : 'kg')}
+                          </div>
                         </td>
                         <td className="p-3.5 font-mono text-[11px] text-slate-600">
                           <div>NSX: {tk.ngaySanXuat || '-'}</div>

@@ -26,14 +26,17 @@ export default function StatusBadge({ status }) {
       break;
     case 'Chờ duyệt':
     case 'Chờ xác nhận':
+    case 'Chưa xác nhận':
     case 'Chờ xử lý':
     case 'Chưa xử lý':
+    case 'Đang xử lý':
     case 'Chờ tiếp nhận':
     case 'Chờ kiểm tra':
       style = 'bg-amber-50 text-amber-800 border-amber-200 shadow-sm';
       Icon = Clock;
       break;
     case 'Từ chối':
+    case 'Không duyệt':
     case 'Hủy':
     case 'Hết hạn':
     case 'Không đạt':
