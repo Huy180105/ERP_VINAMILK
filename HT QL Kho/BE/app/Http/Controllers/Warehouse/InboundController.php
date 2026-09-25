@@ -28,7 +28,7 @@ class InboundController extends Controller
     public function getPendingProductionHandovers()
     {
         $handovers = PhieuYeuCauXuatSP::with(['chiTiets.sanPham', 'phieuNghiemThu', 'nhanVien'])
-            ->where('trangThai', 'Chưa xử lý')
+            ->whereIn('trangThai', ['Chưa xử lý', 'Chưa xác nhận'])
             ->orderBy('ngayYeuCau', 'desc')
             ->get();
 
