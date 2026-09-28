@@ -139,19 +139,34 @@ export default function PhieuThu() {
     setFormData({
       maPhieuThu: autoCode,
       ngayThu: new Date().toISOString().split('T')[0],
-      maDoiTuong: counterparties[0]?.maDoiTuong || '',
+      maDoiTuong: '',
       lyDoThu: '',
       phuongThucThu: 'TM',
-      maTaiKhoanQuy: accounts[0]?.maTaiKhoanQuy || '',
+      maTaiKhoanQuy: '',
       maThanhToan: '',
       maCongNo: '',
       maHoaDon: '',
       items: [
-        { maChiTietThu: `CTPT-${Date.now().toString().slice(-4)}-1`, maDanhMucThu: categories[0]?.maDanhMucThu || '', dienGiai: '', soTien: 0 }
+        { maChiTietThu: `CTPT-${Date.now().toString().slice(-4)}-1`, maDanhMucThu: '', dienGiai: '', soTien: 0 }
       ],
     });
     setModalOpen(true);
     fetchPendingSales();
+  };
+
+  const changeCreateTab = (tab) => {
+    if (editingId || tab === createTab) return;
+    setCreateTab(tab);
+    setSelectedSale(null);
+    setFormData(prev => ({
+      ...prev,
+      maThanhToan: '',
+      maCongNo: '',
+      maHoaDon: '',
+      maDoiTuong: '',
+      lyDoThu: '',
+      items: [{ maChiTietThu: `CTPT-${Date.now().toString().slice(-6)}-1`, maDanhMucThu: '', dienGiai: '', soTien: 0 }],
+    }));
   };
 
   const handleSelectSaleRecord = (sale) => {
@@ -164,14 +179,15 @@ export default function PhieuThu() {
       maThanhToan: sale.maThanhToan,
       maCongNo: sale.maCongNo || '',
       maHoaDon: sale.maHoaDon || '',
-      maDoiTuong: matchedDt ? matchedDt.maDoiTuong : prev.maDoiTuong,
+      maDoiTuong: matchedDt?.maDoiTuong || '',
       soTien: sale.soTien,
       phuongThucThu: sale.phuongThucThanhToan === 'Chuyển khoản' ? 'CK' : 'TM',
+      maTaiKhoanQuy: '',
       lyDoThu: `Thu tiền bán hàng đợt thanh toán ${sale.maThanhToan} (Đơn hàng: ${sale.maDonHang})`,
       items: [
         {
           maChiTietThu: `CTPT-${timestamp}-1`,
-          maDanhMucThu: categories.find(c => c.maDanhMucThu === 'DMT01')?.maDanhMucThu || categories[0]?.maDanhMucThu || '',
+          maDanhMucThu: '',
           dienGiai: `Thanh toán đơn hàng ${sale.maDonHang} - Khách hàng ${sale.tenKhachHang}`,
           soTien: sale.soTien
         }
@@ -203,7 +219,7 @@ export default function PhieuThu() {
       ...prev,
       items: [
         ...prev.items,
-        { maChiTietThu: `CTPT-${timestamp}-${newIdx}`, maDanhMucThu: categories[0]?.maDanhMucThu || '', dienGiai: '', soTien: 0 }
+        { maChiTietThu: `CTPT-${timestamp}-${newIdx}`, maDanhMucThu: '', dienGiai: '', soTien: 0 }
       ]
     }));
   };
@@ -231,6 +247,10 @@ export default function PhieuThu() {
     const total = calculateTotal();
     if (total <= 0) {
       alert('Tổng số tiền phiếu thu phải lớn hơn 0');
+      return;
+    }
+    if (formData.items.some(item => !item.maDanhMucThu)) {
+      alert('Vui lòng chọn danh mục cho từng khoản thu');
       return;
     }
 
@@ -637,7 +657,8 @@ export default function PhieuThu() {
             {/* Tab Header */}
             <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 shrink-0">
               <button
-                onClick={() => setCreateTab('sales')}
+                onClick={() => changeCreateTab('sales')}
+                disabled={!!editingId}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
                   createTab === 'sales' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
@@ -646,7 +667,7 @@ export default function PhieuThu() {
                 <span>Từ Chứng Từ Bán Hàng (FI-BR01)</span>
               </button>
               <button
-                onClick={() => setCreateTab('manual')}
+                onClick={() => changeCreateTab('manual')}
                 className={`pb-3 px-4 text-xs font-bold border-b-2 flex items-center space-x-2 transition cursor-pointer ${
                   createTab === 'manual' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
@@ -766,8 +787,10 @@ export default function PhieuThu() {
                     <select
                       value={formData.maDoiTuong}
                       onChange={(e) => setFormData({ ...formData, maDoiTuong: e.target.value })}
+                      required
                       className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                     >
+                      <option value="" disabled>Chọn đối tượng nộp</option>
                       {counterparties.map((dt) => (
                         <option key={dt.maDoiTuong} value={dt.maDoiTuong}>
                           {dt.tenDoiTuong} ({dt.loaiDoiTuong})
@@ -785,9 +808,11 @@ export default function PhieuThu() {
                     <select
                       value={formData.maTaiKhoanQuy}
                       onChange={(e) => setFormData({ ...formData, maTaiKhoanQuy: e.target.value })}
+                      required
                       className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                     >
-                      {accounts.map((acc) => (
+                      <option value="" disabled>Chọn tài khoản</option>
+                      {accounts.filter(acc => acc.loaiTaiKhoan === (formData.phuongThucThu === 'CK' ? 'NH' : 'TM')).map((acc) => (
                         <option key={acc.maTaiKhoanQuy} value={acc.maTaiKhoanQuy}>
                           {acc.tenTaiKhoanQuy} (Dư: {Number(acc.soDuHienTai).toLocaleString()} đ)
                         </option>
@@ -801,7 +826,10 @@ export default function PhieuThu() {
                     </label>
                     <select
                       value={formData.phuongThucThu}
-                      onChange={(e) => setFormData({ ...formData, phuongThucThu: e.target.value })}
+                      onChange={(e) => {
+                        const phuongThucThu = e.target.value;
+                        setFormData({ ...formData, phuongThucThu, maTaiKhoanQuy: '' });
+                      }}
                       className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                     >
                       <option value="TM">Tiền mặt (TM)</option>
@@ -843,8 +871,10 @@ export default function PhieuThu() {
                         <select
                           value={item.maDanhMucThu}
                           onChange={(e) => handleItemChange(idx, 'maDanhMucThu', e.target.value)}
+                          required
                           className="w-44 bg-white border border-slate-200 text-xs text-slate-800 rounded-lg px-2.5 py-1.5 focus:outline-none"
                         >
+                          <option value="" disabled>Chọn danh mục thu</option>
                           {categories.map((cat) => (
                             <option key={cat.maDanhMucThu} value={cat.maDanhMucThu}>
                               {cat.tenDanhMucThu}

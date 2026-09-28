@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FinanceMasterDataAPI } from '../../../services/financeApi';
-import { Users, Plus, Search, Trash2, Phone, MapPin, CheckCircle2, XCircle, RefreshCw, X } from 'lucide-react';
+import { Users, Plus, Search, Edit2, Trash2, Phone, MapPin, CheckCircle2, XCircle, RefreshCw, X } from 'lucide-react';
 import { generateAutoCode } from '../../../utils/codeGenerator';
 
 export default function DoiTuongGiaoDich() {
@@ -11,6 +11,7 @@ export default function DoiTuongGiaoDich() {
   
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [sourceEntities, setSourceEntities] = useState([]);
   const [alreadyMapped, setAlreadyMapped] = useState([]);
   const [loadingSources, setLoadingSources] = useState(false);
@@ -39,13 +40,16 @@ export default function DoiTuongGiaoDich() {
     }
   };
 
-  const fetchSources = async (loai) => {
+  const fetchSources = async (loai, selectedId = null) => {
     setLoadingSources(true);
     try {
       const res = await FinanceMasterDataAPI.getAvailableSourceEntities({ loaiDoiTuong: loai });
       if (res.data.success) {
         setSourceEntities(res.data.data || []);
         setAlreadyMapped(res.data.mapped || []);
+        if (selectedId) {
+          setSelectedSource((res.data.data || []).find(s => (s.maGoc || s.id) === selectedId) || null);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -55,6 +59,7 @@ export default function DoiTuongGiaoDich() {
   };
 
   const openCreateModal = () => {
+    setEditingItem(null);
     const loai = 'KH';
     const autoCode = generateAutoCode(list, 'maDoiTuong', 'DT', 3, false);
     setFormData({
@@ -68,13 +73,26 @@ export default function DoiTuongGiaoDich() {
     fetchSources(loai);
   };
 
+  const openEditModal = (item) => {
+    setEditingItem(item);
+    setFormData({
+      maDoiTuong: item.maDoiTuong,
+      maThamChieu: item.maThamChieu,
+      loaiDoiTuong: item.loaiDoiTuong,
+      trangThai: item.trangThai ? 1 : 0,
+    });
+    setSelectedSource(null);
+    setModalOpen(true);
+    fetchSources(item.loaiDoiTuong, item.maThamChieu);
+  };
+
   const handleLoaiChange = (e) => {
     const newLoai = e.target.value;
     setFormData(prev => ({
       ...prev,
       loaiDoiTuong: newLoai,
       maThamChieu: '',
-      maDoiTuong: '',
+      maDoiTuong: editingItem ? prev.maDoiTuong : '',
     }));
     setSelectedSource(null);
     fetchSources(newLoai);
@@ -95,7 +113,7 @@ export default function DoiTuongGiaoDich() {
     setFormData(prev => ({
       ...prev,
       maThamChieu: maGoc,
-      maDoiTuong: generatedCode || prev.maDoiTuong,
+      maDoiTuong: editingItem ? prev.maDoiTuong : (generatedCode || prev.maDoiTuong),
     }));
   };
 
@@ -107,7 +125,9 @@ export default function DoiTuongGiaoDich() {
     }
 
     try {
-      const res = await FinanceMasterDataAPI.createCounterparty(formData);
+      const res = editingItem
+        ? await FinanceMasterDataAPI.updateCounterparty(editingItem.maDoiTuong, formData)
+        : await FinanceMasterDataAPI.createCounterparty(formData);
       if (res.data.success) {
         setModalOpen(false);
         fetchData();
@@ -254,6 +274,13 @@ export default function DoiTuongGiaoDich() {
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
+                        onClick={() => openEditModal(item)}
+                        className="p-1.5 text-slate-400 hover:text-[#0052FF] hover:bg-blue-50 rounded-lg transition"
+                        title="Chỉnh sửa ánh xạ"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
                         onClick={() => handleToggleStatus(item.maDoiTuong)}
                         className="inline-flex items-center space-x-1 cursor-pointer"
                         title="Bấm để bật/tắt hoạt động"
@@ -294,7 +321,7 @@ export default function DoiTuongGiaoDich() {
           <div className="bg-white rounded-lg shadow-sm max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-base font-bold text-slate-800">
-                Thiết Lập Ánh Xạ Đối Tượng Giao Dịch
+                {editingItem ? 'Cập Nhật Ánh Xạ Đối Tượng Giao Dịch' : 'Thiết Lập Ánh Xạ Đối Tượng Giao Dịch'}
               </h3>
               <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
                 <X className="w-4 h-4" />
@@ -320,6 +347,7 @@ export default function DoiTuongGiaoDich() {
                   <input
                     type="text"
                     value={formData.maDoiTuong}
+                    disabled={!!editingItem}
                     onChange={(e) => setFormData({ ...formData, maDoiTuong: e.target.value })}
                     required
                     className="w-full bg-slate-50 border border-slate-200 rounded-md p-2.5 text-xs font-mono font-bold"
@@ -343,7 +371,7 @@ export default function DoiTuongGiaoDich() {
                     <option value="">-- Chọn bản ghi nguồn --</option>
                     {sourceEntities.map((s) => {
                       const id = s.maGoc || s.id;
-                      const isMapped = alreadyMapped.includes(id);
+                      const isMapped = alreadyMapped.includes(id) && !(editingItem && editingItem.loaiDoiTuong === formData.loaiDoiTuong && editingItem.maThamChieu === id);
                       return (
                         <option key={id} value={id} disabled={isMapped}>
                           {id} - {s.ten} {isMapped ? '(Đã ánh xạ)' : ''}
@@ -362,6 +390,15 @@ export default function DoiTuongGiaoDich() {
                 </div>
               )}
 
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={!!formData.trangThai}
+                  onChange={(e) => setFormData(prev => ({ ...prev, trangThai: e.target.checked ? 1 : 0 }))}
+                />
+                Hoạt động
+              </label>
+
               <div className="flex justify-end space-x-2 pt-3 border-t">
                 <button
                   type="button"
@@ -374,7 +411,7 @@ export default function DoiTuongGiaoDich() {
                   type="submit"
                   className="px-4 py-2 rounded-md text-xs font-bold bg-[#0B2341] hover:bg-[#132F4C] text-white shadow-sm"
                 >
-                  Lưu Ánh Xạ
+                  {editingItem ? 'Lưu Thay Đổi' : 'Lưu Ánh Xạ'}
                 </button>
               </div>
             </form>

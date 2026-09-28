@@ -1,9 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: typeof window !== 'undefined' && ['3000', '80', '443'].includes(window.location.port)
-    ? '/api/finance'
-    : 'http://localhost:8000/api/finance',
+  baseURL: import.meta.env.VITE_API_BASE_URL
+    ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}/finance`
+    : typeof window !== 'undefined' && ['3000', '80', '443'].includes(window.location.port)
+      ? '/api/finance'
+      : 'http://localhost:8000/api/finance',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

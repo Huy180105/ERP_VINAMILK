@@ -95,6 +95,7 @@ Cần có sẵn trên máy (Windows hoặc WSL/Ubuntu):
      CACHE_STORE=file
      QUEUE_CONNECTION=sync
      ```
+   - Các giá trị `DB_USERNAME` và `DB_PASSWORD` ở trên chỉ là ví dụ. Khi dùng MySQL trong WSL, hãy điền tài khoản có mật khẩu và quyền trên `quanly_erp` (máy đang dùng `erp_app`); tài khoản `root` trên Ubuntu thường đăng nhập bằng Unix socket.
 4. Tạo mã khóa ứng dụng (nếu chưa có):
    ```bash
    php artisan key:generate
@@ -127,12 +128,28 @@ Cần có sẵn trên máy (Windows hoặc WSL/Ubuntu):
 ### Cách 1: Chạy 1-Click trên Windows (Nhanh nhất)
 Nhấp đúp chuột vào file:
 👉 **`run_dev.bat`** tại thư mục gốc của dự án.
-* Script sẽ tự động kiểm tra port MySQL 3306.
+* Script kiểm tra Laravel trên Windows có đăng nhập được vào MySQL hay không.
 * Tự động bật cửa sổ Backend (`http://127.0.0.1:8000`).
 * Tự động bật cửa sổ Frontend (`http://localhost:5173`).
 * Tự động mở trình duyệt web.
 
 ---
+
+### MySQL chạy trong WSL/Ubuntu
+
+Nhấp đúp **`run_wsl.bat`** ở thư mục gốc. Script khởi động MySQL và Laravel trong WSL, rồi mở React trên Windows nếu frontend chưa chạy. Nhờ đó `DB_HOST=127.0.0.1` trong `.env` trỏ đến MySQL của WSL. Nếu có MySQL khác trên Windows cùng dùng cổng 3306, hãy dùng script này thay vì `run_dev.bat`.
+
+Trong `HT QL Kho/BE/.env`, dùng tài khoản MySQL có quyền trên database `quanly_erp`. Kiểm tra kết nối trước khi mở ứng dụng bằng:
+
+```powershell
+wsl --cd "HT QL Kho\BE" -- php artisan db:show
+```
+
+Sau khi import database lần đầu, chạy migration nhật ký Thu Chi trước khi duyệt hoặc hủy phiếu:
+
+```powershell
+wsl --cd "HT QL Kho\BE" -- php artisan migrate --path=database/migrations/2026_09_23_000000_create_nhat_ky_thu_chi_table.php --force
+```
 
 ### Cách 2: Chạy thủ công bằng dòng lệnh
 
@@ -182,16 +199,25 @@ Hệ thống sẽ tự động tạo 3 containers:
    - *Nguyên nhân*: Laravel đang để `SESSION_DRIVER=database` nhưng CSDL không dùng bảng session mặc định.
    - *Khắc phục*: Trong file `HT QL Kho/BE/.env`, chỉnh lại `SESSION_DRIVER=file` và `CACHE_STORE=file`.
 
-2. **Lỗi: `Access denied for user 'root'@'localhost'`**
-   - *Nguyên nhân*: Mật khẩu MySQL của bạn khác hoặc chưa cấp quyền.
-   - *Khắc phục*: Kiểm tra lại user/password trong file `.env`. Nếu dùng WSL MariaDB, cấp quyền bằng:
-     ```sql
-     ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';
-     GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY 'root';
-     FLUSH PRIVILEGES;
-     ```
+2. **Lỗi: `Access denied for user ...`**
+   - Kiểm tra tài khoản và mật khẩu trong `HT QL Kho/BE/.env`, rồi chạy `wsl --cd "HT QL Kho\BE" -- php artisan db:show` từ thư mục gốc để thử kết nối trong WSL.
+   - Nếu lệnh trên thành công nhưng `run_dev.bat` vẫn báo lỗi, PHP trên Windows đang dùng MySQL của Windows. Chạy `run_wsl.bat` để Laravel dùng MySQL trong WSL.
 
 3. **Port 8000 hoặc 5173 bị chiếm dụng (Address already in use)**
    - Đổi port Backend: `php artisan serve --port=8080`
    - Đổi port Frontend: `npm run dev -- --port 5174`
 
+
+
+Bạn đang ở zsh trong WSL; run_wsl.bat là file chạy bằng Windows CMD. Từ thư mục gốc repo, chạy:
+cmd.exe /c run_wsl.bat
+Nếu muốn chạy hoàn toàn bằng terminal WSL, mở hai terminal:
+# Terminal 1: MySQL và backend
+sudo service mysql start
+cd "HT QL Kho/BE"
+php artisan db:show
+php artisan serve --host=127.0.0.1 --port=8000
+# Terminal 2: frontend (từ thư mục gốc repo)
+cd "HT QL Kho/FE"
+npm run dev
+Sau đó mở http://localhost:5173.

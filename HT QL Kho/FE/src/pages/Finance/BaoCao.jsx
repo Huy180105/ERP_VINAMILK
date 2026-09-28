@@ -138,7 +138,6 @@ export default function FinanceBaoCao() {
     setLoading(true);
     try {
       const res = await FinanceReportAPI.getReconciliationReport({
-        maTaiKhoanQuy: selectedAccount,
         tuNgay,
         denNgay
       });
